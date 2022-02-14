@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+
+using Grasshopper.Kernel;
+using Rhino.Geometry;
+
+namespace Master.Components
+{
+    public class Material : GH_Component
+    {
+        /// <summary>
+        /// Initializes a new instance of the Material class.
+        /// </summary>
+        public Material()
+          : base("Material", "Nickname",
+              "Description",
+              "Løve", "2DTruss")
+        {
+        }
+
+        /// <summary>
+        /// Registers all the input parameters for this component.
+        /// </summary>
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: C14", GH_ParamAccess.item, "C14");
+            pManager.AddNumberParameter("Density", "D", "density of the material, default: 100", GH_ParamAccess.item, 100);
+            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material, default 100000", GH_ParamAccess.item,100000);
+        }
+
+        /// <summary>
+        /// Registers all the output parameters for this component.
+        /// </summary>
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            pManager.AddGenericParameter("material", "M", "materialClass object", GH_ParamAccess.item);
+        }
+
+        /// <summary>
+        /// This is the method that actually does the work.
+        /// </summary>
+        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+            //input
+            string Name = "C14";
+            double d = 100;
+            double E = 100000;
+
+            DA.GetData(0, ref Name);
+            DA.GetData(1, ref d);
+            DA.GetData(2, ref E);
+
+            //code
+            MaterialClass mat = new MaterialClass(Name, d, E);
+
+            //output
+            DA.SetData(0, mat);
+
+        }
+
+        /// <summary>
+        /// Provides an Icon for the component.
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                //You can add image files to your project resources and access them like this:
+                // return Resources.IconForThisComponent;
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the unique ID for this component. Do not change this ID after release.
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("6445C831-20BE-46BA-8488-BFBA926A7BF0"); }
+        }
+    }
+}
