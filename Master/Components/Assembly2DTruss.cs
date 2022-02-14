@@ -181,10 +181,9 @@ namespace Master.Components
 
             for (int i = 0; i < _Pts.Count; i++)
             {
-                double ptx = _Pts[i].X;
-                double pty = _Pts[i].Y;
-                double ptz = _Pts[i].Z;
+                //this line was not so good
                 Point3d node = _Pts[i];
+
 
                 for (int j = 0; j < _LoadPts.Count; j++)
                 {
