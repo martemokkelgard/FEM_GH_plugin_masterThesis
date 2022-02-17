@@ -23,9 +23,9 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: C14", GH_ParamAccess.item, "C14");
-            pManager.AddNumberParameter("Density", "D", "density of the material, default: 100", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material, default 100000", GH_ParamAccess.item,100000);
+            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: S355", GH_ParamAccess.item, "s355");
+            pManager.AddNumberParameter("Density", "D", "density of the material, default: 7.8e-6 kg/mm^3", GH_ParamAccess.item, 0.0000078 );
+            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material (in [N/mm^2], default 210000 N/mm^2", GH_ParamAccess.item,210000);
         }
 
         /// <summary>

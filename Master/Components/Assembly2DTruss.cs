@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
 
 
@@ -37,9 +38,9 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation", "u,v", "Deformations of the bar", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
             pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.list);
-            pManager.AddPointParameter("DisplacementOfNodes", "displ", "Reaction Forces", GH_ParamAccess.list);
+            pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
 
         }
 
@@ -110,33 +111,42 @@ namespace Master.Components
 
             
 
-            double[,] K_tot = CreateGlobalStiffnesMatrix(bars, pts);
-
+           
             int dofs_red = BC.Sum();
 
-            double[,] K_red = new double[dofs_red, dofs_red];
-            List<double> R_red = new List<double>();
+            Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
+            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
+            List<double> ptsK = new List<double>();
+            Matrix<double> k_e = SparseMatrix.OfArray(new double[2, 2]);
+            Matrix<double> k_tot = SparseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
+
+            CreateGlobalStiffnesMatrix(bars, pts, out k_tot, out k_e);
+
 
             
-            CreateReducedStiffnesMatrix(BCList, K_tot, LoadList, out K_red, out R_red);
-            
-
-
-
-
-            var r = new List<double>();
-
-            var K = Matrix<double>.Build.DenseOfArray(K_red);
-            var invK = K.Inverse();
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
-            var def = invK.Multiply(R);
+
+            CreateReducedStiffnesMatrix(pts,BCList, k_tot, R, out K_red, out R_red, out ptsK);
+
+            var invK = K_red.Inverse();
+            
+            var def = invK.Multiply(R_red);
 
             var displNodes = new List<Point3d>();
 
-            for(int i =0; i< pts.Count; i++)
+            foreach (BarClass b in bars)
+            {
+                var S = k_e * def[]
+            }
+
+            
+
+            
+            for(int i =0; i< ptsK.Count/2; i++)
             {
 
-                displNodes.Add(new Point3d(pts[i].X + def[2 * i], pts[i].Y, pts[i].Z + def[2 * i + 1]));
+                
+                displNodes.Add(new Point3d(ptsK[i] + def[2 * i]/1000, 0, ptsK[i] + def[2 * i + 1]/1000));
             }
 
 
@@ -146,11 +156,11 @@ namespace Master.Components
 
         }
 
-        private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)
+        private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
         {
             
             //List<int> BCs = new List<int>();
-            List<int> BCsValue = new List<int>();
+            List<int> BCsIndex = new List<int>();
 
             
             for (int i = 0; i < _Pts.Count; i++)
@@ -161,16 +171,16 @@ namespace Master.Components
                     if (b.Coordinate.DistanceTo(node) < 0.000001)
                     {
                         if(b.ux)
-                            BCsValue.Add(2*i);
+                            BCsIndex.Add(2*i);
 
                         if(b.uz)
-                            BCsValue.Add(2*i+1);
+                            BCsIndex.Add(2*i+1);
                     }
                 }
 
             }
 
-            return BCsValue;
+            return BCsIndex;
         }
 
         private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
@@ -205,9 +215,9 @@ namespace Master.Components
 
             return LoadValue;
         }
-        
-    
-        private double[,] CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points)
+
+
+        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot ,out Matrix<double> k_e)
 
         {
 
@@ -220,19 +230,43 @@ namespace Master.Components
                             
 
                 Line currentLine = b.axis;
-                double mat = (b.section.CSA * b.material.youngsModolus) / currentLine.Length;
+                double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length*1000);
                 Point3d p1 = currentLine.From;
                 Point3d p2 = currentLine.To;
 
-                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X);
-                double c = Math.Cos(angle); //check units
+                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X);  //returns angle in rad
+                double c = Math.Cos(angle); //input angle should be in rad
                 double s = Math.Sin(angle);
 
+                /*
                 double[,] K_e = new double[,]
                 {   { mat*c*c, mat*c*s, -mat*c*c ,-mat*c*s},
                         { mat*c*s, mat*s*s ,-mat*c*s, -mat*s*s},
                         { -mat*c*c, -mat*c*s, mat*c*c, mat*c*s},
                         { -mat*c*s ,-mat*s*s ,mat*c*s, mat*s*s} };
+                */
+                Matrix<double> T = SparseMatrix.OfArray(new double[,]
+                                {   
+                        { c, s, 0 ,0},
+                        { -s, c ,0, 0},
+                        { 0, 0, c, -s},
+                        { 0 ,0 ,s, c} 
+                                });
+
+                Matrix<double> ke = DenseMatrix.OfArray(new double[,]
+                                {
+                        { 1, 0, -1 ,0},
+                        { 0, 0 ,0, 0},
+                        { -1, 0, 1, 0},
+                        { 0 ,0 ,0, 0}
+                                });
+
+
+                Matrix<double> Tt = T.Transpose();
+                Matrix<double> K_e = ke.Multiply(T);
+                K_e = Tt.Multiply(K_e);
+                K_e = mat * K_e;
+
 
 
                 int node1 = b.startNode.Id;
@@ -265,35 +299,109 @@ namespace Master.Components
 
             }
 
-            return K_tot;
+            k_e = K_e;
+            k_tot = K_tot;
+
 
         }
 
-        private static void CreateReducedStiffnesMatrix(List<int> _BC, double[,] K_tot, List<double> R, out double [,] K_red, out List<double> R_red )
+        private static void CreateReducedStiffnesMatrix(List<Point3d> _pts ,List<int> _BC, Matrix<double> K_tot, Vector<double> R, out Matrix<double> K_red, out Vector<double> R_red, out List<double> ptsK )
         {
+
+            
             int sum = 0;
-            List<int> index = new List<int>(); 
-           
-            double[,] K_redu = new double[sum,sum];
-            List<double> R_redu = new List<double>();
+            List<int> index = new List<int>();
 
-            for (int i = 0; i < _BC.Count; i++)
+
+            int num = K_tot.RowCount;
+            
+
+            List<int> keep = new List<int>();
+            for (int i = 0; i < num; i++)
             {
-                int sizeOfMatrix = K_tot.GetLength(0);
-                int blockedIndex = _BC[i];
-
-                for (int r = 0; r < sizeOfMatrix; r++)
+                if (!_BC.Contains(i))
                 {
-                    K_tot[blockedIndex, r] = 0;
-                    K_tot[r, blockedIndex] = 0;
+                    keep.Add(i);
+                }
+            }
+
+
+
+            
+            List<double> ptsCoord = new List<double>();
+            for (int i = 0; i<_pts.Count;i++)
+            {
+                ptsCoord.Add(_pts[i].X);
+                ptsCoord.Add(_pts[i].Z);
+            }
+
+            List<double> ptsKeep = new List<double>();
+            List<double> R_redu = new List<double>();
+            Matrix<double> K_redu = SparseMatrix.OfArray(new double[keep.Count, keep.Count]);
+
+            for (int i = 0; i < keep.Count  ; i++)
+            {
+
+                ptsKeep.Add(ptsCoord[keep[i]]);
+                R_redu.Add(R[keep[i]]);
+                for (int j = 0; j < keep.Count; j++)
+                {
+
+                    K_redu[i, j] = K_tot[keep[i], keep[j]];
+                    
+
                 }
 
-                K_tot[blockedIndex, blockedIndex]=1;
+              
 
             }
 
-            K_red = K_tot;
-            R_red = R_redu;
+            /*
+            Matrix<double> K_ = SparseMatrix.OfArray(new double[_BC.Count, _BC.Count]);
+            K_ = K_tot.RemoveRow(0, 1, 4, 5).RemoveColumn(0, 1, 4, 5);
+
+            
+            for (int i = 0; i < _BC.Count; i++)
+            {
+                //int sizeOfMatrix = K_tot.GetLength(0);
+                int blockedIndex = _BC[i];
+
+
+
+                K_ = K_tot.RemoveRow(blockedIndex).RemoveColumn(blockedIndex);
+                
+                
+                
+                R.ToColumnMatrix().RemoveRow(blockedIndex);
+                
+                */
+
+
+
+            /*
+
+            for (int r = 0; r < sizeOfMatrix; r++)
+            {
+                K_tot[blockedIndex, r] = 0;
+                K_tot[r, blockedIndex] = 0;
+
+
+            }
+
+
+            K_tot[blockedIndex, blockedIndex]=1;
+
+
+
+
+
+        }
+        */
+            
+            Vector<double> R_reduu = Vector<double>.Build.DenseOfArray(R_redu.ToArray());
+            K_red = K_redu;
+            R_red = R_reduu;
+            ptsK = ptsKeep;
         }
 
 

@@ -24,7 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name of bar", GH_ParamAccess.item);
-            pManager.AddLineParameter("lines", "LNS", "Geometry (lines)", GH_ParamAccess.list);
+            pManager.AddLineParameter("lines", "LNS", "Geometry (lines with dim in m)", GH_ParamAccess.list);
             pManager.AddGenericParameter("material", "M", "MaterialClass", GH_ParamAccess.item);
             pManager.AddGenericParameter("section", "S", "Section of the bar", GH_ParamAccess.item);
         }

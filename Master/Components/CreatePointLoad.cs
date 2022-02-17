@@ -24,7 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Load", "L", "Load magnitude [Newtons].Give either one load to be applied to all inputted points, or different loads for each inputted loads", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Load", "L", "Load magnitude [N].Give either one load to be applied to all inputted points, or different loads for each inputted load", GH_ParamAccess.list);
             pManager.AddNumberParameter("angle (xz)", "a", "Angle [degrees] for load in xz plane, default: 90deg", GH_ParamAccess.list, 90);  
         }
 
