@@ -138,7 +138,7 @@ namespace Master.Components
 
             foreach (BarClass b in bars)
             {
-                var S = k_eG * def[];
+                //var S = k_eG * def[];
             }
 
             
@@ -264,8 +264,8 @@ namespace Master.Components
                                 });
 
 
-                Matrix<double> Tt = T.Transpose();
-                Matrix<double> K_eG = ke.Multiply(T);
+                Matrix<double> Tt = T.Transpose(); //transpose
+                K_eG = ke.Multiply(T);  //fikset denne
                 K_eG = Tt.Multiply(K_eG);
                 K_eG = mat * K_eG;  //global element stivehetsmatrise
                 ke = mat * ke;      //lokal element stivhetsmatrise
