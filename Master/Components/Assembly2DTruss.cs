@@ -7,7 +7,7 @@ using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
 
-
+//hei
 
 namespace Master.Components
 {
@@ -117,10 +117,12 @@ namespace Master.Components
             Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
             Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
             List<double> ptsK = new List<double>();
-            Matrix<double> k_e = SparseMatrix.OfArray(new double[2, 2]);
+            
+            Matrix<double> k_eG = SparseMatrix.OfArray(new double[2, 2]);
             Matrix<double> k_tot = SparseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
+            
 
-            CreateGlobalStiffnesMatrix(bars, pts, out k_tot, out k_e);
+            CreateGlobalStiffnesMatrix(bars, pts, out k_tot, out k_eG);
 
 
             
@@ -136,7 +138,7 @@ namespace Master.Components
 
             foreach (BarClass b in bars)
             {
-                var S = k_e * def[]
+                var S = k_eG * def[];
             }
 
             
@@ -217,13 +219,13 @@ namespace Master.Components
         }
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot ,out Matrix<double> k_e)
+        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot ,out Matrix<double> k_eG)
 
         {
 
             int dofs = points.Count * 2;
-            double[,] K_tot = new double[dofs, dofs];
-            
+            Matrix<double> K_tot = SparseMatrix.OfArray(new double[dofs, dofs]);
+            Matrix<double> K_eG = SparseMatrix.OfArray(new double[2, 2]);
 
             foreach (BarClass b in bars)
             {
@@ -263,9 +265,10 @@ namespace Master.Components
 
 
                 Matrix<double> Tt = T.Transpose();
-                Matrix<double> K_e = ke.Multiply(T);
-                K_e = Tt.Multiply(K_e);
-                K_e = mat * K_e;
+                Matrix<double> K_eG = ke.Multiply(T);
+                K_eG = Tt.Multiply(K_eG);
+                K_eG = mat * K_eG;  //global element stivehetsmatrise
+                ke = mat * ke;      //lokal element stivhetsmatrise
 
 
 
@@ -273,33 +276,33 @@ namespace Master.Components
                 int node2 = b.endNode.Id;
 
                 //upper left corner of k-matrix
-                K_tot[node1 * 2, node1 * 2] += K_e[0, 0];
-                K_tot[node1 * 2, node1 * 2 + 1] += K_e[0, 1];
-                K_tot[node1 * 2 + 1, node1 * 2] += K_e[1, 0];
-                K_tot[node1 * 2 + 1, node1 * 2 + 1] += K_e[1, 1];
+                K_tot[node1 * 2, node1 * 2] += K_eG[0, 0];
+                K_tot[node1 * 2, node1 * 2 + 1] += K_eG[0, 1];
+                K_tot[node1 * 2 + 1, node1 * 2] += K_eG[1, 0];
+                K_tot[node1 * 2 + 1, node1 * 2 + 1] += K_eG[1, 1];
                 
                 //upper right corner of k-matrix
-                K_tot[node1 * 2, node2 * 2] += K_e[0, 2];
-                K_tot[node1 * 2, node2 * 2 + 1] += K_e[0, 3];
-                K_tot[node1 * 2 + 1, node2 * 2] += K_e[1, 2];
-                K_tot[node1 * 2 + 1, node2 * 2 + 1] += K_e[1, 3];
+                K_tot[node1 * 2, node2 * 2] += K_eG[0, 2];
+                K_tot[node1 * 2, node2 * 2 + 1] += K_eG[0, 3];
+                K_tot[node1 * 2 + 1, node2 * 2] += K_eG[1, 2];
+                K_tot[node1 * 2 + 1, node2 * 2 + 1] += K_eG[1, 3];
                 
                 //lower left corner of k-matrix
-                K_tot[node2 * 2, node1 * 2] += K_e[2, 0];
-                K_tot[node2 * 2, node1 * 2 + 1] += K_e[2, 1];
-                K_tot[node2 * 2 + 1, node1 * 2] += K_e[3, 0];
-                K_tot[node2 * 2 + 1, node1 * 2 + 1] += K_e[3, 1];
+                K_tot[node2 * 2, node1 * 2] += K_eG[2, 0];
+                K_tot[node2 * 2, node1 * 2 + 1] += K_eG[2, 1];
+                K_tot[node2 * 2 + 1, node1 * 2] += K_eG[3, 0];
+                K_tot[node2 * 2 + 1, node1 * 2 + 1] += K_eG[3, 1];
                 
                  //lower right corner of k-matrix
-                K_tot[node2 * 2, node2 * 2] += K_e[2, 2];
-                K_tot[node2 * 2, node2 * 2 + 1] += K_e[2, 3];
-                K_tot[node2 * 2 + 1, node2 * 2] += K_e[3, 2];
-                K_tot[node2 * 2 + 1, node2 * 2 + 1] += K_e[3, 3];
+                K_tot[node2 * 2, node2 * 2] += K_eG[2, 2];
+                K_tot[node2 * 2, node2 * 2 + 1] += K_eG[2, 3];
+                K_tot[node2 * 2 + 1, node2 * 2] += K_eG[3, 2];
+                K_tot[node2 * 2 + 1, node2 * 2 + 1] += K_eG[3, 3];
             
 
             }
 
-            k_e = K_e;
+            k_eG = K_eG;
             k_tot = K_tot;
 
 
@@ -352,7 +355,6 @@ namespace Master.Components
 
                 }
 
-              
 
             }
 
