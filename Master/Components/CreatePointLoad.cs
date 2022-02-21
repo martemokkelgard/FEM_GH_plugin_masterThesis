@@ -24,8 +24,8 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Load", "L", "Load magnitude [N].Give either one load to be applied to all inputted points, or different loads for each inputted load", GH_ParamAccess.list);
-            pManager.AddNumberParameter("angle (xz)", "a", "Angle [degrees] for load in xz plane, default: 90deg", GH_ParamAccess.list, 90);  
+            pManager.AddVectorParameter("LoadVector", "L", "Load magnitude [N].Give either one load to be applied to all inputted points, or different loads for each inputted load", GH_ParamAccess.item);
+              
         }
 
         /// <summary>
@@ -45,69 +45,19 @@ namespace Master.Components
             
             //input
             List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
-            List<double> AmpList = new List<double>();  //list of amplitudes of the loads
-            List<double> anglexzList = new List<double>();  //list of angles in xz plane of the loads (2D)
-            List<Vector3d> Vecs = new List<Vector3d>();
+            Vector3d Vecs = new Vector3d();
 
             if (!DA.GetDataList(0, pointList)) return;
-            if (!DA.GetDataList(1, AmpList)) return;
-            DA.GetDataList(2, anglexzList);
+            if (!DA.GetData(1, ref Vecs)) return;
+            
 
             //code
             
-            double load = 0;
-            double vecX = 0;
-            double vecY = 0;
-            double vecZ = 0;
-
-            if (AmpList.Count == 1 && anglexzList.Count == 1)  //similar load amplitude and angle for all points
-            {
-                
-                load = -1 * AmpList[0]; //neg for z-dir
-                vecX = Math.Round(load * Math.Cos(anglexzList[0] * Math.PI / 180) * Math.Cos(anglexzList[0] * Math.PI / 180), 2);
-                vecY = Math.Round(load * Math.Cos(anglexzList[0] * Math.PI / 180) * Math.Sin(anglexzList[0] * Math.PI / 180), 2);
-                vecZ = Math.Round(load * Math.Sin(anglexzList[0] * Math.PI / 180), 2);
-
-                Vector3d xyzVec = new Vector3d(vecX,vecY,vecZ);
-                
-
-                for (int i = 0; i < pointList.Count; i++)
-                {
-                    Vecs.Add(xyzVec);
-                }
-
-            }
-
-            else  //different load amplitude and angle for the points
-            {
-                for (int i = 0; i < pointList.Count; i++)
-                {
-                    if (AmpList.Count < i) //loadlist is shorter than pointlist
-                    {
-                        Vector3d xyzVec = new Vector3d(vecX, vecY, vecZ);
-                        Vecs.Add(xyzVec);
-                    }
-                    else
-                    {
-                        
-                        load = -1 * AmpList[0]; //neg for z-dir
-                        vecX = Math.Round(load * Math.Cos(anglexzList[i]* Math.PI / 180) * Math.Cos(anglexzList[i]*Math.PI / 180), 2);
-                        vecY = Math.Round(load * Math.Cos(anglexzList[i] * Math.PI / 180) * Math.Sin(anglexzList[i] * Math.PI / 180), 2);
-                        vecZ = Math.Round(load * Math.Sin(anglexzList[i] * Math.PI / 180), 2);
-
-                        Vector3d xyzVec = new Vector3d(vecX, vecY, vecZ);
-                        Vecs.Add(xyzVec);
-                    }
-
-                    
-                }
             
-            
-            }
             List<LoadClass> loads = new List<LoadClass>();
             for (int i = 0; i < pointList.Count; i++)
             {
-                loads.Add(new LoadClass(pointList[i], Vecs[i]));
+                loads.Add(new LoadClass(pointList[i], Vecs));
             }
 
 

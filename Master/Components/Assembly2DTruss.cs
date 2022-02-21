@@ -113,15 +113,13 @@ namespace Master.Components
             
 
            
-            int dofs_red = BC.Sum();
+            int dofs = pts.Count()*2;
 
-            //Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
-            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
-            //List<double> ptsK = new List<double>();
-            
-            Matrix<double> k_eG = DenseMatrix.OfArray(new double[2, 2]);
-            Matrix<double> k_tot = DenseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
-            Vector<double> forces = SparseVector.OfEnumerable(new double[4]);
+
+            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs, dofs]);
+            Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
+            Matrix<double> k_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
+            List<Vector<double>> forces = new List<Vector<double>>();
             
 
 
@@ -134,8 +132,11 @@ namespace Master.Components
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
+            
 
             var invK = K_red.Inverse();
+            
+
             
             var def = invK.Multiply(R);
 
@@ -154,7 +155,7 @@ namespace Master.Components
 
 
             DA.SetDataList(0, def);
-            DA.SetDataList(0, forces);
+            DA.SetDataList(1, forces);
             DA.SetDataList(2, displNodes);
             //output
 
@@ -220,10 +221,13 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
         {
-            Matrix<double> k_eG = DenseMatrix.OfArray(new double[2, 2]);
-            Vector<double> S = SparseVector.OfEnumerable(new double[4]);
+            Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
+            Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
+            Matrix<double> k_eG1 = DenseMatrix.OfArray(new double[4, 4]);
+            Vector<double> S1 = SparseVector.OfEnumerable(new double[4]);
+            List<Vector<double>> S = new List<Vector<double>>();
             Vector<double> v = SparseVector.OfEnumerable(new double[4]);
 
             foreach (BarClass b in bars)
@@ -241,8 +245,8 @@ namespace Master.Components
                                     {
                         { c, s, 0 ,0},
                         { -s, c ,0, 0},
-                        { 0, 0, c, -s},
-                        { 0 ,0 ,s, c}
+                        { 0, 0, c, s},
+                        { 0 ,0 ,-s, c}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
@@ -253,13 +257,12 @@ namespace Master.Components
                         { 0 ,0 ,0, 0}
                                     });
 
-                Matrix<double> Tt = T.Transpose(); //transpose
-                k_eG = Tt.Multiply(ke);
-                k_eG = k_eG.Multiply(T);
-
-
-                k_eG = mat * k_eG;  //global element stivehetsmatrise
                 ke = mat * ke;
+                Matrix<double> Tt = T.Transpose(); //transpose
+                k_eG1 = Tt.Multiply(ke);
+                K_eG = k_eG1.Multiply(T);   //global element stivehetsmatrise
+
+
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
@@ -269,8 +272,8 @@ namespace Master.Components
                 v[2] = _def[node2 * 2];
                 v[3] = _def[node2 * 2 +1];
 
-                S = k_eG.Multiply(v);
-
+                S1 = K_eG.Multiply(v);
+                S.Add(S1);
 
             }
 

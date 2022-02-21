@@ -32,7 +32,7 @@ namespace Master
             h = _h;
             tw = _tw;
             tf = _tf;
-            CSA = w * h -((w-tw)*(h-tf));
+            CSA = w * h - ((w-tw*2)*(h-tf*2));
                    
         }
     }
