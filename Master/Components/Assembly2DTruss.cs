@@ -55,7 +55,7 @@ namespace Master.Components
             //input
             
             
-            List<Point3d> BcPts = new List<Point3d>();
+            List<Point3d> BcPts = new List<Point3d>();  //hei
             List<bool> BcValue = new List<bool>();
             List<Point3d> LoadPts = new List<Point3d>();
             List<Vector3d> LoadVec = new List<Vector3d>();
