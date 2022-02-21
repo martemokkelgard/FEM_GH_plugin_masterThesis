@@ -267,9 +267,8 @@ namespace Master.Components
 
                 Matrix<double> Tt = T.Transpose(); //transpose
                 K_eG = ke.Multiply(T);  //fikset denne
+                K_eG = Tt.Multiply(K_eG); // alt riktig nå
 
-
-                K_eG = Tt.Multiply(K_eG);
                 K_eG = mat * K_eG;  //global element stivehetsmatrise
                 ke = mat * ke;      //lokal element stivhetsmatrise
 
