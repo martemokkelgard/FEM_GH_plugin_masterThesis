@@ -122,7 +122,7 @@ namespace Master.Components
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Matrix<double> k_tot = DenseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
             //List<Vector<double>> forces = new List<Vector<double>>();
-            List<Vector<double>> ST = new List<Vector<double>>();
+            //List<Vector<double>> ST = new List<Vector<double>>();
 
 
 
@@ -146,7 +146,7 @@ namespace Master.Components
             var displNodes = new List<Point3d>();
 
 
-            CreateForces(bars, pts, def, out List<DenseVector> forces);
+            List<Vector<double>> ST = CreateForces(bars, pts, def);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -158,7 +158,7 @@ namespace Master.Components
 
 
             DA.SetDataList(0, def);
-            DA.SetDataList(1, forces);
+            DA.SetDataList(1, ST);
             DA.SetDataList(2, displNodes);
             //output
 
@@ -224,7 +224,7 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<DenseVector> forces)
+        private List<Vector<double>> CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def)
         {
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Vector<double> S = SparseVector.OfEnumerable(new double[4]);
@@ -275,11 +275,10 @@ namespace Master.Components
 
                 S = k_eG.Multiply(v);
                 ST.Add(S);
-                
 
             }
-            forces = new List<DenseVector>();
-            //forces = ST;
+            return ST;
+            
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
