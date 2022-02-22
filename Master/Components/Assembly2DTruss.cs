@@ -6,6 +6,8 @@ using Rhino.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
+using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
 
 //hei
 
@@ -39,7 +41,7 @@ namespace Master.Components
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
-            pManager.AddVectorParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.list);
+            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
 
         }
@@ -146,7 +148,7 @@ namespace Master.Components
             var displNodes = new List<Point3d>();
 
 
-            List<Vector<double>> ST = CreateForces(bars, pts, def);
+            CreateForces(bars, pts, def, out List<Vector<double>> forces); // denne virker nå
 
 
             for (int i =0; i< pts.Count; i++)
@@ -156,12 +158,32 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[2 * i]/1000, pts[i].Y , pts[i].Z + def[2 * i + 1]/1000));
             }
 
+            var outTree = DataTreeFromVectorList(forces);
 
             DA.SetDataList(0, def);
-            DA.SetDataList(1, ST);
+            DA.SetDataTree(1, outTree); // her prøver dere å sende ut en "Grasshopper Vector (Vector3d)" basert på input parameteren på linje 42. Dere har en MathNet vektor. Altså noe helt annet. 
             DA.SetDataList(2, displNodes);
             //output
 
+        }
+
+        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
+        {
+            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
+
+            int count = 0;
+            foreach (Vector<double> vec in vecLst)
+            {
+                GH_Path path = new GH_Path(count);
+                foreach (var num in vec.AsArray())
+                {
+                    tree.Append(new GH_Number(num), path);
+                }
+
+                count++;
+            }
+
+            return tree;
         }
 
         private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
@@ -224,7 +246,7 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private List<Vector<double>> CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
         {
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Vector<double> S = SparseVector.OfEnumerable(new double[4]);
@@ -277,8 +299,8 @@ namespace Master.Components
                 ST.Add(S);
 
             }
-            return ST;
-            
+            forces = new List<Vector<double>>(ST);
+            //forces = ST;
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
