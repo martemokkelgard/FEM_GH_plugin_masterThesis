@@ -12,8 +12,10 @@ namespace Master
     {
         public string Name;
         public int id;
-        public double width;
-        public double height;
+        public double w;
+        public double h;
+        public double tw;
+        public double tf;
         public double CSA;
 
 
@@ -22,14 +24,15 @@ namespace Master
             //empty
         }
         
-        public SectionClass(string _Name)
+        public SectionClass(string _Name, double _h, double _w, double _tf, double _tw )
         {
-            Name = _Name;
 
-            string[] dimensions = Name.Split('x');
-            width = Convert.ToDouble(dimensions[0]);
-            height = Convert.ToDouble(dimensions[1]);
-            CSA = width * height;
+            Name = _Name;
+            w = _w;
+            h = _h;
+            tw = _tw;
+            tf = _tf;
+            CSA = w * h -((w-2*tw)*(h-2*tf));
                    
         }
     }
