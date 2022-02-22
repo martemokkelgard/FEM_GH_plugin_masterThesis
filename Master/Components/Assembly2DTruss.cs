@@ -113,7 +113,7 @@ namespace Master.Components
             
 
            
-            int dofs_red = BC.Sum();
+            int dofs = pts.Count()*2;
 
             //Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
             Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
@@ -134,8 +134,11 @@ namespace Master.Components
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
+            
 
             var invK = K_red.Inverse();
+            
+
             
             var def = invK.Multiply(R);
 
@@ -154,7 +157,7 @@ namespace Master.Components
 
 
             DA.SetDataList(0, def);
-            //DA.SetDataList(1, forces);
+            DA.SetDataList(1, forces);
             DA.SetDataList(2, displNodes);
             //output
 
@@ -242,8 +245,8 @@ namespace Master.Components
                                     {
                         { c, s, 0 ,0},
                         { -s, c ,0, 0},
-                        { 0, 0, c, -s},
-                        { 0 ,0 ,s, c}
+                        { 0, 0, c, s},
+                        { 0 ,0 ,-s, c}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
@@ -254,6 +257,7 @@ namespace Master.Components
                         { 0 ,0 ,0, 0}
                                     });
 
+                ke = mat * ke;
                 Matrix<double> Tt = T.Transpose(); //transpose
                 k_eG = Tt.Multiply(ke*mat);//global element stivehetsmatrise
                 k_eG = k_eG.Multiply(T);
