@@ -6,20 +6,23 @@ using Rhino.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Factorization;
+using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
 
 //hei
 
 namespace Master.Components
 {
-    public class Assembly2DTruss : GH_Component
+    public class Assembly3DTruss : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public Assembly2DTruss()
-          : base("Assembly2DTruss", "Nickname",
+        public Assembly3DTruss()
+          : base("Assembly3DTruss", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Løve", "3DTruss")
         {
         }
 
@@ -39,7 +42,7 @@ namespace Master.Components
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.list);
+            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
 
         }
@@ -55,13 +58,9 @@ namespace Master.Components
             //input
             
             
-            //List<Point3d> BcPts = new List<Point3d>();  //hei
-            //List<bool> BcValue = new List<bool>();
             List<Point3d> LoadPts = new List<Point3d>();
             List<Vector3d> LoadVec = new List<Vector3d>();
 
-            //MaterialClass mat = new MaterialClass();
-            //SectionClass sec = new SectionClass();
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
@@ -73,16 +72,7 @@ namespace Master.Components
             DA.GetDataList(1,  bcc);
             DA.GetDataList(2, lc);
 
-            /*
-            double E = bars[i].material.youngsModolus;
-            double A = bars.section.CSA;
-            lines = bc.lines;
-            BcPts = bcc.Coordinates;
-            BcValue = bcc.xyzVec;
-            LoadPts = lc.coordinate;
-            LoadAmplitude = lc.xyzVec;
-            */
-
+          
             foreach (var load in lc)
             {
                 LoadPts.Add(load.coordinate);
@@ -108,20 +98,13 @@ namespace Master.Components
             
             List<int> BCList = CreateBCList(bcc, pts);
             List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);
-            List<int> BC = new List<int>();
+                      
 
-            
+            Matrix<double> K_red;
 
-           
-            int dofs_red = BC.Sum();
-
-            //Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
-            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
-            //List<double> ptsK = new List<double>();
-            
-            Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
-            Matrix<double> k_tot = DenseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
-            List<Vector<double>> forces = new List<Vector<double>>();
+            //Matrix<double> k_eG;
+            Matrix<double> k_tot;
+            //List<Vector<double>> forces = new List<Vector<double>>();
             
 
 
@@ -135,28 +118,35 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
 
-            var invK = K_red.Inverse();
+            //Matrix<double> k_red = K_red.PointwiseRound();
+
+            //Matrix<double> invK = DenseMatrix.OfArray(new double[9, 9]);
+            Matrix<double> invK = K_red.Inverse();
             
             var def = invK.Multiply(R);
 
             var displNodes = new List<Point3d>();
 
+            //Vector<double> def = K_red.Cholesky().Solve(R);
 
-            CreateForces(bars, pts, def, out forces);
+
+            CreateForces(bars, pts, def, out List<Vector<double>> forces);
 
 
             for (int i =0; i< pts.Count; i++)
             {
 
                 
-                displNodes.Add(new Point3d(pts[i].X + def[2 * i]/1000, pts[i].Y , pts[i].Z + def[2 * i + 1]/1000));
+                displNodes.Add(new Point3d(pts[i].X + def[3 * i]/1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2]/1000));
             }
 
+            var outTree = DataTreeFromVectorList(forces);
 
-            DA.SetDataList(0, def);
-            //DA.SetDataList(1, forces);
-            DA.SetDataList(2, displNodes);
             //output
+            DA.SetDataList(0, def);
+            DA.SetDataTree(1, outTree);
+            DA.SetDataList(2, displNodes);
+            
 
         }
 
@@ -175,16 +165,38 @@ namespace Master.Components
                     if (b.Coordinate.DistanceTo(node) < 0.000001)
                     {
                         if(b.ux)
-                            BCsIndex.Add(2*i);
+                            BCsIndex.Add(3*i);
 
-                        if(b.uz)
-                            BCsIndex.Add(2*i+1);
+                        if (b.uy)
+                            BCsIndex.Add(3 * i + 1);
+
+                        if (b.uz)
+                            BCsIndex.Add(3*i+2);
                     }
                 }
 
             }
 
             return BCsIndex;
+        }
+
+        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
+        {
+            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
+
+            int count = 0;
+            foreach (Vector<double> vec in vecLst)
+            {
+                GH_Path path = new GH_Path(count);
+                foreach (var num in vec.AsArray())
+                {
+                    tree.Append(new GH_Number(num), path);
+                }
+
+                count++;
+            }
+
+            return tree;
         }
 
         private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
@@ -205,10 +217,12 @@ namespace Master.Components
                     if (loadLocation.DistanceTo(node) < 0.00001)
                     {
                         LoadValue.Add(_LoadValue[j][0]);
+                        LoadValue.Add(_LoadValue[j][1]);
                         LoadValue.Add(_LoadValue[j][2]);
                     }
                     else
                     {
+                        LoadValue.Add(0);
                         LoadValue.Add(0);
                         LoadValue.Add(0);
                     }
@@ -222,67 +236,74 @@ namespace Master.Components
 
         private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
         {
-            Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
-            Vector<double> S = SparseVector.OfEnumerable(new double[4]);
+            //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
+            Vector<double> S;
             List<Vector<double>> ST = new List<Vector<double>>();
-            Vector<double> v = SparseVector.OfEnumerable(new double[4]);
+            Vector<double> v = SparseVector.OfEnumerable(new double[6]);
 
             foreach (BarClass b in bars)
             {
                 Line currentLine = b.axis;
                 double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
-                Point3d p1 = currentLine.From;
-                Point3d p2 = currentLine.To;
+                Point3d p1 = new Point3d(Math.Round(currentLine.From.X,5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
+                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
+                double lineLength = Math.Round(currentLine.Length, 6);
 
-                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X);  //returns angle in rad
-                double c = Math.Cos(angle); //input angle should be in rad
-                double s = Math.Sin(angle);
+
+                // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
+
+                double cx = (p2.X - p1.X)/ lineLength;
+                double cy = (p2.Y - p1.Y) / lineLength;
+                double cz = (p2.Z - p1.Z) / lineLength;
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                     {
-                        { c, s, 0 ,0},
-                        { -s, c ,0, 0},
-                        { 0, 0, c, -s},
-                        { 0 ,0 ,s, c}
+                        { cx, cy, cz, 0, 0 ,0},
+                        {cx, cy, cz, 0, 0 ,0},
+                        {cx, cy, cz, 0, 0 ,0 },
+                        { 0, 0 ,0,cx, cy, cz},
+                        { 0, 0 ,0,cx, cy, cz},
+                        { 0, 0 ,0,cx, cy, cz}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { 1, 0, -1 ,0},
-                        { 0, 0 ,0, 0},
-                        { -1, 0, 1, 0},
-                        { 0 ,0 ,0, 0}
+                        { 1,0, 0, -1 ,0,0},
+                        { 0, 0 ,0, 0,0,0},
+                        { 0, 0 ,0, 0,0,0},
+                        { -1, 0,0 ,1,0, 0},
+                        { 0, 0 ,0, 0,0,0},
+                        { 0 ,0 ,0, 0,0,0}
                                     });
 
                 Matrix<double> Tt = T.Transpose(); //transpose
-                k_eG = Tt.Multiply(ke*mat);//global element stivehetsmatrise
-                k_eG = k_eG.Multiply(T);
+                Matrix<double> KG = Tt.Multiply(ke * mat);
+                Matrix<double> K_eG = KG.Multiply(T);
 
-
-                 
-                
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
 
-                v[0] = _def[node1 * 2];
-                v[1] = _def[node1 * 2 +1];
-                v[2] = _def[node2 * 2];
-                v[3] = _def[node2 * 2 +1];
+                v[0] = _def[node1 * 3];
+                v[1] = _def[node1 * 3 +1];
+                v[2] = _def[node1 * 3 + 2];
+                v[3] = _def[node2 * 3];
+                v[4] = _def[node2 * 3 +1];
+                v[5] = _def[node2 * 3 + 2];
 
-                S = k_eG.Multiply(v);
+                S = K_eG.Multiply(v);
                 ST.Add(S);
 
             }
 
-            forces = ST;
+            forces = new List<Vector<double>>(ST);
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
 
         {
 
-            int dofs = points.Count * 2;
+            int dofs = points.Count * 3;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
 
@@ -292,73 +313,59 @@ namespace Master.Components
 
                 Line currentLine = b.axis;
                 double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length*1000);
-                Point3d p1 = currentLine.From;
-                Point3d p2 = currentLine.To;
+                Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
+                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
+                double lineLength = Math.Round(currentLine.Length, 6);
 
-                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X);  //returns angle in rad
-                double c = Math.Cos(angle); //input angle should be in rad
-                double s = Math.Sin(angle);
 
-                /*
-                double[,] K_e = new double[,]
-                {   { mat*c*c, mat*c*s, -mat*c*c ,-mat*c*s},
-                        { mat*c*s, mat*s*s ,-mat*c*s, -mat*s*s},
-                        { -mat*c*c, -mat*c*s, mat*c*c, mat*c*s},
-                        { -mat*c*s ,-mat*s*s ,mat*c*s, mat*s*s} };
-                */
+                // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
+
+                double cx = (p2.X - p1.X) / lineLength;
+                double cy = (p2.Y - p1.Y) / lineLength;
+                double cz = (p2.Z - p1.Z) / lineLength;
+
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
-                                {   
-                        { c, s, 0 ,0},
-                        { -s, c ,0, 0},
-                        { 0, 0, c, s},
-                        { 0 ,0 ,-s, c} 
-                                });
+                                    {
+                        { cx, cy, cz, 0, 0 ,0},
+                        {cx, cy, cz, 0, 0 ,0},
+                        {cx, cy, cz, 0, 0 ,0 },
+                        { 0, 0 ,0,cx, cy, cz},
+                        { 0, 0 ,0,cx, cy, cz},
+                        { 0, 0 ,0,cx, cy, cz}
+                                    });
 
-                Matrix<double> ke = SparseMatrix.OfArray(new double[,]
-                                {
-                        { 1, 0, -1 ,0},
-                        { 0, 0 ,0, 0},
-                        { -1, 0, 1, 0},
-                        { 0 ,0 ,0, 0}
-                                });
-
+                Matrix<double> ke = DenseMatrix.OfArray(new double[,]
+                                    {
+                        { 1,0, 0, -1 ,0,0},
+                        { 0, 0 ,0, 0,0,0},
+                        { 0, 0 ,0, 0,0,0},
+                        { -1, 0,0 ,1,0, 0},
+                        { 0, 0 ,0, 0,0,0},
+                        { 0 ,0 ,0, 0,0,0}
+                                    });
 
 
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double>  KG = Tt.Multiply(ke*mat);
                 Matrix<double>  K_eG = KG.Multiply(T);  
                 
-
-                //K_eG = mat * K_eG;  //global element stivehetsmatrise
-                //ke = mat * ke;      //lokal element stivhetsmatrise
-
+                
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
 
-                //upper left corner of k-matrix
-                K_tot[node1 * 2, node1 * 2] += K_eG[0,0];
-                K_tot[node1 * 2, node1 * 2 + 1] += K_eG[0, 1];
-                K_tot[node1 * 2 + 1, node1 * 2] += K_eG[1, 0];
-                K_tot[node1 * 2 + 1, node1 * 2 + 1] += K_eG[1, 1];
-                
-                //upper right corner of k-matrix
-                K_tot[node1 * 2, node2 * 2] += K_eG[0, 2];
-                K_tot[node1 * 2, node2 * 2 + 1] += K_eG[0, 3];
-                K_tot[node1 * 2 + 1, node2 * 2] += K_eG[1, 2];
-                K_tot[node1 * 2 + 1, node2 * 2 + 1] += K_eG[1, 3];
-                
-                //lower left corner of k-matrix
-                K_tot[node2 * 2, node1 * 2] += K_eG[2, 0];
-                K_tot[node2 * 2, node1 * 2 + 1] += K_eG[2, 1];
-                K_tot[node2 * 2 + 1, node1 * 2] += K_eG[3, 0];
-                K_tot[node2 * 2 + 1, node1 * 2 + 1] += K_eG[3, 1];
-                
-                 //lower right corner of k-matrix
-                K_tot[node2 * 2, node2 * 2] += K_eG[2, 2];
-                K_tot[node2 * 2, node2 * 2 + 1] += K_eG[2, 3];
-                K_tot[node2 * 2 + 1, node2 * 2] += K_eG[3, 2];
-                K_tot[node2 * 2 + 1, node2 * 2 + 1] += K_eG[3, 3];
-            
+                for (int i = 0; i < K_eG.RowCount / 2; i++)
+                {
+                    for (int j = 0; j < K_eG.ColumnCount / 2; j++)
+                    {
+                        K_tot[node1 * 3 + i, node1 * 3 + j] += K_eG[i, j];
+                        K_tot[node1 * 3 + i, node2 * 3 + j] += K_eG[i, j+3];
+                        K_tot[node2 * 3 + i, node1 * 3 + j] += K_eG[i+3, j];
+                        K_tot[node2 * 3 + i, node2 * 3 + j] += K_eG[i+3, j+3];
+
+                    }
+
+                }
+
 
             }
 

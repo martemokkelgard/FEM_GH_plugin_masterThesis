@@ -14,7 +14,7 @@ namespace Master.Components
         public CreatePointLoad()
           : base("PointLoad", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Løve", "3DTruss")
         {
         }
 
@@ -24,7 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Load", "L", "Load magnitude [N].Give either one load to be applied to all inputted points, or different loads for each inputted load", GH_ParamAccess.item);
+            pManager.AddVectorParameter("Load", "L", "Load vector with amplitude in [N].Give either one load to be applied to all inputted points, or different loads for each inputted point", GH_ParamAccess.item);
             
         }
 
