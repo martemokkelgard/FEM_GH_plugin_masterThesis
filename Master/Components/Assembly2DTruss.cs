@@ -39,7 +39,7 @@ namespace Master.Components
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.list);
+            pManager.AddVectorParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.list);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
 
         }
@@ -116,13 +116,14 @@ namespace Master.Components
             int dofs = pts.Count()*2;
 
             //Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
-            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs_red, dofs_red]);
+            Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs, dofs]);
             //List<double> ptsK = new List<double>();
             
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Matrix<double> k_tot = DenseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
-            List<Vector<double>> forces = new List<Vector<double>>();
-            
+            //List<Vector<double>> forces = new List<Vector<double>>();
+            List<Vector<double>> ST = new List<Vector<double>>();
+
 
 
 
@@ -145,7 +146,7 @@ namespace Master.Components
             var displNodes = new List<Point3d>();
 
 
-            CreateForces(bars, pts, def, out forces);
+            CreateForces(bars, pts, def, out List<DenseVector> forces);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -223,15 +224,17 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<DenseVector> forces)
         {
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Vector<double> S = SparseVector.OfEnumerable(new double[4]);
             List<Vector<double>> ST = new List<Vector<double>>();
-            Vector<double> v = SparseVector.OfEnumerable(new double[4]);
+            
 
             foreach (BarClass b in bars)
             {
+                Vector<double> v = DenseVector.OfEnumerable(new double[4]);
+
                 Line currentLine = b.axis;
                 double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
                 Point3d p1 = currentLine.From;
@@ -259,12 +262,8 @@ namespace Master.Components
 
                 ke = mat * ke;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                k_eG = Tt.Multiply(ke*mat);//global element stivehetsmatrise
+                k_eG = Tt.Multiply(ke);//global element stivehetsmatrise
                 k_eG = k_eG.Multiply(T);
-
-
-                 
-                
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
@@ -276,10 +275,11 @@ namespace Master.Components
 
                 S = k_eG.Multiply(v);
                 ST.Add(S);
+                
 
             }
-
-            forces = ST;
+            forces = new List<DenseVector>();
+            //forces = ST;
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
