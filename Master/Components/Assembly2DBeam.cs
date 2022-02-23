@@ -20,9 +20,9 @@ namespace Master.Components
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
         public Assembly2DBeam()
-          : base("Assembly3DTruss", "Nickname",
+          : base("Assembly2DBeam", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Løve", "2DTruss")
         {
         }
 
@@ -41,7 +41,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Defomation [mm]", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
             pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress","S","stress of beam",GH_ParamAccess.list);
@@ -245,7 +245,10 @@ namespace Master.Components
             foreach (BarClass b in bars)
             {
                 Line currentLine = b.axis;
-                double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
+                double L = currentLine.Length*1000;
+                double LL = Math.Pow(L, 2);
+                double mat = ( b.material.youngsModolus * b.section.I) / ( Math.Pow(currentLine.Length,3) );
+                double my = (LL * b.section.CSA) / b.section.I;
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X,5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 double lineLength = Math.Round(currentLine.Length, 6);
@@ -253,32 +256,32 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double cx = (p2.X - p1.X)/ lineLength;
-                double cy = (p2.Y - p1.Y) / lineLength;
-                double cz = (p2.Z - p1.Z) / lineLength;
+                double s = (p2.X - p1.X)/ L;
+                double c = (p2.Z - p1.Z)/ L;
+                
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                     {
-                        { cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0 },
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz}
+                        { c, s, 0, 0, 0 ,0},
+                        {-s, c, 0, 0, 0 ,0},
+                        {0, 0, 1, 0, 0 ,0 },
+                        { 0, 0 ,0,c, s, 0},
+                        { 0, 0 ,0,-s, c, 0},
+                        { 0, 0 ,0, 0, 0, 1}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { 1,0, 0, -1 ,0,0},
-                        { 0, 0 ,0, 0,0,0},
-                        { 0, 0 ,0, 0,0,0},
-                        { -1, 0,0 ,1,0, 0},
-                        { 0, 0 ,0, 0,0,0},
-                        { 0 ,0 ,0, 0,0,0}
+                        { my,0, 0, -my ,0, 0},
+                        { 0, 12 , -6*L, 0,- 12, -6*L},
+                        { 0, -6*L , 4*LL, 0, 6*L, 2*LL},
+                        { -my, 0,0 ,my,0, 0},
+                        { 0, -12 ,6*L, 0,12,6*L},
+                        { 0 ,-6L ,2*LL, 0,6*L,4*LL}
                                     });
-
+                ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                Matrix<double> KG = Tt.Multiply(ke * mat);
+                Matrix<double> KG = Tt.Multiply(ke);
                 Matrix<double> K_eG = KG.Multiply(T);
 
 
@@ -310,10 +313,13 @@ namespace Master.Components
 
             foreach (BarClass b in bars)
             {
-                            
+
 
                 Line currentLine = b.axis;
-                double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length*1000);
+                double L = currentLine.Length * 1000;
+                double LL = Math.Pow(L, 2);
+                double mat = (b.material.youngsModolus * b.section.I) / (Math.Pow(currentLine.Length, 3));
+                double my = (LL * b.section.CSA) / b.section.I;
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 double lineLength = Math.Round(currentLine.Length, 6);
@@ -321,36 +327,35 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double cx = (p2.X - p1.X) / lineLength;
-                double cy = (p2.Y - p1.Y) / lineLength;
-                double cz = (p2.Z - p1.Z) / lineLength;
+                double s = (p2.X - p1.X) / lineLength;
+                double c = (p2.Z - p1.Z) / lineLength;
+
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                     {
-                        { cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0 },
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz}
+                        { c, s, 0, 0, 0 ,0},
+                        {-s, c, 0, 0, 0 ,0},
+                        {0, 0, 1, 0, 0 ,0 },
+                        { 0, 0 ,0,c, s, 0},
+                        { 0, 0 ,0,-s, c, 0},
+                        { 0, 0 ,0, 0, 0, 1}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { 1,0, 0, -1 ,0,0},
-                        { 0, 0 ,0, 0,0,0},
-                        { 0, 0 ,0, 0,0,0},
-                        { -1, 0,0 ,1,0, 0},
-                        { 0, 0 ,0, 0,0,0},
-                        { 0 ,0 ,0, 0,0,0}
+                        { my,0, 0, -my ,0, 0},
+                        { 0, 12 , -6*L, 0,- 12, -6*L},
+                        { 0, -6*L , 4*LL, 0, 6*L, 2*LL},
+                        { -my, 0,0 ,my,0, 0},
+                        { 0, -12 ,6*L, 0,12,6*L},
+                        { 0 ,-6L ,2*LL, 0,6*L,4*LL}
                                     });
-
-
+                ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                Matrix<double>  KG = Tt.Multiply(ke*mat);
-                Matrix<double>  K_eG = KG.Multiply(T);  
-                
-                
+                Matrix<double> KG = Tt.Multiply(ke);
+                Matrix<double> K_eG = KG.Multiply(T);
+
+
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
 

@@ -14,7 +14,7 @@ namespace Master.Components
         public CreateBar()
           : base("CreateBar", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Løve", "2DTruss")
         {
         }
 
