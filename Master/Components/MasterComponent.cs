@@ -21,7 +21,7 @@ namespace Master
         public MasterComponent()
           : base("Master", "Nickname",
             "2DTruss FEM",
-            "LÃ¸ve", "2DTruss")
+            "Løve", "2DTruss")
         {
         }
 

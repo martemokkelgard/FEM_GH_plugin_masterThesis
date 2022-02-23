@@ -10,16 +10,16 @@ using MathNet.Numerics.LinearAlgebra.Factorization;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 
-//hei
+
 
 namespace Master.Components
 {
-    public class Assembly3DTruss : GH_Component
+    public class Assembly2DBeam : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public Assembly3DTruss()
+        public Assembly2DBeam()
           : base("Assembly3DTruss", "Nickname",
               "Description",
               "Løve", "3DTruss")
@@ -44,7 +44,7 @@ namespace Master.Components
             pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
             pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
-
+            pManager.AddNumberParameter("Stress","S","stress of beam",GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -146,6 +146,7 @@ namespace Master.Components
             DA.SetDataList(0, def);
             DA.SetDataTree(1, outTree);
             DA.SetDataList(2, displNodes);
+            //DA.SetDatalist(3, stress);
             
 
         }
