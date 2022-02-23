@@ -14,7 +14,7 @@ namespace Master.Components
         public CreatePointLoad()
           : base("PointLoad", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Løve", "2DTruss")
         {
         }
 
