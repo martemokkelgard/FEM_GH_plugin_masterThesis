@@ -40,7 +40,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Defomation [mm]", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
             pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
 
@@ -56,34 +56,20 @@ namespace Master.Components
             
             //input
             
-            
-            //List<Point3d> BcPts = new List<Point3d>();  //hei
-            //List<bool> BcValue = new List<bool>();
+
             List<Point3d> LoadPts = new List<Point3d>();
             List<Vector3d> LoadVec = new List<Vector3d>();
-
-            //MaterialClass mat = new MaterialClass();
-            //SectionClass sec = new SectionClass();
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
 
             
-            //int node1 = bars[1].endNode.Id;
 
             DA.GetDataList(0, bars);
-            DA.GetDataList(1,  bcc);
+            DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
 
-            /*
-            double E = bars[i].material.youngsModolus;
-            double A = bars.section.CSA;
-            lines = bc.lines;
-            BcPts = bcc.Coordinates;
-            BcValue = bcc.xyzVec;
-            LoadPts = lc.coordinate;
-            LoadAmplitude = lc.xyzVec;
-            */
+            //code
 
             foreach (var load in lc)
             {
@@ -91,8 +77,6 @@ namespace Master.Components
                 LoadVec.Add(load.LoadVec);
             }
 
-
-            //code
 
             List<Point3d> pts = new List<Point3d>();
             foreach (BarClass b in bars)
@@ -110,51 +94,36 @@ namespace Master.Components
             
             List<int> BCList = CreateBCList(bcc, pts);
             List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);
-            List<int> BC = new List<int>();
+            //List<int> BC = new List<int>();
 
             
 
            
             int dofs = pts.Count()*2;
 
-            //Vector<double> R_red = SparseVector.OfEnumerable(new double[dofs_red]);
             Matrix<double> K_red = SparseMatrix.OfArray(new double[dofs, dofs]);
-            //List<double> ptsK = new List<double>();
             
             Matrix<double> k_eG = DenseMatrix.OfArray(new double[4, 4]);
             Matrix<double> k_tot = DenseMatrix.OfArray(new double[pts.Count*2, pts.Count*2]);
-            //List<Vector<double>> forces = new List<Vector<double>>();
-            //List<Vector<double>> ST = new List<Vector<double>>();
-
-
-
-
-            CreateGlobalStiffnesMatrix(bars, pts, out k_tot);
-
-            
-
-            
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
-            CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
+            CreateGlobalStiffnesMatrix(bars, pts, out k_tot);   //total global stiffness matrix
+            CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);  //global stiffness matrix reduced with 1 on diagonal and 0 elsewhere in the boundry conditions
             
 
             var invK = K_red.Inverse();
             
+            var def = invK.Multiply(R);     //r = K^-1 * R --> finding displacements
 
-            
-            var def = invK.Multiply(R);
-
-            var displNodes = new List<Point3d>();
+            var displNodes = new List<Point3d>();   //showing the displacement of the nodes in Rhino
 
 
-            CreateForces(bars, pts, def, out List<Vector<double>> forces); // denne virker nå
+            CreateForces(bars, pts, def, out List<Vector<double>> forces); // Finding the forces in the boundry points
 
 
             for (int i =0; i< pts.Count; i++)
             {
 
-                
                 displNodes.Add(new Point3d(pts[i].X + def[2 * i]/1000, pts[i].Y , pts[i].Z + def[2 * i + 1]/1000));
             }
 
@@ -198,14 +167,16 @@ namespace Master.Components
                 Point3d node = _Pts[i];
                 foreach (var b in _BcValue)
                 {
+
                     if (b.Coordinate.DistanceTo(node) < 0.000001)
                     {
-                        if(b.ux)
-                            BCsIndex.Add(2*i);
+                        if (b.ux)
+                            BCsIndex.Add(2 * i);
 
-                        if(b.uz)
-                            BCsIndex.Add(2*i+1);
+                        if (b.uz)
+                            BCsIndex.Add(2 * i + 1);
                     }
+
                 }
 
             }
