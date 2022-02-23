@@ -17,6 +17,7 @@ namespace Master
         public double tw;
         public double tf;
         public double CSA;
+        public double I;
 
 
         public SectionClass()
@@ -33,6 +34,7 @@ namespace Master
             tw = _tw;
             tf = _tf;
             CSA = w * h -((w-2*tw)*(h-2*tf));
+            I = ( 1 / 12 * w * Math.Pow(h,3) ) - ( 1 / 12 * (w - 2 * tw) * Math.Pow((h - 2 * tf), 3) );
                    
         }
     }
