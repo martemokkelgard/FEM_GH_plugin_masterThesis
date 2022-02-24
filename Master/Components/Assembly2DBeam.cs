@@ -45,6 +45,7 @@ namespace Master.Components
             pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress","S","stress of beam",GH_ParamAccess.list);
+            pManager.AddNumberParameter("Strain", "S", "strain oin beam", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -175,6 +176,7 @@ namespace Master.Components
             DA.SetDataTree(1, outTree);
             DA.SetDataList(2, displNodes);
             DA.SetDataList(3, stress);
+            DA.SetDataList(4, strain);
             
 
         }
@@ -246,8 +248,8 @@ namespace Master.Components
                     if (loadLocation.DistanceTo(node) < 0.00001)
                     {
                         LoadValue.Add(_LoadValue[j][0]);
+                        LoadValue.Add(_LoadValue[j][1]);
                         LoadValue.Add(_LoadValue[j][2]);
-                        LoadValue.Add(0);
                     }
                     else
                     {
@@ -284,11 +286,11 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X)/ L;
-                double c = (p2.Z - p1.Z)/ L;
+                double s = (p2.X - p1.X)/ currentLine.Length;
+                double c = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
-                Matrix<double> T = SparseMatrix.OfArray(new double[,]
+                Matrix<double> T = DenseMatrix.OfArray(new double[,]
                                     {
                         { c, s, 0, 0, 0 ,0},
                         {-s, c, 0, 0, 0 ,0},
