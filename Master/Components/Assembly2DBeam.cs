@@ -168,10 +168,10 @@ namespace Master.Components
                         if(b.ux)
                             BCsIndex.Add(3*i);
 
-                        if (b.uy)
+                        if (b.uz)
                             BCsIndex.Add(3 * i + 1);
 
-                        if (b.uz)
+                        if (b.rx)
                             BCsIndex.Add(3*i+2);
                     }
                 }

@@ -13,21 +13,21 @@ namespace Master
 
         public Point3d Coordinate;
         public bool ux;
-        public bool uy;
         public bool uz;
+        public bool rx;
 
         public BcClass()
         { }
 
 
 
-        public BcClass(Point3d _Coordinate,bool _ux,bool _uy,bool _uz)
+        public BcClass(Point3d _Coordinate,bool _ux, bool _uz, bool _rx)
         {
             
             Coordinate = _Coordinate;
             ux = _ux;
-            uy = _uy;
             uz = _uz;
+            rx = _rx;
         }
 
     }
