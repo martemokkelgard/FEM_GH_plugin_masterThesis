@@ -142,11 +142,39 @@ namespace Master.Components
 
             var outTree = DataTreeFromVectorList(forces);
 
+            
+            List<Line> liness = new List<Line>();
+            
+            for (int i =0; i< displNodes.Count - 1; i++)
+            {
+                Line line = new Line(displNodes[i], displNodes[i + 1]);
+                liness.Add(line);
+            }
+           
+            List<double> strain = new List<double>();   //strain and stress
+            List<double> stress = new List<double>();
+            foreach (BarClass b in bars)
+            {
+                double originLength = b.axis.Length;
+                double deformedLength = liness[b.Id].Length;
+
+                double dL = originLength - deformedLength;
+
+                double e = dL / originLength;
+                strain.Add(e);
+
+                double s = e * b.material.youngsModolus;
+                stress.Add(s);
+            }
+
+
+
+
             //output
             DA.SetDataList(0, def);
             DA.SetDataTree(1, outTree);
             DA.SetDataList(2, displNodes);
-            //DA.SetDatalist(3, stress);
+            DA.SetDataList(3, stress);
             
 
         }
@@ -218,8 +246,8 @@ namespace Master.Components
                     if (loadLocation.DistanceTo(node) < 0.00001)
                     {
                         LoadValue.Add(_LoadValue[j][0]);
-                        LoadValue.Add(_LoadValue[j][1]);
                         LoadValue.Add(_LoadValue[j][2]);
+                        LoadValue.Add(0);
                     }
                     else
                     {
