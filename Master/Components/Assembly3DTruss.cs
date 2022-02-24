@@ -115,15 +115,23 @@ namespace Master.Components
 
             
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
+            
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
 
             //Matrix<double> k_red = K_red.PointwiseRound();
 
             //Matrix<double> invK = DenseMatrix.OfArray(new double[9, 9]);
-            Matrix<double> invK = K_red.Inverse();
+
+            //Matrix<double> invK = K_red.Inverse();
+
+            
+            var invK = K_red.Inverse();
+            
             
             var def = invK.Multiply(R);
+
+            //var def = K_red.Cholesky().Solve(R);
 
             var displNodes = new List<Point3d>();
 
@@ -149,6 +157,9 @@ namespace Master.Components
             
 
         }
+
+
+        
 
         private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
         {
@@ -244,7 +255,8 @@ namespace Master.Components
             foreach (BarClass b in bars)
             {
                 Line currentLine = b.axis;
-                double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
+                double L = currentLine.Length * 1000;
+                double mat = (b.section.CSA * b.material.youngsModolus) / (L);
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X,5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 double lineLength = Math.Round(currentLine.Length, 6);
@@ -256,14 +268,14 @@ namespace Master.Components
                 double cy = (p2.Y - p1.Y) / lineLength;
                 double cz = (p2.Z - p1.Z) / lineLength;
 
-                Matrix<double> T = SparseMatrix.OfArray(new double[,]
+                Matrix<double> T = DenseMatrix.OfArray(new double[,]
                                     {
-                        { cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0 },
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz},
-                        { 0, 0 ,0,cx, cy, cz}
+                        {(cx), (cy), (cz), 0, 0 ,0},
+                        {(cx), (cy), (cz), 0, 0 ,0},
+                        {(cx), (cy), (cz), 0, 0 ,0},
+                        { 0, 0 ,0, (cx), (cy), (cz)},
+                        { 0, 0 ,0, (cx), (cy), (cz)},
+                        { 0, 0 ,0, (cx), (cy), (cz)}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
@@ -276,8 +288,9 @@ namespace Master.Components
                         { 0 ,0 ,0, 0,0,0}
                                     });
 
+                ke = mat * ke;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                Matrix<double> KG = Tt.Multiply(ke * mat);
+                Matrix<double> KG = Tt.Multiply(ke);
                 Matrix<double> K_eG = KG.Multiply(T);
 
 
@@ -312,7 +325,8 @@ namespace Master.Components
                             
 
                 Line currentLine = b.axis;
-                double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length*1000);
+                double L = currentLine.Length * 1000;
+                double mat = (b.section.CSA * b.material.youngsModolus) / (L);
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 double lineLength = Math.Round(currentLine.Length, 6);
@@ -324,11 +338,11 @@ namespace Master.Components
                 double cy = (p2.Y - p1.Y) / lineLength;
                 double cz = (p2.Z - p1.Z) / lineLength;
 
-                Matrix<double> T = SparseMatrix.OfArray(new double[,]
+                Matrix<double> T = DenseMatrix.OfArray(new double[,]
                                     {
-                        { cx, cy, cz, 0, 0 ,0},
                         {cx, cy, cz, 0, 0 ,0},
-                        {cx, cy, cz, 0, 0 ,0 },
+                        {cx, cy, cz, 0, 0 ,0},
+                        {cx, cy, cz, 0, 0 ,0},
                         { 0, 0 ,0,cx, cy, cz},
                         { 0, 0 ,0,cx, cy, cz},
                         { 0, 0 ,0,cx, cy, cz}
@@ -336,7 +350,7 @@ namespace Master.Components
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { 1,0, 0, -1 ,0,0},
+                        { 1, 0, 0, -1 ,0,0},
                         { 0, 0 ,0, 0,0,0},
                         { 0, 0 ,0, 0,0,0},
                         { -1, 0,0 ,1,0, 0},
@@ -344,9 +358,9 @@ namespace Master.Components
                         { 0 ,0 ,0, 0,0,0}
                                     });
 
-
+                ke = mat * ke;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                Matrix<double>  KG = Tt.Multiply(ke*mat);
+                Matrix<double>  KG = Tt.Multiply(ke);
                 Matrix<double>  K_eG = KG.Multiply(T);  
                 
                 
