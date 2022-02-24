@@ -275,11 +275,11 @@ namespace Master.Components
                 Line currentLine = b.axis;
                 double L = currentLine.Length*1000;
                 double LL = Math.Pow(L, 2);
-                double mat = ( b.material.youngsModolus * b.section.I) / ( Math.Pow(currentLine.Length,3) );
+                double mat = ( b.material.youngsModolus * b.section.I) / ( Math.Pow(L,3) );
                 double my = (LL * b.section.CSA) / b.section.I;
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X,5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
-                double lineLength = Math.Round(currentLine.Length, 6);
+                //double lineLength = Math.Round(currentLine.Length, 6);
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
@@ -346,7 +346,7 @@ namespace Master.Components
                 Line currentLine = b.axis;
                 double L = currentLine.Length * 1000;
                 double LL = Math.Pow(L, 2);
-                double mat = (b.material.youngsModolus * b.section.I) / (Math.Pow(currentLine.Length, 3));
+                double mat = (b.material.youngsModolus * b.section.I) / (Math.Pow(L, 3));
                 double my = (LL * b.section.CSA) / b.section.I;
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
