@@ -41,10 +41,11 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation [mm]", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
+            pManager.AddNumberParameter("Defomation [mm]", "def", "Deformation [mm]", GH_ParamAccess.list);
+            pManager.AddNumberParameter("ReactionForces [N]/[Nmm]", "R", "Reaction Forces[N] Moments[Nmm]", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Stress","S","stress of beam",GH_ParamAccess.list);
+            pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Stress [N/mm^2] ", "S","stress [N/mm^2] ",GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -65,9 +66,7 @@ namespace Master.Components
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
 
-            
-            //int node1 = bars[1].endNode.Id;
-
+           
             DA.GetDataList(0, bars);
             DA.GetDataList(1,  bcc);
             DA.GetDataList(2, lc);
@@ -97,33 +96,17 @@ namespace Master.Components
             }
             
             List<int> BCList = CreateBCList(bcc, pts);
-            List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);
-                      
+            List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);        
 
-            Matrix<double> K_red;
-
-            //Matrix<double> k_eG;
-            Matrix<double> k_tot;
-            //List<Vector<double>> forces = new List<Vector<double>>();
-            
-
-
-
-            CreateGlobalStiffnesMatrix(bars, pts, out k_tot);
-
-            
-
-            
+            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot);
+                        
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
-            CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
-
-            //Matrix<double> k_red = K_red.PointwiseRound();
-
-            //Matrix<double> invK = DenseMatrix.OfArray(new double[9, 9]);
+            CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red, out Vector<double> R_red);
+                        
             Matrix<double> invK = K_red.Inverse();
             
-            var def = invK.Multiply(R);
+            Vector<double> def = invK.Multiply(R_red);
 
             var displNodes = new List<Point3d>();
 
@@ -135,8 +118,7 @@ namespace Master.Components
 
             for (int i =0; i< pts.Count; i++)
             {
-
-                
+                                
                 displNodes.Add(new Point3d(pts[i].X + def[3 * i]/1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2]/1000));
             }
 
@@ -174,7 +156,8 @@ namespace Master.Components
             DA.SetDataList(0, def);
             DA.SetDataTree(1, outTree);
             DA.SetDataList(2, displNodes);
-            DA.SetDataList(3, stress);
+            DA.SetDataList(3, strain);
+            DA.SetDataList(4, stress);
             
 
         }
@@ -277,15 +260,15 @@ namespace Master.Components
                 double LL = Math.Pow(L, 2);
                 double mat = ( b.material.youngsModolus * b.section.I) / ( Math.Pow(L,3) );
                 double my = (LL * b.section.CSA) / b.section.I;
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X,5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
-                //double lineLength = Math.Round(currentLine.Length, 6);
+                Point3d p1 = new Point3d(Math.Round(currentLine.From.X,10), Math.Round(currentLine.From.Y, 10), Math.Round(currentLine.From.Z, 10));
+                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 10), Math.Round(currentLine.To.Y, 10), Math.Round(currentLine.To.Z, 10));
+                
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X)/ L;
-                double c = (p2.Z - p1.Z)/ L;
+                double s = (p2.X - p1.X)/ currentLine.Length;
+                double c = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
@@ -301,11 +284,11 @@ namespace Master.Components
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
                         { my,0, 0, -my ,0, 0},
-                        { 0, 12 , -6*L, 0,- 12, -6*L},
-                        { 0, -6*L , 4*LL, 0, 6*L, 2*LL},
+                        { 0, 12 , 6*L, 0,- 12, 6*L},
+                        { 0, 6*L , 4*LL, 0, -6*L, 2*LL},
                         { -my, 0,0 ,my,0, 0},
-                        { 0, -12 ,6*L, 0,12,6*L},
-                        { 0 ,-6L ,2*LL, 0,6*L,4*LL}
+                        { 0, -12 ,-6*L, 0,12,-6*L},
+                        { 0 ,6L ,2*LL,- 0,6*L,4*LL}
                                     });
                 ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -348,15 +331,18 @@ namespace Master.Components
                 double LL = Math.Pow(L, 2);
                 double mat = (b.material.youngsModolus * b.section.I) / (Math.Pow(L, 3));
                 double my = (LL * b.section.CSA) / b.section.I;
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
-                double lineLength = Math.Round(currentLine.Length, 6);
+                //Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
+                //Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
+                Point3d p1 = currentLine.From;
+                Point3d p2 = currentLine.To;
+
+                //double lineLength = Math.Round(currentLine.Length, 6);
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X) / lineLength;
-                double c = (p2.Z - p1.Z) / lineLength;
+                double s = (p2.X - p1.X) / currentLine.Length;
+                double c = (p2.Z - p1.Z) / currentLine.Length;
 
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
@@ -370,17 +356,17 @@ namespace Master.Components
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
-                                    {
+                                     {
                         { my,0, 0, -my ,0, 0},
-                        { 0, 12 , -6*L, 0,- 12, -6*L},
-                        { 0, -6*L , 4*LL, 0, 6*L, 2*LL},
+                        { 0, 12 , 6*L, 0,- 12, 6*L},
+                        { 0, 6*L , 4*LL, 0, -6*L, 2*LL},
                         { -my, 0,0 ,my,0, 0},
-                        { 0, -12 ,6*L, 0,12,6*L},
-                        { 0 ,-6L ,2*LL, 0,6*L,4*LL}
+                        { 0, -12 ,-6*L, 0,12,-6*L},
+                        { 0 ,6L ,2*LL,- 0,6*L,4*LL}
                                     });
-                ke = ke * mat;
+                Matrix<double> Ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
-                Matrix<double> KG = Tt.Multiply(ke);
+                Matrix<double> KG = Tt.Multiply(Ke);
                 Matrix<double> K_eG = KG.Multiply(T);
 
 
@@ -404,37 +390,37 @@ namespace Master.Components
             }
 
             
-            k_tot = K_tot;
+           k_tot = K_tot;
 
 
         }
 
-        private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tot, out Matrix<double> K_red)
+        private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tott, Vector<double> Rvec, out Matrix<double> K_red, out Vector<double> R_red)
         {
 
             
             for (int i = 0; i < _BC.Count; i++)
             {
-                int sizeOfMatrix = K_tot.ColumnCount;
+                int sizeOfMatrix = K_tott.ColumnCount;
                 int blockedIndex = _BC[i];
 
-            
+                Rvec[blockedIndex] = 0;
 
                 for (int r = 0; r < sizeOfMatrix; r++)
                 {
-                    K_tot[blockedIndex, r] = 0;
-                    K_tot[r, blockedIndex] = 0;
+                    K_tott[blockedIndex, r] = 0;
+                    K_tott[r, blockedIndex] = 0;
 
                 }
 
 
-                K_tot[blockedIndex, blockedIndex]=1;
+                K_tott[blockedIndex, blockedIndex]=1;
 
 
             }
 
-            K_red = K_tot;
-            
+            K_red = K_tott;
+            R_red = Rvec;
           
 
         }
