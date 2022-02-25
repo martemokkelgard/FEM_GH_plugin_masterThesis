@@ -229,8 +229,8 @@ namespace Master.Components
                     if (loadLocation.DistanceTo(node) < 0.00001)
                     {
                         LoadValue.Add(_LoadValue[j][0]);
+                        LoadValue.Add(_LoadValue[j][1]);
                         LoadValue.Add(_LoadValue[j][2]);
-                        LoadValue.Add(0);
                     }
                     else
                     {
@@ -271,7 +271,7 @@ namespace Master.Components
                 double c = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
-                Matrix<double> T = SparseMatrix.OfArray(new double[,]
+                Matrix<double> T = DenseMatrix.OfArray(new double[,]
                                     {
                         { c, s, 0, 0, 0 ,0},
                         {-s, c, 0, 0, 0 ,0},
