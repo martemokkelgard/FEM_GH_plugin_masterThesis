@@ -33,7 +33,7 @@ namespace Master.Components
         {
             pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Point load", "PL", "LoadClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -59,8 +59,7 @@ namespace Master.Components
             //input
             
             
-            List<Point3d> LoadPts = new List<Point3d>();
-            List<Vector3d> LoadVec = new List<Vector3d>();
+            
 
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
@@ -73,13 +72,13 @@ namespace Master.Components
             DA.GetDataList(1,  bcc);
             DA.GetDataList(2, lc);
 
-          
+            /*
             foreach (var load in lc)
             {
                 LoadPts.Add(load.coordinate);
                 LoadVec.Add(load.LoadVec);
             }
-
+            */
 
             //code
 
@@ -98,7 +97,7 @@ namespace Master.Components
             }
             
             List<int> BCList = CreateBCList(bcc, pts);
-            List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);
+            Vector<double> LoadList = CreateLoadList(lc, pts);
                       
 
             Matrix<double> K_red;
@@ -230,39 +229,65 @@ namespace Master.Components
             return tree;
         }
 
-        private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
+        private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
-            
-            List<double> LoadValue = new List<double>();
 
+            Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 3]);
 
-            for (int i = 0; i < _Pts.Count; i++)
+            foreach (var load in _lc )
+
             {
-                //this line was not so good
-                Point3d node = _Pts[i];
+                //List<Vector3d> LoadVec = new List<Vector3d>();
+                
+                //Vector<double> LoadValue = new Vector<double>();
+                List<Point3d> LoadPts = new List<Point3d>();
 
-
-                for (int j = 0; j < _LoadPts.Count; j++)
+                if (load.Id == true)
                 {
-                    Point3d loadLocation = _LoadPts[j];
-                    if (loadLocation.DistanceTo(node) < 0.00001)
+                    LoadPts.Add(load.coordinate);
+                }
+
+                    
+                else
+                {
+                    LoadPts.Add(load.stPt);
+                    LoadPts.Add(load.enPt);
+                }
+                
+
+                Vector<double> LoadVec = load.LoadVec;
+
+                for (int i = 0; i < _Pts.Count; i++)
+                {
+                    //this line was not so good
+                    Point3d node = _Pts[i];
+
+
+                    for (int j = 0; j < LoadPts.Count; j++)
                     {
-                        LoadValue.Add(_LoadValue[j][0]);
-                        LoadValue.Add(_LoadValue[j][1]);
-                        LoadValue.Add(_LoadValue[j][2]);
-                    }
-                    else
-                    {
-                        LoadValue.Add(0);
-                        LoadValue.Add(0);
-                        LoadValue.Add(0);
+                        Point3d loadLocation = LoadPts[j];
+                        if (loadLocation.DistanceTo(node) < 0.00001)
+                        {
+                            LoadValue[i] += LoadVec[0];
+                            LoadValue[i+1] += LoadVec[1];
+                            LoadValue[i+2] += LoadVec[2];
+                        }
+                        else
+                        {
+                            LoadValue[i] += 0;
+                            LoadValue[i+1] += 0;
+                            LoadValue[i+2] += 0;
+                        }
+
                     }
 
                 }
 
+                
             }
 
             return LoadValue;
+
         }
 
         private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
