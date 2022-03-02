@@ -33,7 +33,7 @@ namespace Master.Components
         {
             pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Point load", "PL", "LoadClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -59,8 +59,7 @@ namespace Master.Components
             //input
             
             
-            List<Point3d> LoadPts = new List<Point3d>();
-            List<Vector3d> LoadVec = new List<Vector3d>();
+            
 
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
@@ -71,13 +70,13 @@ namespace Master.Components
             DA.GetDataList(1,  bcc);
             DA.GetDataList(2, lc);
 
-          
+            /*
             foreach (var load in lc)
             {
                 LoadPts.Add(load.coordinate);
                 LoadVec.Add(load.LoadVec);
             }
-
+            */
 
             //code
 
@@ -96,7 +95,19 @@ namespace Master.Components
             }
             
             List<int> BCList = CreateBCList(bcc, pts);
+
+            Vector<double> LoadList = CreateLoadList(lc, pts);
+                      
+
+            Matrix<double> K_red;
+
+            //Matrix<double> k_eG;
+            Matrix<double> k_tot;
+            //List<Vector<double>> forces = new List<Vector<double>>();
+            
+
             List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);        
+
 
             CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot);
                         
@@ -106,7 +117,13 @@ namespace Master.Components
                         
             Matrix<double> invK = K_red.Inverse();
             
+
+
+
+            var def = invK.Multiply(R);
+
             Vector<double> def = invK.Multiply(R_red);
+
 
             var displNodes = new List<Point3d>();
 
@@ -211,39 +228,65 @@ namespace Master.Components
             return tree;
         }
 
-        private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
+        private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
-            
-            List<double> LoadValue = new List<double>();
 
+            Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 3]);
 
-            for (int i = 0; i < _Pts.Count; i++)
+            foreach (var load in _lc )
+
             {
-                //this line was not so good
-                Point3d node = _Pts[i];
+                //List<Vector3d> LoadVec = new List<Vector3d>();
+                
+                //Vector<double> LoadValue = new Vector<double>();
+                List<Point3d> LoadPts = new List<Point3d>();
 
-
-                for (int j = 0; j < _LoadPts.Count; j++)
+                if (load.Id == true)
                 {
-                    Point3d loadLocation = _LoadPts[j];
-                    if (loadLocation.DistanceTo(node) < 0.00001)
+                    LoadPts.Add(load.coordinate);
+                }
+
+                    
+                else
+                {
+                    LoadPts.Add(load.stPt);
+                    LoadPts.Add(load.enPt);
+                }
+                
+
+                Vector3d LoadVec = load.LoadVec;
+
+                for (int i = 0; i < _Pts.Count; i++)
+                {
+                    //this line was not so good
+                    Point3d node = _Pts[i];
+
+
+                    for (int j = 0; j < LoadPts.Count; j++)
                     {
-                        LoadValue.Add(_LoadValue[j][0]);
-                        LoadValue.Add(_LoadValue[j][1]);
-                        LoadValue.Add(_LoadValue[j][2]);
-                    }
-                    else
-                    {
-                        LoadValue.Add(0);
-                        LoadValue.Add(0);
-                        LoadValue.Add(0);
+                        Point3d loadLocation = LoadPts[j];
+                        if (loadLocation.DistanceTo(node) < 0.00001)
+                        {
+                            LoadValue[i*3] += LoadVec.X+0;
+                            LoadValue[i*3+1] += LoadVec.Y;
+                            LoadValue[i*3+2] += LoadVec.Z + 0;
+                        }
+                        else
+                        {
+                            LoadValue[i*3] += 0;
+                            LoadValue[i*3+1] += 0;
+                            LoadValue[i*3+2] += 0;
+                        }
+
                     }
 
                 }
 
+                
             }
 
             return LoadValue;
+
         }
 
         private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
@@ -267,8 +310,8 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X)/ currentLine.Length;
-                double c = (p2.Z - p1.Z)/ currentLine.Length;
+                double c = (p2.X - p1.X)/ currentLine.Length;
+                double s = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
                 Matrix<double> T = DenseMatrix.OfArray(new double[,]
@@ -341,8 +384,10 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X) / currentLine.Length;
-                double c = (p2.Z - p1.Z) / currentLine.Length;
+
+                double c = (p2.X - p1.X) / lineLength;
+                double s = (p2.Z - p1.Z) / lineLength;
+
 
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
@@ -356,13 +401,16 @@ namespace Master.Components
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
-                                     {
-                        { my,0, 0, -my ,0, 0},
-                        { 0, 12 , 6*L, 0,- 12, 6*L},
-                        { 0, 6*L , 4*LL, 0, -6*L, 2*LL},
-                        { -my, 0,0 ,my,0, 0},
-                        { 0, -12 ,-6*L, 0,12,-6*L},
-                        { 0 ,6L ,2*LL,- 0,6*L,4*LL}
+
+                                    {
+                        { my,   0,      0,      -my,    0,      0},
+                        { 0,    12 ,    -6*L,   0,      -12,    -6*L},
+                        { 0,    -6*L ,  4*LL,   0,      6*L,    2*LL},
+                        { -my,  0,      0 ,     my,     0,      0},
+                        { 0,    -12 ,   6*L,    0,      12,     6*L},
+                        { 0 ,   -6*L ,  2*LL,   0,      6*L,    4*LL}
+
+
                                     });
                 Matrix<double> Ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -377,10 +425,10 @@ namespace Master.Components
                 {
                     for (int j = 0; j < K_eG.ColumnCount / 2; j++)
                     {
-                        K_tot[node1 * 3 + i, node1 * 3 + j] += K_eG[i, j];
-                        K_tot[node1 * 3 + i, node2 * 3 + j] += K_eG[i, j+3];
-                        K_tot[node2 * 3 + i, node1 * 3 + j] += K_eG[i+3, j];
-                        K_tot[node2 * 3 + i, node2 * 3 + j] += K_eG[i+3, j+3];
+                        K_tot[node1 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i, j],5);
+                        K_tot[node1 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i, j+3], 5);
+                        K_tot[node2 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i+3, j], 5);
+                        K_tot[node2 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i+3, j+3], 5);
 
                     }
 
