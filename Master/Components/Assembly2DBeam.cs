@@ -123,6 +123,8 @@ namespace Master.Components
             //Matrix<double> invK = DenseMatrix.OfArray(new double[9, 9]);
             Matrix<double> invK = K_red.Inverse();
             
+
+
             var def = invK.Multiply(R);
 
             var displNodes = new List<Point3d>();
@@ -255,7 +257,7 @@ namespace Master.Components
                 }
                 
 
-                Vector<double> LoadVec = load.LoadVec;
+                Vector3d LoadVec = load.LoadVec;
 
                 for (int i = 0; i < _Pts.Count; i++)
                 {
@@ -268,15 +270,15 @@ namespace Master.Components
                         Point3d loadLocation = LoadPts[j];
                         if (loadLocation.DistanceTo(node) < 0.00001)
                         {
-                            LoadValue[i] += LoadVec[0];
-                            LoadValue[i+1] += LoadVec[1];
-                            LoadValue[i+2] += LoadVec[2];
+                            LoadValue[i*3] += LoadVec.X+0;
+                            LoadValue[i*3+1] += LoadVec.Y;
+                            LoadValue[i*3+2] += LoadVec.Z + 0;
                         }
                         else
                         {
-                            LoadValue[i] += 0;
-                            LoadValue[i+1] += 0;
-                            LoadValue[i+2] += 0;
+                            LoadValue[i*3] += 0;
+                            LoadValue[i*3+1] += 0;
+                            LoadValue[i*3+2] += 0;
                         }
 
                     }
@@ -311,8 +313,8 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X)/ currentLine.Length;
-                double c = (p2.Z - p1.Z)/ currentLine.Length;
+                double c = (p2.X - p1.X)/ currentLine.Length;
+                double s = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
                 Matrix<double> T = DenseMatrix.OfArray(new double[,]
@@ -382,8 +384,8 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X) / lineLength;
-                double c = (p2.Z - p1.Z) / lineLength;
+                double c = (p2.X - p1.X) / lineLength;
+                double s = (p2.Z - p1.Z) / lineLength;
 
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
@@ -398,12 +400,12 @@ namespace Master.Components
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { my,0, 0, -my ,0, 0},
-                        { 0, 12 , -6*L, 0,- 12, -6*L},
-                        { 0, -6*L , 4*LL, 0, 6*L, 2*LL},
-                        { -my, 0,0 ,my,0, 0},
-                        { 0, -12 ,6*L, 0,12,6*L},
-                        { 0 ,-6L ,2*LL, 0,6*L,4*LL}
+                        { my,   0,      0,      -my,    0,      0},
+                        { 0,    12 ,    -6*L,   0,      -12,    -6*L},
+                        { 0,    -6*L ,  4*LL,   0,      6*L,    2*LL},
+                        { -my,  0,      0 ,     my,     0,      0},
+                        { 0,    -12 ,   6*L,    0,      12,     6*L},
+                        { 0 ,   -6*L ,  2*LL,   0,      6*L,    4*LL}
                                     });
                 ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -418,10 +420,10 @@ namespace Master.Components
                 {
                     for (int j = 0; j < K_eG.ColumnCount / 2; j++)
                     {
-                        K_tot[node1 * 3 + i, node1 * 3 + j] += K_eG[i, j];
-                        K_tot[node1 * 3 + i, node2 * 3 + j] += K_eG[i, j+3];
-                        K_tot[node2 * 3 + i, node1 * 3 + j] += K_eG[i+3, j];
-                        K_tot[node2 * 3 + i, node2 * 3 + j] += K_eG[i+3, j+3];
+                        K_tot[node1 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i, j],5);
+                        K_tot[node1 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i, j+3], 5);
+                        K_tot[node2 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i+3, j], 5);
+                        K_tot[node2 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i+3, j+3], 5);
 
                     }
 
