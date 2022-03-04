@@ -14,6 +14,7 @@ namespace Master
         public int Id;
         public double youngsModolus;
         public double density;
+        public double G;
 
         public MaterialClass()
         { }
@@ -29,6 +30,7 @@ namespace Master
             Name = _Name;
             density = _density;
             youngsModolus = _youngsModolus;
+            G = 1;
         }
 
 

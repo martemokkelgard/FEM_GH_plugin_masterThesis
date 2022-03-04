@@ -14,7 +14,7 @@ namespace Master.Components
         public CreateLineLoad()
           : base("CreateLineLoad", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Løve", "3DBeam")
         {
         }
 
