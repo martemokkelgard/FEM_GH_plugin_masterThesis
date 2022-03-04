@@ -316,28 +316,38 @@ namespace Master.Components
 
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X,6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
-                
+
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
 
 
-                double cx = (p2.X - p1.X)/ currentLine.Length;
-                double cy = (p2.Y - p1.Y) / currentLine.Length;
-                double cz = (p2.Z - p1.Z)/ currentLine.Length;
+                double xl = (p2.X - p1.X);
+                double yl = (p2.Y - p1.Y);
+                double zl = (p2.Z - p1.Z);
 
+                double l = currentLine.Length;
+                double den = l * Math.Pow(Math.Pow(xl,2) + Math.Pow(yl,2) , 2);
+
+                double cx = xl / l;
+                double cy = yl / l;
+                double cz = zl / l;
+
+                double s = ( p2.Z - p1.Z ) / l;
+                double c = ( Math.Pow( Math.Pow((p2.X - p1.X),2) + Math.Pow((p2.Y - p2.Y),2 ) , 0.5) ) / l ;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
-                        {cx,   cx,   cx},
-                        {cy,   cy,   cy},
-                        {cz,   cz,   cz},
+                        {cx,                                     cy,                   cz},
+                        {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
+                        {(xl*zl*c - l*yl*s)/den,       (yl*zl*c + l*xl*s) / den,   -den*c / (l*l)},
                 });
 
+               
                 var T = t.DiagonalStack(t);
                 T = T.DiagonalStack(T);
-
+                
                 
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
@@ -425,16 +435,25 @@ namespace Master.Components
 
 
 
-                double cx = (p2.X - p1.X) / currentLine.Length;
-                double cy = (p2.Y - p1.Y) / currentLine.Length;
-                double cz = (p2.Z - p1.Z) / currentLine.Length;
+                double xl = (p2.X - p1.X);
+                double yl = (p2.Y - p1.Y);
+                double zl = (p2.Z - p1.Z);
 
+                double l = currentLine.Length;
+                double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 2);
+
+                double cx = xl / l;
+                double cy = yl / l;
+                double cz = zl / l;
+
+                double s = (p2.Z - p1.Z) / l;
+                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p2.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
-                        {cx,   cx,   cx},
-                        {cy,   cy,   cy},
-                        {cz,   cz,   cz},
+                        {cx,                                     cy,                   cz},
+                        {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
+                        {(xl*zl*c - l*yl*s)/den,       (yl*zl*c + l*xl*s) / den,   -den*c / (l*l)},
                 });
 
                 var T = t.DiagonalStack(t);
