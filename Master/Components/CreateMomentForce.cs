@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Section : GH_Component
+    public class CreateMomentForce : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Sectioncs class.
+        /// Initializes a new instance of the CreateMomentForce class.
         /// </summary>
-        public Section()
-          : base("Sectioncs", "Nickname",
+        public CreateMomentForce()
+          : base("CreateMomentForce", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Category", "Subcategory")
         {
         }
 
@@ -23,11 +23,8 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name of the section (bxh [mm]), default: 100x100mm", GH_ParamAccess.item,"100x100");
-            pManager.AddNumberParameter("Height", "h", "Height of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("Width", "w", "Width of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("ThicknessF", "tf", "Thickness of the flanges of the cross-section", GH_ParamAccess.item, 5);
-            pManager.AddNumberParameter("ThicknessW", "tw", "Thickness of the web of the cross-section", GH_ParamAccess.item, 5);
+            pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
+            pManager.AddNumberParameter("MomentValue", "MV", "Moment Load vector with amplitude in [Nmm].Give it like list", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -35,7 +32,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("section","S","SectionClass object",GH_ParamAccess.item);
+            pManager.AddGenericParameter("MomentLoad", "ML", "List of MomentLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,25 +41,32 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-
             //input
-            string Name = "100x100";
-            double h = 100;
-            double w = 100;
-            double tf = 5;
-            double tw = 5;
-            DA.GetData(0, ref Name);
-            DA.GetData(1,ref h);
-            DA.GetData(2,ref w);
-            DA.GetData(3,ref tf);
-            DA.GetData(4,ref tw);
-               
+            List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
+            List<double> mVal = new List<double>();
+
+
+            if (!DA.GetDataList(0, pointList)) return;
+            if (!DA.GetDataList(1, mVal)) return;
+
+
+
             //code
-            SectionClass sec = new SectionClass(Name, h, w, tf, tw);
-           
+
+
+            List<LoadClass> loads = new List<LoadClass>();
+
+            for (int i = 0; i < pointList.Count; i++)
+            {
+                loads.Add(new LoadClass(pointList[i], mVal));
+            }
+
+
 
             //output
-            DA.SetData(0, sec);
+            DA.SetDataList(0, loads);
+
+
         }
 
         /// <summary>
@@ -83,7 +87,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("D6B5319A-CE46-464C-ABFF-EC3CCC6DFB5B"); }
+            get { return new Guid("DB0D35C6-F075-4CF7-90E9-1D44F7C74C2A"); }
         }
     }
 }

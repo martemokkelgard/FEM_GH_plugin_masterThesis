@@ -16,6 +16,8 @@ namespace Master
         public Point3d stPt;
         public Point3d enPt;
         public bool Id;
+        public bool Id1;
+        public List<double> mVal;
 
         public LoadClass()
         { }
@@ -27,7 +29,7 @@ namespace Master
             coordinate = _coordinate;
             LoadVec = _LoadVec;
             Id = true;
-                
+            Id1 = true; 
         }
 
         public LoadClass(Line _line, Vector3d _LoadVec)
@@ -37,6 +39,14 @@ namespace Master
             stPt = line.From;
             enPt = line.To;
             Id = false;
+        }
+
+        public LoadClass(Point3d _coordinate, List<double> _momentValues)
+        {
+            coordinate = _coordinate;
+            Id = true;
+            mVal = _momentValues;
+            Id1 = false;
         }
 
     }
