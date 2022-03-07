@@ -45,7 +45,7 @@ namespace Master.Components
             pManager.AddPointParameter("Rotation [rad]", "R", "Forces in points", GH_ParamAccess.list);
             pManager.AddPointParameter("Forces [N]","F","Forces in points",GH_ParamAccess.list);
             pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces [N]/[Nmm]", "R", "Reaction Forces[N] Moments[Nmm]", GH_ParamAccess.tree);
+            //pManager.AddNumberParameter("ReactionForces [N]/[Nmm]", "R", "Reaction Forces[N] Moments[Nmm]", GH_ParamAccess.tree);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S","stress [N/mm^2] ",GH_ParamAccess.list);
@@ -152,12 +152,30 @@ namespace Master.Components
             List<Point3d> disp_lst = new List<Point3d>();
             List<Point3d> rot_lst = new List<Point3d>();
 
-            for (int i = 0; i < displNodes.Count; i++)
+            //gjør om små tall til 0
+            for (int i = 0; i < forces.Count; i++)
             {
+                if (Math.Abs(forces[i]) <= 0.00001)
+                {
+                    forces[i] = 0;
+                }
+
+
+                if (Math.Abs(rotation[i]) <= 0.00001)
+                {
+                    rotation[i] = 0;
+                }
+
+            }
+
+            // endrer output til liste med punkter
+            for (int i = 0; i < pts.Count; i++)
+            {
+                disp_lst.Add(new Point3d(def[i * 6], def[i * 6 + 1], def[i * 6 + 2]));
+                rot_lst.Add(new Point3d(def[i * 6 + 3], def[i * 6 + 4], def[i * 6 + 5]));
                 force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2] ) );
                 mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
-                disp_lst.Add(new Point3d(def[i*6], def[i*6+1],def[i*6+2]));
-                rot_lst.Add(new Point3d(def[i * 6 +3], def[i * 6 + 4], def[i * 6 + 5]));
+                
             }
 
 
@@ -199,7 +217,7 @@ namespace Master.Components
                             BCsIndex.Add(6*i + 2);
 
                         if (b.rx)
-                            BCsIndex.Add(6*i+3);
+                            BCsIndex.Add(6 * i + 3);
 
                         if (b.ry)
                             BCsIndex.Add(6 * i + 4);
@@ -419,6 +437,8 @@ namespace Master.Components
 
                 S = K_eG.Multiply(v);
 
+
+
                 disp[node1 * 3] += S[0];
                 disp[node1 * 3 + 1] += S[1];
                 disp[node1 * 3 + 2] += S[ 2];
@@ -443,7 +463,7 @@ namespace Master.Components
             
 
             forces = disp;
-            rotation = rot;
+            rotation = rot;     
             //forces = new List<Vector<double>>(ST_disp);
             //rotation = new List<Vector<double>>(ST_rot);
         }
