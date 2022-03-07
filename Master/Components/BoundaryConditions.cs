@@ -60,9 +60,9 @@ namespace Master.Components
             if (!DA.GetData(1, ref x)) return;
             if (!DA.GetData(2, ref y)) return;
             if (!DA.GetData(3, ref z)) return;
-            if (!DA.GetData(1, ref rx)) return;
-            if (!DA.GetData(2, ref ry)) return;
-            if (!DA.GetData(3, ref rz)) return;
+            if (!DA.GetData(4, ref rx)) return;
+            if (!DA.GetData(5, ref ry)) return;
+            if (!DA.GetData(6, ref rz)) return;
 
             List<BcClass> BCs = new List<BcClass>();
           
