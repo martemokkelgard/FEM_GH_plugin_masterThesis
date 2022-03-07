@@ -328,7 +328,7 @@ namespace Master.Components
                 double zl = (p2.Z - p1.Z);
 
                 double l = currentLine.Length;
-                double den = l * Math.Pow(Math.Pow(xl,2) + Math.Pow(yl,2) , 2);
+                double den = l * Math.Pow(Math.Pow(xl,2) + Math.Pow(yl,2) , 0.5);
 
                 double cx = xl / l;
                 double cy = yl / l;
@@ -382,7 +382,7 @@ namespace Master.Components
                 v[6] = _def[node2 * 6];
                 v[7] = _def[node2 * 6 + 1];
                 v[8] = _def[node2 * 6 + 2];
-                v[9] = _def[node2 * 6 + 3];
+                v[9] =_def[node2 * 6 + 3];
                 v[10] = _def[node2 * 6 + 4];
                 v[11] = _def[node2 * 6 + 5];
 
@@ -407,7 +407,7 @@ namespace Master.Components
 
                 Line currentLine = b.axis;
                 double L = currentLine.Length * 1000;
-                double LL = Math.Pow(L, 2);
+                //double LL = Math.Pow(L, 2);
 
                 //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
 
@@ -430,17 +430,12 @@ namespace Master.Components
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
 
 
-
-                // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
-
-
-
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
                 double l = currentLine.Length;
-                double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 2);
+                double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
                 double cy = yl / l;
