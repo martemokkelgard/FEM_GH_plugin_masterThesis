@@ -10,7 +10,6 @@ using MathNet.Numerics.LinearAlgebra.Factorization;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 
-//hei
 
 namespace Master.Components
 {
@@ -41,10 +40,12 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces", "R", "Reaction Forces", GH_ParamAccess.tree);
-            pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
-
+            pManager.AddPointParameter("Defomation [mm]", "def", "Deformations of the bar in [mm]", GH_ParamAccess.list);
+            pManager.AddPointParameter("Reaction Forces [N]", "R", "Reaction Forces", GH_ParamAccess.list);
+            pManager.AddPointParameter("Reaction Forces Position", "RP", "Reaction Force Position", GH_ParamAccess.list);
+            pManager.AddPointParameter("Displacement Of Nodes", "displ", "Deformed geometry", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -71,6 +72,7 @@ namespace Master.Components
             DA.GetDataList(0, bars);
             DA.GetDataList(1,  bcc);
             DA.GetDataList(2, lc);
+
 
           
             foreach (var load in lc)
@@ -138,7 +140,7 @@ namespace Master.Components
             //Vector<double> def = K_red.Cholesky().Solve(R);
 
 
-            CreateForces(bars, pts, def, out List<Vector<double>> forces);
+            CreateForces(bars, pts, def, out Vector<double> forces);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -148,14 +150,73 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[3 * i]/1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2]/1000));
             }
 
-            var outTree = DataTreeFromVectorList(forces);
+            //var outTree = DataTreeFromVectorList(forces);
 
-            //output
-            DA.SetDataList(0, def);
-            DA.SetDataTree(1, outTree);
-            DA.SetDataList(2, displNodes);
+            List<Line> liness = new List<Line>();
+
+            for (int i = 0; i < displNodes.Count - 1; i++)
+            {
+                Line line = new Line(displNodes[i], displNodes[i + 1]);
+                liness.Add(line);
+            }
+
+            List<double> strain = new List<double>();   //strain and stress
+            List<double> stress = new List<double>();
+            foreach (BarClass b in bars)
+            {
+                double originLength = b.axis.Length;
+                double deformedLength = liness[b.Id].Length;
+
+                double dL = originLength - deformedLength;
+
+                double e = dL / originLength;
+                strain.Add(e);
+
+                double s = e * b.material.youngsModolus;
+                stress.Add(s);
+            }
+
+            //lage lister med displacement
+
+            List<Point3d> force_lst = new List<Point3d>();
+            List<Point3d> force_lst_pos = new List<Point3d>();
+            List<Point3d> disp_lst = new List<Point3d>();
             
 
+            //gjør om små tall til 0
+            for (int i = 0; i < forces.Count; i++)
+            {
+                if (Math.Abs(forces[i]) <= 0.00001)
+                {
+                    forces[i] = 0;
+                }
+
+            }
+
+            // endrer output til liste med punkter
+            for (int i = 0; i < pts.Count; i++)
+            {
+                disp_lst.Add(new Point3d(def[i * 3], def[i * 3 + 1], def[i * 3 + 2]));
+                
+                if (BCList.Contains(i*3) | BCList.Contains(i * 3+1) | BCList.Contains(i * 3+2))
+                {
+                    force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
+                    force_lst_pos.Add(pts[i]);
+                }
+                
+                
+            }
+
+
+
+            //output
+            DA.SetDataList(0, disp_lst);
+            DA.SetDataList(1, force_lst);
+            DA.SetDataList(2, force_lst_pos);
+            //DA.SetDataTree(1, outTree);
+            DA.SetDataList(3, displNodes);
+            DA.SetDataList(4, strain);
+            DA.SetDataList(5, stress);
         }
 
 
@@ -191,7 +252,8 @@ namespace Master.Components
             return BCsIndex;
         }
 
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
+        /*
+        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector3d> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
 
@@ -209,6 +271,8 @@ namespace Master.Components
 
             return tree;
         }
+
+        */
 
         private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
         {
@@ -245,12 +309,20 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
-            List<Vector<double>> ST = new List<Vector<double>>();
+            //List<Point3d> st = new List<Point3d>(points.Count);
+            Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            //List <Vector<double>> Force = new List<Vector<double>>(points.Count);
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
+
+            var nodes = new List<NodeClass>();
+            foreach (Point3d pt in points)
+            {
+                nodes.Add(new NodeClass(pt));
+            }
 
             foreach (BarClass b in bars)
             {
@@ -304,13 +376,26 @@ namespace Master.Components
                 v[4] = _def[node2 * 3 +1];
                 v[5] = _def[node2 * 3 + 2];
 
+               
                 S = K_eG.Multiply(v);
-                ST.Add(S);
 
+                disp[node1 * 3] += S[0];
+                disp[node1 * 3 + 1] += S[1];
+                disp[node1 * 3 + 2] += S[2];
+
+                disp[node2 * 3] -= S[3];
+                disp[node2 * 3 + 1] -= S[4];
+                disp[node2 * 3 + 2] -= S[5];
+                
             }
 
-            forces = new List<Vector<double>>(ST);
+
+            forces = disp;
+            
+            
         }
+
+    
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
 
@@ -405,10 +490,12 @@ namespace Master.Components
                     K_tot[blockedIndex, r] = 0;
                     K_tot[r, blockedIndex] = 0;
 
+                    if (K_tot[r,r]== 0)
+                    {
+                        K_tot[r, r] = 1;
+                    }
+
                 }
-
-
-                K_tot[blockedIndex, blockedIndex]=1;
 
 
             }
