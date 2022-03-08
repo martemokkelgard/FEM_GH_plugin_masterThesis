@@ -173,8 +173,14 @@ namespace Master.Components
             {
                 disp_lst.Add(new Point3d(def[i * 6], def[i * 6 + 1], def[i * 6 + 2]));
                 rot_lst.Add(new Point3d(def[i * 6 + 3], def[i * 6 + 4], def[i * 6 + 5]));
-                force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2] ) );
-                mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
+
+                if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1 ) | BCList.Contains(i * 6 + 2) | BCList.Contains(i * 6 + 3) | BCList.Contains(i * 6 + 4) | BCList.Contains(i * 6 + 5) )
+                    {
+                        force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
+                        mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
+
+                    }
+                
                 
             }
 
