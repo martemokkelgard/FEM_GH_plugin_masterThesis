@@ -70,7 +70,7 @@ namespace Master.Components
 
            
             DA.GetDataList(0, bars);
-            DA.GetDataList(1,  bcc);
+            DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
 
             /*
@@ -100,16 +100,7 @@ namespace Master.Components
             List<int> BCList = CreateBCList(bcc, pts);
 
             Vector<double> LoadList = CreateLoadList(lc, pts);
-                      
-
-            Matrix<double> K_red;
-
-            //Matrix<double> k_eG;
-            Matrix<double> k_tot;
-            //List<Vector<double>> forces = new List<Vector<double>>();
-            
-
-            List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);        
+                         
 
 
             CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot);
@@ -120,10 +111,6 @@ namespace Master.Components
                         
             Matrix<double> invK = K_red.Inverse();
             
-
-
-
-            var def = invK.Multiply(R);
 
             Vector<double> def = invK.Multiply(R_red);
 
@@ -276,7 +263,7 @@ namespace Master.Components
 
             return tree;
         }
-
+        */
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
 
@@ -316,9 +303,9 @@ namespace Master.Components
                         Point3d loadLocation = LoadPts[j];
                         if (loadLocation.DistanceTo(node) < 0.00001)
                         {
-                            LoadValue[i*3] += LoadVec.X+0;
-                            LoadValue[i*3+1] += LoadVec.Y;
-                            LoadValue[i*3+2] += LoadVec.Z + 0;
+                            LoadValue[i*3] += LoadVec.X;
+                            LoadValue[i*3+1] += LoadVec.Z;
+                            LoadValue[i*3+2] += 0;
                         }
                         else
                         {
@@ -378,12 +365,12 @@ namespace Master.Components
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { my, 0, 0, -my ,0, 0},
-                        { 0, 12 , 6*L, 0,-12, 6*L},
-                        { 0, 6*L , 4*LL, 0, -6*L, 2*LL},
-                        { -my, 0,0 ,my,0, 0},
-                        { 0, -12 ,-6*L, 0,12,-6*L},
-                        { 0 ,6L ,2*LL,- 0,6*L,4*LL}
+                        {  my,    0,        0,       -my,     0,        0},
+                        {  0,   12.00,   -6.00*L,     0,   -12.00,   -6.00*L},
+                        {  0,  -6.00*L,   4.00*LL,    0,   6.00*L,  2.00*LL},
+                        {-my,     0,        0,        my,     0,         0},
+                        {  0,  -12.00,    6.00*L,     0,    12.00,    6.00*L},
+                        {  0,   -6.00*L,  2.00*LL,    0,   6.00*L,   4.00*LL}
                                     });
                 ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -446,7 +433,7 @@ namespace Master.Components
                 Point3d p1 = currentLine.From;
                 Point3d p2 = currentLine.To;
 
-                //double lineLength = Math.Round(currentLine.Length, 6);
+                double lineLength = Math.Round(currentLine.Length, 6);
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
@@ -470,12 +457,12 @@ namespace Master.Components
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
 
                                     {
-                        { my,   0,      0,      -my,    0,      0},
-                        { 0,    12 ,    -6*L,   0,      -12,    -6*L},
-                        { 0,    -6*L ,  4*LL,   0,      6*L,    2*LL},
-                        { -my,  0,      0 ,     my,     0,      0},
-                        { 0,    -12 ,   6*L,    0,      12,     6*L},
-                        { 0 ,   -6*L ,  2*LL,   0,      6*L,    4*LL}
+                        {  my,    0,         0,      -my,     0,        0},
+                        {  0,   12.00,   -6.00*L,     0,   -12.00,   -6.00*L},
+                        {  0,  -6.00*L,   4.00*LL,    0,   6.00*L,  2.00*LL},
+                        {-my,    0,          0,       my,     0,        0},
+                        {  0,  -12.00,    6.00*L,     0,    12.00,    6.00*L},
+                        {  0,   -6.00*L,  2.00*LL,    0,    6.00*L,   4.00*LL}
 
 
                                     });
@@ -492,10 +479,10 @@ namespace Master.Components
                 {
                     for (int j = 0; j < K_eG.ColumnCount / 2; j++)
                     {
-                        K_tot[node1 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i, j],5);
-                        K_tot[node1 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i, j+3], 5);
-                        K_tot[node2 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i+3, j], 5);
-                        K_tot[node2 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i+3, j+3], 5);
+                        K_tot[node1 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i, j],7);
+                        K_tot[node1 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i, j+3], 7);
+                        K_tot[node2 * 3 + i, node1 * 3 + j] += Math.Round(K_eG[i+3, j], 7);
+                        K_tot[node2 * 3 + i, node2 * 3 + j] += Math.Round(K_eG[i+3, j+3], 7);
 
                     }
 
