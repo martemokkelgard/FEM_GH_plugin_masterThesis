@@ -102,14 +102,14 @@ namespace Master.Components
             Vector<double> LoadList = CreateLoadList(lc, pts);
                       
 
-            Matrix<double> K_red;
+            
 
             //Matrix<double> k_eG;
-            Matrix<double> k_tot;
+            
             //List<Vector<double>> forces = new List<Vector<double>>();
             
 
-            List<double> LoadList = CreateLoadList(LoadPts, LoadVec, pts);        
+                
 
 
             CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot);
@@ -122,8 +122,6 @@ namespace Master.Components
             
 
 
-
-            var def = invK.Multiply(R);
 
             Vector<double> def = invK.Multiply(R_red);
 
@@ -277,6 +275,8 @@ namespace Master.Components
             return tree;
         }
 
+        */
+
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
 
@@ -316,9 +316,9 @@ namespace Master.Components
                         Point3d loadLocation = LoadPts[j];
                         if (loadLocation.DistanceTo(node) < 0.00001)
                         {
-                            LoadValue[i*3] += LoadVec.X+0;
-                            LoadValue[i*3+1] += LoadVec.Y;
-                            LoadValue[i*3+2] += LoadVec.Z + 0;
+                            LoadValue[i*3] += LoadVec.X;
+                            LoadValue[i*3+1] += LoadVec.Z;
+                            LoadValue[i*3+2] += 0 ;
                         }
                         else
                         {
@@ -446,7 +446,7 @@ namespace Master.Components
                 Point3d p1 = currentLine.From;
                 Point3d p2 = currentLine.To;
 
-                //double lineLength = Math.Round(currentLine.Length, 6);
+                double lineLength = Math.Round(currentLine.Length, 6);
 
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
