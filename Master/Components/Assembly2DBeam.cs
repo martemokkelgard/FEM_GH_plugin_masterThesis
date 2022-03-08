@@ -41,13 +41,13 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddPointParameter("Displacement [mm]", "def", "Displacement [mm]", GH_ParamAccess.list);
-            pManager.AddPointParameter("Rotation [rad]", "R", "Forces in points", GH_ParamAccess.list);
-            pManager.AddPointParameter("Forces [N]", "F", "Forces in points", GH_ParamAccess.list);
-            pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
-            pManager.AddPointParameter("Position of Force and Moment", "Position", "Position for reaction froces and moments", GH_ParamAccess.list);
-            pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
+            pManager.AddPointParameter("Displacement [mm]", "def", "Displacement [mm] in nodes", GH_ParamAccess.list);
+            pManager.AddPointParameter("Rotation [rad]", "R", "Rotation [rad] in nodes", GH_ParamAccess.list);
+            pManager.AddPointParameter("Reaction Forces [N]", "F", "Forces in support points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Reaction Moments [Nmm]", "M", "Moments in support points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Position of Supports", "PS", "Position for support points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Displacement of Nodes", "displ", "Deformed geometry", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Strain", "S", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
         }
 
