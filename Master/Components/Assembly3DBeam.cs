@@ -394,7 +394,7 @@ namespace Master.Components
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,       (yl*zl*c + l*xl*s) / den,   -den*c / (l*l)},
+                        {(xl*zl*c - l*yl*s)/den,      (yl*zl*c + l*xl*s) / den,     -den*c / (l*l)},
                 });
 
                
@@ -527,8 +527,8 @@ namespace Master.Components
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
-                        {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,       (yl*zl*c + l*xl*s) / den,   -den*c / (l*l)},
+                        {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
+                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,       -den*c / (l*l)},
                 });
 
                 var T = t.DiagonalStack(t);
