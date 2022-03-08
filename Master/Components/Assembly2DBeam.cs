@@ -22,7 +22,7 @@ namespace Master.Components
         public Assembly2DBeam()
           : base("Assembly2DBeam", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Løve", "2DBeam")
         {
         }
 
@@ -41,11 +41,14 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Defomation [mm]", "def", "Deformation [mm]", GH_ParamAccess.list);
-            pManager.AddNumberParameter("ReactionForces [N]/[Nmm]", "R", "Reaction Forces[N] Moments[Nmm]", GH_ParamAccess.tree);
+            pManager.AddPointParameter("Displacement [mm]", "def", "Displacement [mm]", GH_ParamAccess.list);
+            pManager.AddPointParameter("Rotation [rad]", "R", "Forces in points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Forces [N]", "F", "Forces in points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Position of Force and Moment", "Position", "Position for reaction froces and moments", GH_ParamAccess.list);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Stress [N/mm^2] ", "S","stress [N/mm^2] ",GH_ParamAccess.list);
+            pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -113,7 +116,7 @@ namespace Master.Components
             //Vector<double> def = K_red.Cholesky().Solve(R);
 
 
-            CreateForces(bars, pts, def, out List<Vector<double>> forces);
+            CreateForces(bars, pts, def, out Vector<double> forces, out Vector<double> rotation);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -122,7 +125,7 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[3 * i]/1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2]/1000));
             }
 
-            var outTree = DataTreeFromVectorList(forces);
+            //var outTree = DataTreeFromVectorList(forces);
 
             
             List<Line> liness = new List<Line>();
@@ -149,16 +152,61 @@ namespace Master.Components
                 stress.Add(s);
             }
 
+            //lage lister med displacement
+
+            List<Point3d> force_lst = new List<Point3d>();
+            List<Point3d> mom_lst = new List<Point3d>();
+            List<Point3d> disp_lst = new List<Point3d>();
+            List<Point3d> rot_lst = new List<Point3d>();
+
+            List<Point3d> force_mom_pos = new List<Point3d>();
+
+            //gjør om små tall til 0
+            for (int i = 0; i < forces.Count; i++)
+            {
+                if (Math.Abs(forces[i]) <= 0.00001)
+                {
+                    forces[i] = 0;
+                }
+            }
+
+            for (int i = 0; i < rotation.Count; i++)
+            { 
+
+                if (Math.Abs(rotation[i]) <= 0.00001)
+                {
+                    rotation[i] = 0;
+                }
+
+            }
+
+            // endrer output til liste med punkter
+            for (int i = 0; i < pts.Count; i++)
+            {
+                disp_lst.Add(new Point3d(def[i * 3], 0.00, def[i * 3 + 1]));
+                rot_lst.Add(new Point3d( 0.00, def[i * 3 + 2], 0.00));
+
+                if (BCList.Contains(i * 3) | BCList.Contains(i * 3 + 1) | BCList.Contains(i * 3 + 2))
+                {
+                    force_lst.Add(new Point3d(forces[i * 2], 0.00, forces[i * 2 + 1]));
+                    mom_lst.Add(new Point3d(0.00, rotation[i], 0.00));
+                    force_mom_pos.Add(pts[i]);
+                }
+
+            }
 
 
 
             //output
-            DA.SetDataList(0, def);
-            DA.SetDataTree(1, outTree);
-            DA.SetDataList(2, displNodes);
-            DA.SetDataList(3, strain);
-            DA.SetDataList(4, stress);
-            
+            DA.SetDataList(0, disp_lst);
+            DA.SetDataList(1, rot_lst);
+            DA.SetDataList(2, force_lst);
+            DA.SetDataList(3, mom_lst);
+            DA.SetDataList(4, force_mom_pos);
+            //DA.SetDataTree(1, outTree);
+            DA.SetDataList(5, displNodes);
+            DA.SetDataList(6, strain);
+            DA.SetDataList(7, stress);
 
         }
 
@@ -192,6 +240,7 @@ namespace Master.Components
             return BCsIndex;
         }
 
+        /*
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
@@ -211,6 +260,8 @@ namespace Master.Components
             return tree;
         }
 
+        */
+
         private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
         {
             
@@ -229,8 +280,8 @@ namespace Master.Components
                     if (loadLocation.DistanceTo(node) < 0.00001)
                     {
                         LoadValue.Add(_LoadValue[j][0]);
-                        LoadValue.Add(_LoadValue[j][1]);
                         LoadValue.Add(_LoadValue[j][2]);
+                        LoadValue.Add(0);
                     }
                     else
                     {
@@ -246,12 +297,15 @@ namespace Master.Components
             return LoadValue;
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> forces)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
-            List<Vector<double>> ST = new List<Vector<double>>();
+            //List<Vector<double>> ST = new List<Vector<double>>();
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
+
+            Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count]);
+            Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 2]);
 
             foreach (BarClass b in bars)
             {
@@ -267,8 +321,8 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X)/ currentLine.Length;
-                double c = (p2.Z - p1.Z)/ currentLine.Length;
+                double c = (p2.X - p1.X)/ currentLine.Length;
+                double s = (p2.Z - p1.Z)/ currentLine.Length;
                 
 
                 Matrix<double> T = DenseMatrix.OfArray(new double[,]
@@ -283,8 +337,8 @@ namespace Master.Components
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                                     {
-                        { my,0, 0, -my ,0, 0},
-                        { 0, 12 , 6*L, 0,- 12, 6*L},
+                        { my, 0, 0, -my ,0, 0},
+                        { 0, 12 , 6*L, 0,-12, 6*L},
                         { 0, 6*L , 4*LL, 0, -6*L, 2*LL},
                         { -my, 0,0 ,my,0, 0},
                         { 0, -12 ,-6*L, 0,12,-6*L},
@@ -307,11 +361,26 @@ namespace Master.Components
                 v[5] = _def[node2 * 3 + 2];
 
                 S = K_eG.Multiply(v);
-                ST.Add(S);
 
-            }
+                disp[node1 * 2] += S[0];
+                disp[node1 * 2 + 1] += S[1];
+                
+                disp[node2 * 2] -= S[3];
+                disp[node2 * 2 + 1] -= S[4];
+                
 
-            forces = new List<Vector<double>>(ST);
+                rot[node1] += S[2];
+                
+                rot[node2] -= S[5];
+                
+
+
+
+             }
+
+
+            forces = disp;
+            rotation = rot;
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
@@ -341,8 +410,8 @@ namespace Master.Components
 
                 // finding the cos value of the angle that projects the line to x,y,z axis (in 2D we use cos and sin of the same angle for x and z)
 
-                double s = (p2.X - p1.X) / currentLine.Length;
-                double c = (p2.Z - p1.Z) / currentLine.Length;
+                double c = (p2.X - p1.X) / currentLine.Length;
+                double s = (p2.Z - p1.Z) / currentLine.Length;
 
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
