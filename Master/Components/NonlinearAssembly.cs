@@ -43,14 +43,14 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddPointParameter("Displacement [mm]", "def", "Displacement [mm]", GH_ParamAccess.list);
-            pManager.AddPointParameter("Rotation [rad]", "R", "Forces in points", GH_ParamAccess.list);
+            pManager.AddPointParameter("Displacement [mm] in x", "def", "Displacement [mm]", GH_ParamAccess.list);
+            pManager.AddPointParameter("Rotation [rad] in x", "R", "Forces in points", GH_ParamAccess.list);
             pManager.AddPointParameter("Forces [N]", "F", "Forces in points", GH_ParamAccess.list);
             pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            
+            pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> u);
+            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> u, out double M);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -202,7 +202,7 @@ namespace Master.Components
             DA.SetDataList(4, displNodes);
             DA.SetDataList(5, strain);
             DA.SetDataList(6, stress);
-            
+            DA.SetData(7, M);
 
 
         }
@@ -339,7 +339,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> _u)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> _u, out double M)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -348,7 +348,7 @@ namespace Master.Components
             Vector<double> S;
 
             Vector<double> v = SparseVector.OfEnumerable(new double[12]);
-
+            var _M = new double();
 
             Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
@@ -382,24 +382,13 @@ namespace Master.Components
                 var B = dN;
                 u = N.Multiply(v);
 
-                eps = B.Multiply(v);
+                eps = B.Multiply(v);        //strain (3)
 
-                var C = Matrix<double>.Build.DenseOfArray(new double[,]
-                {
-
-                {1-my,   my,     my,      0,       0,      0},
-                {my,   1-my,     my,      0,       0,      0},
-                {my,    my,   (1-my),     0,       0,      0},
-                {0,      0,       0,  (1-2*my)/2,  0,      0},
-                {0,      0,       0,      0,  (1-2*my)/2,  0},
-                {0,      0,       0,      0,       0, (1-2*my)/2 },
-
-                });
-
-                C = E / ((1 + my) * (1 - 2 * my)) * C;
-
-                sigma = C.Multiply(eps);
+                sigma = E * eps;            //stress = E*3
                 S = k_eg * v;
+
+                _M = E * b.section.Iy * eps[4];
+
 
                 disp[node1*3] += S[0];
                 disp[node1 * 3+1] += S[1];
@@ -426,7 +415,7 @@ namespace Master.Components
             strain = eps;
             stress = sigma;
             _u = u;
-            
+            M = _M;
 
         }
 
@@ -478,22 +467,22 @@ namespace Master.Components
                 {0,   N3,     0,    0,    0,    N4,     0,    N5,     0,     0,     0,   N6},
                 {0,    0,    N3,    0,  -N4,     0,     0,     0,    N5,     0,   -N6,    0},
                 {0,    0,     0,   N1,    0,     0,     0,     0,     0,    N2,     0,    0},
-                {0,    dN3,   0,    0,    0,   dN4,     0,    dN5,    0,     0,     0,   dN6},
-                {0,     0,   dN3,   0,  -dN4,    0,     0,     0,    dN5,    0,   -dN6,   0},
+                {0,    dN3,    0,    0,    0,   dN4,    0,     dN5,   0,     0,     0,   dN6},
+                {0,     0,    dN3,   0,   -dN4,  0,     0,     0,    dN5,    0,   -dN6,   0},
 
                 });
 
 
-
+                //N1 and N2 is linear shape function and is derived one (Translationin x dir) while the rest is derived twice for beams. 
 
                 _dN = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                {dN1,   0,    0,    0,    0,     0,    dN2,    0,     0,     0,     0,    0},
-                {0,    dN3,   0,    0,    0,   dN4,     0,    dN5,    0,     0,     0,   dN6},
-                {0,     0,   dN3,   0,  -dN4,    0,     0,     0,    dN5,    0,   -dN6,   0},
-                {0,     0,    0,   dN1,   0,     0,     0,     0,     0,    dN2,    0,    0},
-                {0,    ddN3,  0,    0,    0,   ddN4,    0,    ddN5,   0,     0,     0,   ddN6},
-                {0,     0,   ddN3,   0,  -ddN4,    0,   0,     0,    ddN5,   0,   -ddN6,   0},
+                {dN1,   0,    0,    0,    0,      0,    dN2,     0,      0,     0,     0,      0},
+                {0,    dN3,  0,    0,    0,    dN4,     0,    dN5,    0,     0,     0,   dN6},
+                {0,     0,   dN3,  0,  -dN4,    0,      0,     0,    dN5,    0,   -dN6,    0},
+                {0,     0,    0,   dN1,   0,      0,      0,     0,      0,    dN2,    0,      0},
+                {0,    ddN3,  0,    0,    0,    ddN4,     0,    ddN5,    0,     0,     0,   ddN6},
+                {0,     0,   ddN3,  0,  -ddN4,    0,      0,     0,    ddN5,    0,   -ddN6,    0},
 
                 });
                 
