@@ -35,6 +35,9 @@ namespace Master.Components
             pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
+            pManager.AddMatrixParameter("Kematrix","Ke","Ke_matrix from MathCad",GH_ParamAccess.list);
+            pManager.AddMatrixParameter("Nmatrix", "N", "N_matrix from MathCad", GH_ParamAccess.item);
+            pManager.AddMatrixParameter("dNmatrix", "dN", "dN_matrix from MathCad", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -49,6 +52,7 @@ namespace Master.Components
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
+            pManager.AddNumberParameter("displ ", "d", " displ. from form function ", GH_ParamAccess.tree);
         }
 
         /// <summary>
@@ -65,11 +69,19 @@ namespace Master.Components
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
+            //created in a differen component from MathCad
+            Matrix<double> ke = DenseMatrix.OfArray(new double[12, 12]);
+            Matrix<double> N = DenseMatrix.OfArray(new double[6, 12]);
+            Matrix<double> dN = DenseMatrix.OfArray(new double[6, 12]);
+
 
 
             DA.GetDataList(0, bars);
             DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
+            DA.GetData(3, ref ke);      
+            DA.GetData(4, ref N);  
+            DA.GetData(5, ref dN);
 
 
             List<Point3d> pts = new List<Point3d>();
@@ -89,10 +101,9 @@ namespace Master.Components
             List<int> BCList = CreateBCList(bcc, pts);
 
             Vector<double> LoadList = CreateLoadList(lc, pts);
-            
 
 
-            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out Matrix<double> k_eg);
+            CreateGlobalStiffnesMatrix(bars, pts, ke, out Matrix<double> k_tot, out Matrix<double> k_eg);
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
@@ -106,11 +117,10 @@ namespace Master.Components
             Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
-            CreateGenerelizedShapeFunc(bars, k_tot, out Matrix<double> N, out Matrix<double> dN);
+            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> displ);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress);
-
+            var displace = DataTreeFromVectorList(displ);
 
             for (int i = 0; i < pts.Count; i++)
             {
@@ -190,6 +200,7 @@ namespace Master.Components
 
             //output
             DA.SetDataList(0, disp_lst);
+            
             DA.SetDataList(1, rot_lst);
             DA.SetDataList(2, force_lst);
             DA.SetDataList(3, mom_lst);
@@ -197,6 +208,7 @@ namespace Master.Components
             DA.SetDataList(4, displNodes);
             DA.SetDataList(5, strain);
             DA.SetDataList(6, stress);
+            DA.SetDataTree(7, displace);
 
 
         }
@@ -333,16 +345,17 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> displ)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> displ)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
-            Vector<double> u = SparseVector.OfEnumerable(6);
+            Vector<double> u = SparseVector.OfEnumerable(new double[6]);
             Vector<double> eps = SparseVector.OfEnumerable(new double[3]);
             Vector<double> sigma = SparseVector.OfEnumerable(new double[3]);
             Vector<double> S;
 
             Vector<double> v = SparseVector.OfEnumerable(new double[12]);
-
+            
+            List<Vector<double>> u_lst = new List<Vector<double>>();
 
             Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
@@ -373,6 +386,8 @@ namespace Master.Components
 
                 //displacement
                 u = N.Multiply(v);
+
+                u_lst.Add(u);
 
                 eps = B.Multiply(v);
 
@@ -421,91 +436,21 @@ namespace Master.Components
             rotation = rot;
             strain = eps;
             stress = sigma;
-            displ = u;
+            displ = u_lst;
 
         }
 
 
-        private static void CreateGenerelizedShapeFunc(List<BarClass> bars, Matrix<double> k_tot, out Matrix<double> N, out Matrix<double> dN)
-        {
-
-            Matrix<double> _N = DenseMatrix.OfArray(new double[4, 12]);
-            Matrix<double> _dN = DenseMatrix.OfArray(new double[4, 12]);
-            foreach (BarClass b in bars)
-            {
-                Line currentLine = b.axis;
-                double L = currentLine.Length;
-                var x = L/2;
-
-                double N1 = 1 - x / L;                                                                      //axial translation in node 1
-                double N2 = x / L;                                                                          //axial translation in node 2
-                double N3 = 1 - 3 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2 * Math.Pow(x, 3) / Math.Pow(L, 3);  //translation node 1
-                double N4 = -x * (1 - 2*x/L + Math.Pow(x,2)/Math.Pow(L,2));                                 //rotation node 1
-                double N5 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * Math.Pow(x, 3) / Math.Pow(L, 3);      //translation node 2
-                double N6 = x * ( x / L - Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 2
 
 
-                double dN1 = -1 / L;
-                double dN2 = 1 / L;
-                double dN3 = -6 * x / Math.Pow(L, 2) + 6 * Math.Pow(x, 2) / Math.Pow(L, 3);
-                double dN4 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 4 * x / L + 1;
-                double dN5 = -dN3;
-                double dN6 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * x / L;
-
-                double ddN3 = -6 / Math.Pow(L, 2) + 12 * x / Math.Pow(L, 3);
-                double ddN4 = 6 * x / Math.Pow(L, 2) - 4 / L;
-                double ddN5 = 6 / Math.Pow(L, 2) - 12 * x / Math.Pow(L, 3);
-                double ddN6 = 6 * x / Math.Pow(L, 2) - 2 / L;
-
-
-                // første rad blir ux = N1*ux1 + N2*ux2
-                //andre rad blir uy = N3*uy1 + N5*uy2 etc.
-
-                _N = Matrix<double>.Build.DenseOfArray(new double[,]
-                {
-                    {N1,   0,     0,    0,    0,     0,    N2,     0,     0,     0,     0,    0},
-                    {0,   N3,     0,    0,    0,    N4,     0,    N5,     0,     0,     0,   N6},
-                    {0,    0,    N3,    0,  -N4,     0,     0,     0,    N5,     0,   -N6,    0},
-                    {0,    0,     0,   N1,    0,     0,     0,     0,     0,    N2,     0,    0},
-                    {0,    dN3,   0,    0,    0,   dN4,     0,    dN5,    0,     0,     0,   dN6},
-                    {0,     0,   dN3,   0,  -dN4,    0,     0,     0,    dN5,    0,   -dN6,   0},
-
-                });
-
-                
-
-                
-                _dN = Matrix<double>.Build.DenseOfArray(new double[,]
-                {
-                    {dN1,   0,    0,    0,    0,     0,    dN2,    0,     0,     0,     0,    0},
-                    {0,    dN3,   0,    0,    0,   dN4,     0,    dN5,    0,     0,     0,   dN6},
-                    {0,     0,   dN3,   0,  -dN4,    0,     0,     0,    dN5,    0,   -dN6,   0},
-                    {0,     0,    0,   dN1,   0,     0,     0,     0,     0,    dN2,    0,    0},
-                    {0,    ddN3,  0,    0,    0,   ddN4,    0,    ddN5,   0,     0,     0,   ddN6},
-                    {0,     0,   ddN3,   0,  -ddN4,    0,   0,     0,    ddN5,   0,   -ddN6,   0},
-
-                });
-
-                
-
-            }
-
-            N = _N;
-            dN = _dN;
-        }
-
-
-
-        
-
-
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot, out Matrix<double> k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, Matrix<double> ke, out Matrix<double> k_tot, out Matrix<double> k_eg)
 
         {
 
             int dofs = points.Count * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[6, 6]);
+            
 
             foreach (BarClass b in bars)
             {
@@ -513,21 +458,7 @@ namespace Master.Components
 
                 Line currentLine = b.axis;
                 double L = currentLine.Length * 1000;
-               
-
-
-                double X = b.section.CSA * b.material.youngsModolus / L;
-                double Y1 = 12.00 * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y2 = 6.00 * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));  //slender profile, approx.
-                double Y3 = 4.00 * b.material.youngsModolus * b.section.Iz / L;
-                double Y4 = 2.00 * b.material.youngsModolus * b.section.Iz / L;
-
-                double Z1 = 12.00 * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z2 = 6.00 * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));  //slender profile, approx.
-                double Z3 = 4.00 * b.material.youngsModolus * b.section.Iy / L;
-                double Z4 = 2.00 * b.material.youngsModolus * b.section.Iy / L;
-
-                double C = (b.material.G * b.section.J) / L;    
+                  
 
 
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
@@ -558,25 +489,7 @@ namespace Master.Components
                 var T = t.DiagonalStack(t);
                 T = T.DiagonalStack(T);
 
-
-
-                Matrix<double> ke = DenseMatrix.OfArray(new double[,]
-                {
-                        {X,  0,   0,   0,   0,   0,  -X,   0,   0,   0,   0,   0},
-                        {0,  Y1,  0,   0,   0,   Y2,  0,  -Y1,  0,   0,   0,   Y2},
-                        {0,  0,   Z1,  0,  -Z2,  0,   0,   0,  -Z1,  0,  -Z2,  0},
-                        {0,  0,   0,   C,   0,   0,   0,   0,   0,  -C,   0,   0},
-                        {0,  0 , -Z2,  0,   Z3,  0,   0,   0,   Z2,  0,   Z4,  0},
-                        {0,  Y2,  0,   0,   0,   Y3,  0,  -Y2,  0,   0,   0,   Y4},
-                        {-X, 0,   0,   0,   0,   0,   X,   0,   0,   0,   0,   0},
-                        {0, -Y1,  0,   0,   0,  -Y2,  0,   Y1,  0,   0,   0,  -Y2},
-                        {0,  0,  -Z1,  0,   Z2,  0,   0,   0,   Z1,  0,   Z2,  0},
-                        {0,  0,   0,  -C,   0,   0,   0,   0,   0,   C,   0,   0},
-                        {0,  0,  -Z2,  0,   Z4,  0,   0,   0,   Z2,  0,   Z3,  0},
-                        {0,  Y2,  0,   0,   0,   Y4,  0,  -Y2,  0,   0,   0,   Y3},
-
-
-                });
+                
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double> KG = Tt.Multiply(ke);
                 K_eG = KG.Multiply(T);
