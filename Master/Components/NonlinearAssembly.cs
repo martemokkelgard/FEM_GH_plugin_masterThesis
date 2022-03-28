@@ -473,6 +473,7 @@ namespace Master.Components
                 });
 
 
+
                 //N1 and N2 is linear shape function and is derived one (Translationin x dir) while the rest is derived twice for beams. 
 
                 _dN = Matrix<double>.Build.DenseOfArray(new double[,]
