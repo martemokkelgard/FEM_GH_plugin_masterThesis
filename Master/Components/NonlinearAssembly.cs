@@ -51,6 +51,7 @@ namespace Master.Components
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.item);
+            pManager.AddNumberParameter("umax", "Umax", "maximum displacement ", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -113,7 +114,7 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> u, out double M);
+            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -174,8 +175,12 @@ namespace Master.Components
 
             }
 
-            disp_lst.Add(new Point3d(u[0], u[1], u[2]));
-            rot_lst.Add(new Point3d(u[3], u[4], u[ 5]));
+            foreach (Vector uu in u)
+            {
+                disp_lst.Add(new Point3d(uu[0], uu[1], uu[2]));
+                rot_lst.Add(new Point3d(uu[3], uu[4], uu[5]));
+            }
+            
             // endrer output til liste med punkter
             for (int i = 0; i < pts.Count; i++)
             {
@@ -203,6 +208,7 @@ namespace Master.Components
             DA.SetDataList(5, strain);
             DA.SetDataList(6, stress);
             DA.SetData(7, M);
+            DA.SetData(8, umax);
 
 
         }
@@ -339,7 +345,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out Vector<double> _u, out double M)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -352,7 +358,13 @@ namespace Master.Components
 
             Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
-            
+
+            var u_max = new double();
+            double u_Max = 0;
+
+
+            List<Vector<double>> u_lst = new List<Vector<double>>();
+            List<double> M_lst = new List<double>();
 
             foreach (BarClass b in bars)
             {
@@ -382,6 +394,16 @@ namespace Master.Components
                 var B = dN;
                 u = N.Multiply(v);
 
+                u_lst.Add(u);
+
+                u_max = Math.Sqrt(Math.Pow(u[0], 2) + Math.Pow(u[1],2) + Math.Pow(u[2], 2) );
+
+                if ( u_max >  u_Max)
+                {
+                    u_Max = u_max;
+                }
+                
+
                 eps = B.Multiply(v);        //strain (3)
 
                 sigma = E * eps;            //stress = E*3
@@ -389,6 +411,7 @@ namespace Master.Components
 
                 _M = E * b.section.Iy * eps[4];
 
+                M_lst.Add(_M);
 
                 disp[node1*3] += S[0];
                 disp[node1 * 3+1] += S[1];
@@ -414,8 +437,9 @@ namespace Master.Components
             rotation = rot;
             strain = eps;
             stress = sigma;
-            _u = u;
-            M = _M;
+            umax = u_Max;
+            _u = u_lst;
+            M = M_lst;
 
         }
 
