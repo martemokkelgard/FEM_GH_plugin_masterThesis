@@ -129,7 +129,7 @@ namespace Master.Components
             List<double> stress = new List<double>();
             foreach (BarClass b in bars)
             {
-                double originLength = b.axis.Length;
+                double originLength = b.axis.GetLength();
                 double deformedLength = liness[b.Id].Length;
 
                 double dL = originLength - deformedLength;
@@ -349,8 +349,8 @@ namespace Master.Components
             foreach (BarClass b in bars)
             {
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length*1000;
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength()*1000;
                 double LL = Math.Pow(L, 2);
                 
                 //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
@@ -370,8 +370,8 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;    //NB! må kanskje endre J og G
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X,6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X,6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));
 
 
 
@@ -383,7 +383,7 @@ namespace Master.Components
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.Length;
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl,2) + Math.Pow(yl,2) , 0.5);
 
                 double cx = xl / l;
@@ -488,8 +488,8 @@ namespace Master.Components
             {
 
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length * 1000;
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength() * 1000;
                 //double LL = Math.Pow(L, 2);
 
                 //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
@@ -509,15 +509,15 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;    //NB! må kanskje endre J og G
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));
 
 
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.Length;
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;

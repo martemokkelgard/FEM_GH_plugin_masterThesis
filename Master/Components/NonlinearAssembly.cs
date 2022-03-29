@@ -100,7 +100,7 @@ namespace Master.Components
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
-            CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red, out Vector<double> R_red);
+            CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
             Matrix<double> invK = K_red.Inverse();
 
@@ -423,8 +423,8 @@ namespace Master.Components
         private static void CreateGenerelizedShapeFunc(List<BarClass> bars, Matrix<double> k_tot, double X , out Matrix<double> N, out Matrix<double> dN)
         {
 
-            Matrix<double> _N = DenseMatrix.OfArray(new double[4, 12]);
-            Matrix<double> _dN = DenseMatrix.OfArray(new double[4, 12]);
+            Matrix<double> _N = DenseMatrix.OfArray(new double[6, 12]);
+            Matrix<double> _dN = DenseMatrix.OfArray(new double[6, 12]);
 
             
 
@@ -432,8 +432,8 @@ namespace Master.Components
             {
                 
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length;
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength();
                 var x = X * L;
 
                 
@@ -466,9 +466,9 @@ namespace Master.Components
                 {N1,   0,     0,    0,    0,     0,    N2,     0,     0,     0,     0,    0},
                 {0,   N3,     0,    0,    0,    N4,     0,    N5,     0,     0,     0,   N6},
                 {0,    0,    N3,    0,  -N4,     0,     0,     0,    N5,     0,   -N6,    0},
-                {0,    0,     0,   N1,    0,     0,     0,     0,     0,    N2,     0,    0},
-                {0,    dN3,    0,    0,    0,   dN4,    0,     dN5,   0,     0,     0,   dN6},
-                {0,     0,    dN3,   0,   -dN4,  0,     0,     0,    dN5,    0,   -dN6,   0},
+                {0,    0,     0,    N1,   0,     0,     0,     0,     0,    N2,     0,    0},
+                {0,   dN3,    0,    0,    0,    dN4,    0,    dN5,    0,     0,     0,   dN6},
+                {0,    0,    dN3,   0,  -dN4,    0,     0,     0,    dN5,    0,   -dN6,   0},
 
                 });
 
@@ -512,8 +512,8 @@ namespace Master.Components
             {
 
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length * 1000;
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength() * 1000;
                
 
 
@@ -531,15 +531,15 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;    
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));
 
 
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.Length;
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
@@ -607,7 +607,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tott, Vector<double> Rvec, out Matrix<double> K_red, out Vector<double> R_red)
+        private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tott, Vector<double> Rvec, out Matrix<double> K_red)
         {
 
 
@@ -631,7 +631,7 @@ namespace Master.Components
             }
 
             K_red = K_tott;
-            R_red = Rvec;
+            
 
 
         }

@@ -14,7 +14,7 @@ namespace Master
         public int Id;
         public SectionClass section;
         public MaterialClass material;
-        public Line axis;
+        public Curve axis;
         public NodeClass startNode;
         public NodeClass endNode;
         
@@ -23,10 +23,10 @@ namespace Master
         public BarClass()
         { }
         
-        public BarClass(string _Name, Line _line, SectionClass _section, MaterialClass _material) 
+        public BarClass(string _Name, Curve _line, SectionClass _section, MaterialClass _material) 
         {
             Name = _Name;
-            axis= _line;
+            axis = _line;
             section = _section;
             material = _material;
         }
