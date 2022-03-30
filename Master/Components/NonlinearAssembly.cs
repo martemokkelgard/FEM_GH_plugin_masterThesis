@@ -97,7 +97,7 @@ namespace Master.Components
             
 
 
-            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out Matrix<double> k_eg);
+            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out List<Matrix<double>> Lk_eg);
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
@@ -114,7 +114,7 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
+            CreateForces(bars, pts, def, Lk_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -345,7 +345,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, Matrix<double> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> Lk_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -407,7 +407,7 @@ namespace Master.Components
                 eps = B.Multiply(v);        //strain (3)
 
                 sigma = E * eps;            //stress = E*3
-                S = k_eg * v;
+                S = Lk_eg[b.Id].Multiply(v);
 
                 _M = E * b.section.Iy * eps[4];
 
@@ -524,13 +524,14 @@ namespace Master.Components
         
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot, out Matrix<double> k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> L_k_eg)
 
         {
 
             int dofs = points.Count * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[6, 6]);
+            List<Matrix<double>> LK_eG = new List<Matrix<double>>();
 
             foreach (BarClass b in bars)
             {
@@ -539,7 +540,7 @@ namespace Master.Components
                 Curve currentLine = b.axis;
                 double L = currentLine.GetLength() * 1000;
                
-
+                
 
                 double X = b.section.CSA * b.material.youngsModolus / L;
                 double Y1 = 12.00 * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
@@ -606,6 +607,7 @@ namespace Master.Components
                 Matrix<double> KG = Tt.Multiply(ke);
                 K_eG = KG.Multiply(T);
 
+                LK_eG.Add(K_eG);
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
@@ -627,7 +629,7 @@ namespace Master.Components
             }
 
             k_tot = K_tot;
-            k_eg = K_eG;
+            L_k_eg = LK_eG;
 
         }
 
