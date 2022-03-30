@@ -39,9 +39,22 @@ namespace Master
             h = _h;
             tw = _tw;
             tf = _tf;
-            CSA = w * h -((w-2*tw)*(h-2*tf));
-            Iy = ( 1 / (12.0000) * w * Math.Pow(h,3) ) - ( 1 / (12.0000) * (w - 2*tw) * Math.Pow( (h - 2*tf), 3) );
-            Iz = (1 / (12.0000) * h * Math.Pow(w, 3)) - (1 / (12.0000) * (h - 2 * tf) * Math.Pow((w - 2 * tw), 3));
+
+            if (tw == 0)
+            {
+                CSA = w * h;
+                Iy = (1 / (12.0000) * w * Math.Pow(h, 3)) ;
+                Iz = (1 / (12.0000) * h * Math.Pow(w, 3)) ;
+            }
+
+            else
+            {
+                CSA = w * h - ((w - 2 * tw) * (h - 2 * tf));
+                Iy = (1 / (12.0000) * w * Math.Pow(h, 3)) - (1 / (12.0000) * (w - 2 * tw) * Math.Pow((h - 2 * tf), 3));
+                Iz = (1 / (12.0000) * h * Math.Pow(w, 3)) - (1 / (12.0000) * (h - 2 * tf) * Math.Pow((w - 2 * tw), 3));
+            }
+            
+            
            
 
             if (h > w)
