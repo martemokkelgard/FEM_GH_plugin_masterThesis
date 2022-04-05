@@ -15,13 +15,13 @@ using MathNet.Numerics.Integration;
 
 namespace Master.Components
 {
-    public class NonlinearAssembly : GH_Component
+    public class NonlinearAssembly2 : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public NonlinearAssembly()
-          : base("NonlinearAssembly", "Nickname",
+        public NonlinearAssembly2()
+          : base("NonlinearAssembly2", "Nickname",
               "Description",
               "Løve", "3DBeam")
         {
@@ -68,6 +68,7 @@ namespace Master.Components
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
+            List<NodeClass> nodes = new List<NodeClass>();
             double x = new double();
 
 
@@ -76,23 +77,38 @@ namespace Master.Components
             DA.GetDataList(2, lc);
             DA.GetData(3, ref x);
 
+            
 
-            List<Point3d> pts = new List<Point3d>();
-            foreach (BarClass b in bars)
+
+            
+            List<Point3d> pts = new List<Point3d>();  //making pointList from lines
+
+            for (int i = 0; i < bars.Count; i++)
             {
+                Curve L1 = bars[i].axis;
+                
+                double a = 0.5;                                             // * parameter for midnode 
 
-                if (!pts.Contains(b.startNode.pt))
+                pts.Add(L1.PointAtNormalizedLength(0));
+                               
+                pts.Add(L1.PointAtNormalizedLength(a));
+
+                pts.Add(L1.PointAtNormalizedLength(1));
+
+            }
+
+            for (int i = 0;i < pts.Count;i++)
+            {
+                for (int j = 0;j < pts.Count;j++)
                 {
-                    pts.Add(b.startNode.pt);
-                }
-                
-                pts.Add(b.midNode.pt);
-                
-                if (!pts.Contains(b.endNode.pt))
-                {
-                    pts.Add(b.endNode.pt);
+                    double tole = 0.00001;
+                    if (pts[i].DistanceTo(pts[j]) < tole && i!=j)
+                    {
+                        pts.Remove(pts[j]);
+                    }
                 }
             }
+
 
             List<int> BCList = CreateBCList(bcc, pts);
 
@@ -114,10 +130,10 @@ namespace Master.Components
             Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
-            CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
+            CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
+            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -126,28 +142,7 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[6 * i] / 1000, pts[i].Y + def[6 * i + 1] / 1000, pts[i].Z + def[6 * i + 2] / 1000));
             }
 
-            //var outTree = DataTreeFromVectorList(forces);
-
-            /*
-            List<Line> liness = new List<Line>();
-            for (int i = 0; i < displNodes.Count - 1; i++)
-            {
-                Line line = new Line(displNodes[i], displNodes[i + 1]);
-                liness.Add(line);
-            }
-            List<double> strain = new List<double>();   //strain and stress
-            List<double> stress = new List<double>();
-            foreach (BarClass b in bars)
-            {
-                double originLength = b.axis.Length;
-                double deformedLength = liness[b.Id].Length;
-                double dL = originLength - deformedLength;
-                double e = dL / originLength;
-                strain.Add(e);
-                double s = e * b.material.youngsModolus;
-                stress.Add(s);
-            }
-            */
+            
 
             //lage lister med displacement
 
@@ -165,29 +160,33 @@ namespace Master.Components
                 }
 
 
-                if (Math.Abs(rotation[i]) <= 0.00001)
+                if (Math.Abs(moment[i]) <= 0.00001)
                 {
-                    rotation[i] = 0;
+                    moment[i] = 0;
                 }
 
             }
 
+            
+
             foreach (Vector uu in u)
             {
-                disp_lst.Add(new Point3d(uu[0], uu[1], uu[2]));
-                rot_lst.Add(new Point3d(uu[3], uu[4], uu[5]));
+
+                int tol = 6;
+                disp_lst.Add(new Point3d(Math.Round(uu[0], tol), Math.Round(uu[1], tol), Math.Round(uu[2], tol)));
+                rot_lst.Add(new Point3d(Math.Round(uu[3], tol), Math.Round(uu[4], tol), Math.Round(uu[5], tol)));
             }
 
 
             // endrer output til liste med punkter
             for (int i = 0; i < pts.Count; i++)
             {
-
+                
 
                 if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1) | BCList.Contains(i * 6 + 2) | BCList.Contains(i * 6 + 3) | BCList.Contains(i * 6 + 4) | BCList.Contains(i * 6 + 5))
                 {
                     force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
-                    mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
+                    mom_lst.Add(new Point3d(moment[i * 3], moment[i * 3 + 1], moment[i * 3 + 2]));
 
                 }
 
@@ -268,9 +267,23 @@ namespace Master.Components
 
             return tree;
         }
-
+       
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
+            /*
+            List<int> globalIds = new List<int>();
+            foreach (var b in _Bars)
+            {
+                globalIds.Add(b.startNode.Id);
+                globalIds.Add(b.midNode.Id);
+                globalIds.Add(b.endNode.Id);
+            }
+            globalIds.Distinct();
+            
+            int sizeOfR = globalIds.Count*6;
+            */
+
+
 
             Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 6]);
 
@@ -343,7 +356,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
+        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -354,8 +367,8 @@ namespace Master.Components
             Vector<double> v = SparseVector.OfEnumerable(new double[18]);
             var _M = new double();
 
-            Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
-            Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> forc = SparseVector.OfEnumerable(new double[points.Count * 3]);
 
             double u_Max = 0;
 
@@ -415,46 +428,46 @@ namespace Master.Components
                 eps = B.Multiply(v);        //strain (3)
 
                 sigma = E * eps;            //stress = E*3
-                S = k_eg[b.Id] * v;
+                S = k_eg[b.Id].Multiply(v);
 
-                _M = E * b.section.Iy * eps[4];
+                _M = E * b.section.Iy * eps[2];
 
                 M_lst.Add(_M);
 
 
-                disp[node1 * 3] += S[0];
-                disp[node1 * 3 + 1] += S[1];
-                disp[node1 * 3 + 2] += S[2];
+                forc[node1 * 3] += S[0];
+                forc[node1 * 3 + 1] += S[1];
+                forc[node1 * 3 + 2] += S[2];
 
-                disp[node3 * 3] += S[6];
-                disp[node3 * 3 + 1] += S[7];
-                disp[node3 * 3 + 2] += S[8];
+                forc[node3 * 3] += S[6];
+                forc[node3 * 3 + 1] += S[7];
+                forc[node3 * 3 + 2] += S[8];
 
-                disp[node2 * 3] += S[12];
-                disp[node2 * 3 + 1] += S[13];
-                disp[node2 * 3 + 2] += S[14];
-
-
-                rot[node1 * 3] += S[3];
-                rot[node1 * 3 + 1] += S[4];
-                rot[node1 * 3 + 2] += S[5];
-
-                rot[node3 * 3] += S[9];
-                rot[node3 * 3 + 1] += S[10];
-                rot[node3 * 3 + 2] += S[11];
+                forc[node2 * 3] += S[12];
+                forc[node2 * 3 + 1] += S[13];
+                forc[node2 * 3 + 2] += S[14];
 
 
-                rot[node2 * 3] += S[15];
-                rot[node2 * 3 + 1] += S[16];
-                rot[node2 * 3 + 2] += S[17];
+                mom[node1 * 3] += S[3];
+                mom[node1 * 3 + 1] += S[4];
+                mom[node1 * 3 + 2] += S[5];
+
+                mom[node3 * 3] += S[9];
+                mom[node3 * 3 + 1] += S[10];
+                mom[node3 * 3 + 2] += S[11];
+
+
+                mom[node2 * 3] += S[15];
+                mom[node2 * 3 + 1] += S[16];
+                mom[node2 * 3 + 2] += S[17];
 
 
 
             }
 
 
-            forces = disp;
-            rotation = rot;
+            forces = forc;
+            moment = mom;
             strain = eps;
             stress = sigma;
             umax = u_Max;
@@ -464,7 +477,7 @@ namespace Master.Components
         }
 
 
-        private static void CreateGenerelizedShapeFunc(List<BarClass> bars, Matrix<double> k_tot, double X, out Matrix<double> N, out Matrix<double> dN)
+        private static void CreateGenerelizedShapeFunc(List<BarClass> bars, double X, out Matrix<double> N, out Matrix<double> dN)
         {
 
             Matrix<double> _N = DenseMatrix.OfArray(new double[6, 18]);
@@ -477,42 +490,42 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = currentLine.GetLength();
+                double L = currentLine.GetLength()*1000.00;
                 var x = X * L;
 
 
-                double N1 = 2 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 3*x/L + 1;                                //axial translation in node 1
-                double N2 = 4*x/L - 4*Math.Pow(x,2)/(Math.Pow(L,2));                                          //axial translation in midside node
-                double N3 = 2*Math.Pow(x,2)/(Math.Pow(L,2)) - x/L;                                            //axial translation in node 2
+                double N1 = 2.00 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 3.00*x/L + 1.00;                                //axial translation in node 1
+                double N2 = 4.00*x/L - 4.00*Math.Pow(x,2)/(Math.Pow(L,2));                                          //axial translation in midside node
+                double N3 = 2.00*Math.Pow(x,2)/(Math.Pow(L,2)) - x/L;                                            //axial translation in node 2
 
-                double N4 = 66*Math.Pow(x,3)/(Math.Pow(L,3)) - 23 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 68 * Math.Pow(x, 4) / (Math.Pow(L, 4)) + 24 * Math.Pow(x, 5) / (Math.Pow(L, 5)) + 1;             //translation node 1
-                double N5 = x - 6*Math.Pow(x,2)/L + 13*Math.Pow(x,3)/(Math.Pow(L,2)) - 12*Math.Pow(x,4)/(Math.Pow(L,3))+ 4 * Math.Pow(x,5)/(Math.Pow(L,4));                                              //rotation node 1
+                double N4 = 66.00*Math.Pow(x,3)/(Math.Pow(L,3)) - 23.00 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 68.00 * Math.Pow(x, 4) / (Math.Pow(L, 4)) + 24.00 * Math.Pow(x, 5) / (Math.Pow(L, 5)) + 1.00;             //translation node 1
+                double N5 = - x + 6.00*Math.Pow(x,2)/L - 13.00*Math.Pow(x,3)/(Math.Pow(L,2)) + 12.00*Math.Pow(x,4)/(Math.Pow(L,3))- 4.00 * Math.Pow(x,5)/(Math.Pow(L,4));                                              //rotation node 1
 
-                double N6 = 16 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 32 * Math.Pow(x, 3) / (Math.Pow(L, 3)) + 16 * Math.Pow(x, 4) / (Math.Pow(L, 4));                                                  //translation midside node
-                double N7 = 32 * Math.Pow(x, 3) / Math.Pow(L, 2) - 8 * Math.Pow(x, 2) /L - 40 * Math.Pow(x, 4) / (Math.Pow(L, 3)) + 16 * Math.Pow(x, 5) / (Math.Pow(L, 4));                           //rotation midside node
+                double N6 = 16.00 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 32.00 * Math.Pow(x, 3) / (Math.Pow(L, 3)) + 16.00 * Math.Pow(x, 4) / (Math.Pow(L, 4));                                                  //translation midside node
+                double N7 = -32.00 * Math.Pow(x, 3) / Math.Pow(L, 2) + 8.00 * Math.Pow(x, 2) /L + 40.00 * Math.Pow(x, 4) / (Math.Pow(L, 3)) - 16.00 * Math.Pow(x, 5) / (Math.Pow(L, 4));                           //rotation midside node
                
-                double N8 = 7 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 34 * Math.Pow(x, 3) / (Math.Pow(L, 3)) + 52 * Math.Pow(x, 4) / (Math.Pow(L, 4)) - 24 * Math.Pow(x, 5) / (Math.Pow(L, 5));          //translation node 2
-                double N9 = 5 * Math.Pow(x, 3) / (Math.Pow(L, 2)) - Math.Pow(x, 2) / L - 8 * Math.Pow(x, 4) / (Math.Pow(L, 3)) + 4 * Math.Pow(x, 5) / (Math.Pow(L, 4));                                 //rotation node 2
+                double N8 = 7.00 * Math.Pow(x, 2) / (Math.Pow(L, 2)) - 34.00 * Math.Pow(x, 3) / (Math.Pow(L, 3)) + 52.00 * Math.Pow(x, 4) / (Math.Pow(L, 4)) - 24.00 * Math.Pow(x, 5) / (Math.Pow(L, 5));          //translation node 2
+                double N9 = - 5.00 * Math.Pow(x, 3) / (Math.Pow(L, 2)) + Math.Pow(x, 2) / L + 8.00 * Math.Pow(x, 4) / (Math.Pow(L, 3)) - 4.00 * Math.Pow(x, 5) / (Math.Pow(L, 4));                                 //rotation node 2
 
-                double dN1 = 4 * x / Math.Pow(L, 2) - 3 / L;
-                double dN2 = 4/L - 8*x/ Math.Pow(L, 2);
-                double dN3 = 4 * x / Math.Pow(L, 2) - 1 / L;
+                double dN1 = 4.00 * x / Math.Pow(L, 2) - 3.00 / L;
+                double dN2 = 4.00/L - 8.00*x/ Math.Pow(L, 2);
+                double dN3 = 4.00 * x / Math.Pow(L, 2) - 1.00 / L;
 
-                double dN4 = 198*Math.Pow(x,2) / Math.Pow(L, 3) - 46*x/Math.Pow(L,2) - 272 * Math.Pow(x,3) /Math.Pow(L,4) + 120 * Math.Pow(x,4)/Math.Pow(L,5);
-                double dN5 = 39 * Math.Pow(x, 2) / Math.Pow(L, 2) - 12 * x / L - 48 * Math.Pow(x, 3) / Math.Pow(L, 3) + 20 * Math.Pow(x, 4) / Math.Pow(L, 4) + 1;
-                double dN6 = 32 * x / Math.Pow(L, 2) - 96 * Math.Pow(x, 2) / Math.Pow(L, 3) + 64 * Math.Pow(x, 3) / Math.Pow(L, 4);
-                double dN7 = 96 * Math.Pow(x, 2) / Math.Pow(L, 2) - 16 * x / L - 160 * Math.Pow(x, 3) / Math.Pow(L, 3) + 80 * Math.Pow(x, 4) / Math.Pow(L, 4);
-                double dN8 = 14 * x / Math.Pow(L, 2) - 102 * Math.Pow(x, 2) / Math.Pow(L, 3) + 208 * Math.Pow(x, 3) / Math.Pow(L, 4) - 120 * Math.Pow(x, 4) / Math.Pow(L, 5);
-                double dN9 = 15 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * x / L - 32 * Math.Pow(x, 3) / Math.Pow(L, 3) + 20 * Math.Pow(x, 4) / Math.Pow(L, 4);
+                double dN4 = 198.00*Math.Pow(x,2) / Math.Pow(L, 3) - 46.00*x/Math.Pow(L,2) - 272.00 * Math.Pow(x,3) /Math.Pow(L,4) + 120.00 * Math.Pow(x,4)/Math.Pow(L,5);
+                double dN5 = - 39.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 12.00 * x / L + 48.00 * Math.Pow(x, 3) / Math.Pow(L, 3) - 20.00 * Math.Pow(x, 4) / Math.Pow(L, 4) - 1.00;
+                double dN6 = 32.00 * x / Math.Pow(L, 2) - 96.00 * Math.Pow(x, 2) / Math.Pow(L, 3) + 64.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
+                double dN7 = -96.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 16.00 * x / L + 160.00 * Math.Pow(x, 3) / Math.Pow(L, 3) - 80.00 * Math.Pow(x, 4) / Math.Pow(L, 4);
+                double dN8 = 14.00 * x / Math.Pow(L, 2) - 102.00 * Math.Pow(x, 2) / Math.Pow(L, 3) + 208.00 * Math.Pow(x, 3) / Math.Pow(L, 4) - 120.00 * Math.Pow(x, 4) / Math.Pow(L, 5);
+                double dN9 = -15.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2.00 * x / L + 32.00 * Math.Pow(x, 3) / Math.Pow(L, 3) - 20.00 * Math.Pow(x, 4) / Math.Pow(L, 4);
 
-                double ddN4 = 396 * x / Math.Pow(L, 3) - 46/Math.Pow(L,2) - 816 * Math.Pow(x, 2) / Math.Pow(L, 4) + 480 * Math.Pow(x, 3) / Math.Pow(L, 5);
-                double ddN5 = 78 * x / Math.Pow(L, 2) - 12/L - 144 * Math.Pow(x, 2) / Math.Pow(L, 3) + 80 * Math.Pow(x, 3) / Math.Pow(L, 4);
+                double ddN4 = 396.00 * x / Math.Pow(L, 3) - 46.00/Math.Pow(L,2) - 816.00 * Math.Pow(x, 2) / Math.Pow(L, 4) + 480.00 * Math.Pow(x, 3) / Math.Pow(L, 5);
+                double ddN5 = -78.00 * x / Math.Pow(L, 2) + 12.00/L + 144.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 80.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
 
-                double ddN6 = 32 / Math.Pow(L, 2) - 192 *x / Math.Pow(L, 3) + 192 * Math.Pow(x, 2) / Math.Pow(L, 4);
-                double ddN7 = 192 * x / Math.Pow(L, 2) - 16/L - 480 * Math.Pow(x, 2) / Math.Pow(L, 3) + 320 * Math.Pow(x, 3) / Math.Pow(L, 4);
+                double ddN6 = 32.00 / Math.Pow(L, 2) - 192.00 *x / Math.Pow(L, 3) + 192.00 * Math.Pow(x, 2) / Math.Pow(L, 4);
+                double ddN7 = -192.00 * x / Math.Pow(L, 2) + 16.00/L + 480.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 320.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
 
-                double ddN8 = 14 / Math.Pow(L, 2) - 204 * x / Math.Pow(L, 3) + 624 * Math.Pow(x, 2) / Math.Pow(L, 4) - 480 * Math.Pow(x, 3) / Math.Pow(L, 5);
-                double ddN9 = 30 * x / Math.Pow(L, 2) - 2/L - 96 * Math.Pow(x, 2) / Math.Pow(L, 3) + 80 * Math.Pow(x, 3) / Math.Pow(L, 4);
+                double ddN8 = 14.00 / Math.Pow(L, 2) - 204.00 * x / Math.Pow(L, 3) + 624.00 * Math.Pow(x, 2) / Math.Pow(L, 4) - 480.00 * Math.Pow(x, 3) / Math.Pow(L, 5);
+                double ddN9 = -30.00 * x / Math.Pow(L, 2) + 2.00/L + 96.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 80.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
 
                 // første rad blir ux = N1*ux1 + N2*ux2
                 //andre rad blir uy = N3*uy1 + N5*uy2 etc.
@@ -572,46 +585,46 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = currentLine.GetLength() * 1000;
+                double L = currentLine.GetLength() * 1000.00;
 
 
 
-                double X1 = (7/3) * b.section.CSA * b.material.youngsModolus / L;
-                double X2 = (-8/3) * b.section.CSA * b.material.youngsModolus / L;
-                double X3 = (1/3) * b.section.CSA * b.material.youngsModolus / L;
-                double X4 = (16 / 3) * b.section.CSA * b.material.youngsModolus / L;
+                double X1 = 7.00/3.00 * b.section.CSA * b.material.youngsModolus / L;
+                double X2 = -8.00/3.00 * b.section.CSA * b.material.youngsModolus / L;
+                double X3 = 1.00/3.00 * b.section.CSA * b.material.youngsModolus / L;
+                double X4 = 16.00 / 3.00 * b.section.CSA * b.material.youngsModolus / L;
 
 
-                double Y1 = (5092/35) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y2 = (1138/35) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));  
-                double Y3 = (-512 / 5) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y4 = (384 / 7) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
-                double Y5 = (-1508 / 35) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y6 = (242 / 35) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
-                double Y7 = (332/35) * b.material.youngsModolus * b.section.Iz / L;
-                double Y8 = (-128 / 5) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
-                double Y9 = (64/7) * b.material.youngsModolus * b.section.Iz / L;
-                double Y10 = (38 / 35) * b.material.youngsModolus * b.section.Iz / L;
-                double Y11 = (1024 / 5) * b.material.youngsModolus * b.section.Iz / Math.Pow(L,3);
-                double Y12 = (256 / 7) * b.material.youngsModolus * b.section.Iz / L;
+                double Y1 = (5092.00/35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
+                double Y2 = (-1138.00/35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));  
+                double Y3 = (-512.00 / 5.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
+                double Y4 = (-384.00 / 7.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y5 = (-1508.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
+                double Y6 = (-242.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y7 = (332.00/35.00) * b.material.youngsModolus * b.section.Iz / L;
+                double Y8 = (128.00 / 5.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y9 = (64.00/7.00) * b.material.youngsModolus * b.section.Iz / L;
+                double Y10 = (38.00 / 35.00) * b.material.youngsModolus * b.section.Iz / L;
+                double Y11 = (1024.00 / 5.00) * b.material.youngsModolus * b.section.Iz / Math.Pow(L,3);
+                double Y12 = (256.00 / 7.00) * b.material.youngsModolus * b.section.Iz / L;
 
-                double Z1 = (5092 / 35) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z2 = (1138 / 35) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));  
-                double Z3 = (-512 / 5) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z4 = (384 / 7) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
-                double Z5 = (-1508 / 35) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z6 = (242 / 35) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
-                double Z7 = (332 / 35) * b.material.youngsModolus * b.section.Iy / L;
-                double Z8 = (-128 / 5) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
-                double Z9 = (64 / 7) * b.material.youngsModolus * b.section.Iy / L;
-                double Z10 = (38 / 35) * b.material.youngsModolus * b.section.Iy / L;
-                double Z11 = (1024 / 5) * b.material.youngsModolus * b.section.Iy / Math.Pow(L,3);
-                double Z12 = (256 / 7) * b.material.youngsModolus * b.section.Iy / L;
+                double Z1 = (5092.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
+                double Z2 = (-1138.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));  
+                double Z3 = (-512.00 / 5.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
+                double Z4 = (-384.00 / 7.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z5 = (-1508.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
+                double Z6 = (-242.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z7 = (332.00 / 35.00) * b.material.youngsModolus * b.section.Iy / L;
+                double Z8 = (128.00 / 5.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z9 = (64.00 / 7.00) * b.material.youngsModolus * b.section.Iy / L;
+                double Z10 = (38.00 / 35.00) * b.material.youngsModolus * b.section.Iy / L;
+                double Z11 = (1024.00 / 5.00) * b.material.youngsModolus * b.section.Iy / Math.Pow(L,3);
+                double Z12 = (256.00 / 7.00) * b.material.youngsModolus * b.section.Iy / L;
 
-                double C1 = (7 / 3) * (b.material.G * b.section.J) / L;
-                double C2 = (-8 / 3) * (b.material.G * b.section.J) / L;
-                double C3 = (1 / 3) * (b.material.G * b.section.J) / L;
-                double C4 = (16 / 3) * (b.material.G * b.section.J) / L;
+                double C1 = (7.00 / 3.00) * (b.material.G * b.section.J) / L;
+                double C2 = (-8.00 / 3.00) * (b.material.G * b.section.J) / L;
+                double C3 = (1.00 / 3.00) * (b.material.G * b.section.J) / L;
+                double C4 = (16.00 / 3.00) * (b.material.G * b.section.J) / L;
 
                 Point3d p1 = b.startNode.pt;
                 Point3d p2 = b.endNode.pt;
@@ -678,21 +691,23 @@ namespace Master.Components
                 int node2 = b.endNode.Id;
                 int node3 = b.midNode.Id;
 
+                int tol = 15;
+
                 for (int i = 0; i < K_eG.RowCount / 3; i++)
                 {
                     for (int j = 0; j < K_eG.ColumnCount / 3; j++)
                     {
-                        K_tot[node1 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i, j], 5);
-                        K_tot[node1 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i, j + 6], 5);
-                        K_tot[node1 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i, j + 12], 5);
+                        K_tot[node1 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i, j], tol);
+                        K_tot[node1 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i, j + 6], tol);
+                        K_tot[node1 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i, j + 12], tol);
 
-                        K_tot[node3 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i + 6, j], 5);
-                        K_tot[node3 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i + 6, j + 6], 5);
-                        K_tot[node3 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i + 6, j + 12], 5);
+                        K_tot[node3 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i + 6, j], tol);
+                        K_tot[node3 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i + 6, j + 6], tol);
+                        K_tot[node3 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i + 6, j + 12], tol);
 
-                        K_tot[node2 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i + 12, j], 5);
-                        K_tot[node2 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i + 12, j + 6], 5);
-                        K_tot[node2 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i + 12, j + 12], 5);
+                        K_tot[node2 * 6 + i, node1 * 6 + j] += Math.Round(K_eG[i + 12, j], tol);
+                        K_tot[node2 * 6 + i, node3 * 6 + j] += Math.Round(K_eG[i + 12, j + 6], tol);
+                        K_tot[node2 * 6 + i, node2 * 6 + j] += Math.Round(K_eG[i + 12, j + 12], tol);
 
                     }
 

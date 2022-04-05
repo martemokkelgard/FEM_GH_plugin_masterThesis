@@ -55,8 +55,19 @@ namespace Master.Components
             DA.GetData(3, ref sec);
             List<BarClass> bars = new List<BarClass>();
 
+            /*
+            lines[0].PointAtNormalizedLength(0);
+            lines[0].PointAtNormalizedLength(0.5);
+            lines[0].PointAtNormalizedLength(1);
 
-            double x = 0.5;                                 // * parameter for midnode 
+            double minpdomain = lines[0].Domain[0];
+            double maxpdomain = lines[0].Domain[1];
+            double middomain = minpdomain + (maxpdomain - minpdomain) / 2;
+            lines[0].PointAt(minpdomain);
+            lines[0].PointAt(middomain);
+            lines[0].PointAt(maxpdomain);
+            */
+
 
             //code
             foreach (Curve l in lines)  //making barsClass objects of lines
@@ -76,19 +87,26 @@ namespace Master.Components
             {
                 Curve L1 = lines[i];
                 
+                double a = 0.5;                                             // * parameter for midnode 
 
-                if (!pts.Contains(L1.PointAtStart))
+                pts.Add(L1.PointAtNormalizedLength(0));
+                               
+                pts.Add(L1.PointAtNormalizedLength(a));
+
+                pts.Add(L1.PointAtNormalizedLength(1));
+
+            }
+
+            for (int i = 0;i < pts.Count;i++)
+            {
+                for (int j = 0;j < pts.Count;j++)
                 {
-                    pts.Add(L1.PointAtStart);
+                    double tol = 0.00001;
+                    if (pts[i].DistanceTo(pts[j]) < tol && i!=j)
+                    {
+                        pts.Remove(pts[j]);
+                    }
                 }
-
-                pts.Add(L1.PointAt(x));
-
-                if (!pts.Contains(L1.PointAtEnd))
-                {
-                    pts.Add(L1.PointAtEnd);
-                }
-
             }
 
             List<NodeClass> nodes = new List<NodeClass>();  //making nodeClass objects of points
@@ -101,22 +119,30 @@ namespace Master.Components
             for (int i = 0; i < nodes.Count; i++)   //giving id to nodeClass objects
             {
                 nodes[i].Id = i;
+                
 
                 foreach (BarClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
+                    
+                    double a = 0.5;                                             // * parameter for midnode 
+                    double tol = 0.001;
 
-
-                    if (l.axis.PointAtStart == nodes[i].pt)
+                    if (l.axis.PointAtStart.DistanceTo(nodes[i].pt)<tol)
                     {
                         l.startNode = nodes[i];
                     }
-                    if (l.axis.PointAtEnd == nodes[i].pt)
-                    {
-                        l.endNode = nodes[i];
-                    }
-                    if (l.axis.PointAt(x) == nodes[i].pt)
+
+
+                    if (l.axis.PointAtNormalizedLength(a).DistanceTo(nodes[i].pt)< tol)
                     {
                         l.midNode = nodes[i];
+                    }
+
+                    
+
+                    if (l.axis.PointAtEnd.DistanceTo(nodes[i].pt)< tol)
+                    {
+                        l.endNode = nodes[i];
                     }
 
 
