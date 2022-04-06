@@ -14,7 +14,7 @@ namespace Master.Components
         public BoundaryConditions()
           : base("BoundaryConditions", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -94,7 +94,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("67B07F7C-EC63-4E79-A1CC-80168B002FBC"); }
+            get { return new Guid("af95171f-3b5c-4e23-866d-58642e5021b2"); }
         }
     }
 }
