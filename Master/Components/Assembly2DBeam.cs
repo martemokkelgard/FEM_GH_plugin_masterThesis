@@ -22,7 +22,7 @@ namespace Master.Components
         public Assembly2DBeam()
           : base("Assembly2DBeam", "Nickname",
               "Description",
-              "Løve", "2DBeam")
+              "Panda", "2DBeam")
         {
         }
 
@@ -546,7 +546,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DDB74701-399A-4352-B4DC-1F175E566460"); }
+            get { return new Guid("8709d6e3-bd61-4d51-8002-f13e0a49af92"); }
         }
     }
 }

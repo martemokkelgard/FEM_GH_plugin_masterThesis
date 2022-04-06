@@ -14,7 +14,7 @@ namespace Master.Components
         public CreateBar()
           : base("CreateBar", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Panda", "2DBeam")
         {
         }
 
@@ -138,7 +138,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("A5FAD6C5-F8A4-44BC-A8D3-FDF88A0CB043"); }
+            get { return new Guid("1f786f0e-05c2-4290-84db-b5e2f0840d23"); }
         }
     }
 }

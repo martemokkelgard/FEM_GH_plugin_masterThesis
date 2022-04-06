@@ -14,7 +14,7 @@ namespace Master.Components
         public Section()
           : base("Sectioncs", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Panda", "Properties")
         {
         }
 
@@ -83,7 +83,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("D6B5319A-CE46-464C-ABFF-EC3CCC6DFB5B"); }
+            get { return new Guid("d64b9e8a-60d4-41ea-9175-742c48c8a889"); }
         }
     }
 }
