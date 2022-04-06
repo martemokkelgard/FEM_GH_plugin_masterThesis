@@ -12,7 +12,7 @@ namespace Master.Components
         /// Initializes a new instance of the Sectioncs class.
         /// </summary>
         public Section()
-          : base("Sectioncs", "Nickname",
+          : base("Section", "Nickname",
               "Description",
               "Panda", "3DTruss")
         {
