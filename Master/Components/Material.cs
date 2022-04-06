@@ -14,7 +14,7 @@ namespace Master.Components
         public Material()
           : base("Material", "Nickname",
               "Description",
-              "Panda", "3DTruss")
+              "Panda", "Properties")
         {
         }
 

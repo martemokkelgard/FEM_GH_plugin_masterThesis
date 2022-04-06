@@ -14,7 +14,7 @@ namespace Master.Components
         public Section()
           : base("Section", "Nickname",
               "Description",
-              "Panda", "3DTruss")
+              "Panda", "Properties")
         {
         }
 
