@@ -318,7 +318,7 @@ namespace Master.Components
         {
 
             
-            Vector<double> v = SparseVector.OfEnumerable(new double[4]);
+            
             Vector<double> S;
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 2]);
 
