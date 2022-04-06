@@ -647,7 +647,7 @@ namespace Master.Components
                 double cz = zl / l;
 
                 double s = (p2.Z - p1.Z) / l;
-                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p2.Y), 2), 0.5)) / l;
+                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
