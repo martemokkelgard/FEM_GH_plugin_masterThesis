@@ -14,7 +14,7 @@ namespace Master.Components
         public CreateLineLoad()
           : base("CreateLineLoad", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -81,7 +81,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("1DB78A50-8DB2-4E17-8117-25078F75EFC8"); }
+            get { return new Guid("1b6fd7da-f9d7-4d42-863a-71175e7448ea"); }
         }
     }
 }

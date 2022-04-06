@@ -21,9 +21,9 @@ namespace Master.Components
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
         public NonlinearAssembly2()
-          : base("NonlinearAssembly2", "Nickname",
+          : base("NonlinearAssembly", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -773,7 +773,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DDB74701-399A-4352-B4DC-1F175E566460"); }
+            get { return new Guid("507f24f1-255b-4704-919f-ea03005e4650"); }
         }
     }
 }

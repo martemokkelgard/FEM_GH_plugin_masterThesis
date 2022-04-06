@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
@@ -12,15 +13,15 @@ using MathNet.Numerics.Integration;
 
 namespace Master.Components
 {
-    public class elementStiffnessMatrix : GH_Component
+    public class ElementStiffnessMatrix : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the elementStiffnessMatrix class.
         /// </summary>
-        public elementStiffnessMatrix()
-          : base("elementStiffnessMatrix", "Nickname",
+        public ElementStiffnessMatrix()
+          : base("ElementStiffnessMatrix", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -46,6 +47,7 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+
         }
 
         /// <summary>
@@ -66,7 +68,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("3D581D1C-C41D-492F-BDAA-1941E5820720"); }
+            get { return new Guid("d3c24a01-835f-4bac-bd49-42be0925efc8"); }
         }
     }
 }

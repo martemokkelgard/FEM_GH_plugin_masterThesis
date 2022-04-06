@@ -14,7 +14,7 @@ namespace Master.Components
         public CreateMomentForce()
           : base("CreateMomentForce", "Nickname",
               "Description",
-              "Category", "Subcategory")
+              "Panda", "3DBeam")
         {
         }
 
@@ -87,7 +87,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DB0D35C6-F075-4CF7-90E9-1D44F7C74C2A"); }
+            get { return new Guid("83489457-ad76-4d3e-b757-22f1255d3aa8"); }
         }
     }
 }
