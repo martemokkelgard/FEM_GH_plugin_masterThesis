@@ -14,7 +14,7 @@ namespace Master.Components
         public BoundaryConditions()
           : base("BoundaryConditions", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Panda", "2DTruss")
         {
         }
 

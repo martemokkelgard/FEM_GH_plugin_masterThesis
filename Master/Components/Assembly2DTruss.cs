@@ -19,7 +19,7 @@ namespace Master.Components
         public Assembly2DTruss()
           : base("Assembly2DTruss", "Nickname",
               "Description",
-              "Løve", "2DTruss")
+              "Panda", "2DTruss")
         {
         }
 
