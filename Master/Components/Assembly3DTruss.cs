@@ -21,7 +21,7 @@ namespace Master.Components
         public Assembly3DTruss()
           : base("Assembly3DTruss", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DTruss")
         {
         }
 
@@ -511,7 +511,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DDB74701-399A-4352-B4DC-1F175E566460"); }
+            get { return new Guid("112f2acf-8867-4841-af90-7c42c7161efa"); }
         }
     }
 }

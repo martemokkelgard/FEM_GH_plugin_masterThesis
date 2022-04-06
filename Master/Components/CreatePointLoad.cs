@@ -14,7 +14,7 @@ namespace Master.Components
         public CreatePointLoad()
           : base("PointLoad", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DTruss")
         {
         }
 
@@ -85,7 +85,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("ED282DDC-4338-474F-BBB1-0B01FD70D9F5"); }
+            get { return new Guid("2663c548-5709-4e62-89aa-017caaeda946"); }
         }
     }
 }

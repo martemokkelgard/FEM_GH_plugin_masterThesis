@@ -14,7 +14,7 @@ namespace Master.Components
         public BoundaryConditions()
           : base("BoundaryConditions", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DTruss")
         {
         }
 
@@ -84,7 +84,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("67B07F7C-EC63-4E79-A1CC-80168B002FBC"); }
+            get { return new Guid("76e696b1-e619-4a8f-98af-7844c6a67afc"); }
         }
     }
 }
