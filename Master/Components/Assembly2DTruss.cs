@@ -6,6 +6,8 @@ using Rhino.Geometry;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
+using Grasshopper.Kernel.Data;
+using Grasshopper.Kernel.Types;
 
 //hei
 
@@ -38,12 +40,14 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+
             pManager.AddPointParameter("Displacement [mm]", "def", "Displacement [mm] in nodes", GH_ParamAccess.list);
             pManager.AddPointParameter("Reaction Forces [N]", "F", "Forces in support points", GH_ParamAccess.list);
             pManager.AddPointParameter("Position of Supports", "PS", "Position for support points", GH_ParamAccess.list);
             pManager.AddPointParameter("Displacement of Nodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "S", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
+
 
         }
 
@@ -57,24 +61,21 @@ namespace Master.Components
             
             //input
             
-            
-            //List<Point3d> BcPts = new List<Point3d>();  //hei
-            //List<bool> BcValue = new List<bool>();
+
             List<Point3d> LoadPts = new List<Point3d>();
             List<Vector3d> LoadVec = new List<Vector3d>();
-
-            //MaterialClass mat = new MaterialClass();
-            //SectionClass sec = new SectionClass();
             List<BarClass> bars = new List<BarClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
 
             
-            //int node1 = bars[1].endNode.Id;
 
             DA.GetDataList(0, bars);
-            DA.GetDataList(1,  bcc);
+            DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
+
+
+            //code
 
 
             foreach (var load in lc)
@@ -83,8 +84,6 @@ namespace Master.Components
                 LoadVec.Add(load.LoadVec);
             }
 
-
-            //code
 
             List<Point3d> pts = new List<Point3d>();
             foreach (BarClass b in bars)
@@ -101,6 +100,7 @@ namespace Master.Components
             }
             
             List<int> BCList = CreateBCList(bcc, pts);
+
             Vector<double> LoadList = CreateLoadList(lc, pts);
             List<int> BC = new List<int>();
 
@@ -112,20 +112,25 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out Matrix<double> K_red);
 
+           
+            
+
             var invK = K_red.Inverse();
             
-            var def = invK.Multiply(R);
+            var def = invK.Multiply(R);     //r = K^-1 * R --> finding displacements
 
-            var displNodes = new List<Point3d>();
+            var displNodes = new List<Point3d>();   //showing the displacement of the nodes in Rhino
+
 
 
             CreateForces(bars, pts, def, out Vector<double> forces);
 
 
+
+
             for (int i =0; i< pts.Count; i++)
             {
 
-                
                 displNodes.Add(new Point3d(pts[i].X + def[2 * i]/1000, pts[i].Y , pts[i].Z + def[2 * i + 1]/1000));
             }
 
@@ -189,6 +194,7 @@ namespace Master.Components
             }
 
 
+            
 
             //output
             DA.SetDataList(0, disp_lst);
@@ -200,6 +206,25 @@ namespace Master.Components
             DA.SetDataList(3, displNodes);
             DA.SetDataList(4, strain);
             DA.SetDataList(5, stress);
+        }
+
+        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
+        {
+            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
+
+            int count = 0;
+            foreach (Vector<double> vec in vecLst)
+            {
+                GH_Path path = new GH_Path(count);
+                foreach (var num in vec.AsArray())
+                {
+                    tree.Append(new GH_Number(num), path);
+                }
+
+                count++;
+            }
+
+            return tree;
         }
 
         private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
@@ -214,14 +239,16 @@ namespace Master.Components
                 Point3d node = _Pts[i];
                 foreach (var b in _BcValue)
                 {
+
                     if (b.Coordinate.DistanceTo(node) < 0.000001)
                     {
-                        if(b.ux)
-                            BCsIndex.Add(2*i);
+                        if (b.ux)
+                            BCsIndex.Add(2 * i);
 
-                        if(b.uz)
-                            BCsIndex.Add(2*i+1);
+                        if (b.uz)
+                            BCsIndex.Add(2 * i + 1);
                     }
+
                 }
 
             }
@@ -289,13 +316,18 @@ namespace Master.Components
 
         private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces)
         {
+
             
             Vector<double> v = SparseVector.OfEnumerable(new double[4]);
             Vector<double> S;
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 2]);
 
+
+
             foreach (BarClass b in bars)
             {
+                Vector<double> v = DenseVector.OfEnumerable(new double[4]);
+
                 Line currentLine = b.axis;
                 double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
                 Point3d p1 = currentLine.From;
@@ -309,8 +341,8 @@ namespace Master.Components
                                     {
                         { c, s, 0 ,0},
                         { -s, c ,0, 0},
-                        { 0, 0, c, -s},
-                        { 0 ,0 ,s, c}
+                        { 0, 0, c, s},
+                        { 0 ,0 ,-s, c}
                                     });
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
@@ -321,11 +353,11 @@ namespace Master.Components
                         { 0 ,0 ,0, 0}
                                     });
 
+
                 ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double> KG = Tt.Multiply(ke);
                 Matrix<double> K_eG = KG.Multiply(T);
-
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
@@ -349,6 +381,8 @@ namespace Master.Components
 
             forces = disp;
             
+
+
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
