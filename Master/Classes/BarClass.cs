@@ -17,7 +17,7 @@ namespace Master
         public Curve axis;
         public NodeClass startNode;
         public NodeClass endNode;
-        public NodeClass midNode;
+        public List<NodeClass> midNode;
 
 
 
@@ -30,6 +30,8 @@ namespace Master
             axis = _line;
             section = _section;
             material = _material;
+
+           
         }
     }
 }

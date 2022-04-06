@@ -27,6 +27,7 @@ namespace Master.Components
             pManager.AddCurveParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
             pManager.AddGenericParameter("material", "M", "MaterialClass", GH_ParamAccess.item);
             pManager.AddGenericParameter("section", "S", "Section of the bar", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Degree", "Deg", "Degree of nonlinearity", GH_ParamAccess.item,1);
 
         }
 
@@ -49,10 +50,12 @@ namespace Master.Components
             List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
+            int deg = 1; 
             DA.GetData(0, ref name);
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
+            DA.GetData(4, ref deg);
             List<BarClass> bars = new List<BarClass>();
 
             /*
@@ -80,21 +83,24 @@ namespace Master.Components
                 bars[i].Id = i;
             }
 
+            List<double> param = new List<double>();
+            for (int i = 0; i < deg +1 ; i++)
+            {
+                param.Add(i / deg);
+            }
+
+            
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
 
             for (int i = 0; i < lines.Count; i++)
             {
                 Curve L1 = lines[i];
-                
-                double a = 0.5;                                             // * parameter for midnode 
-
-                pts.Add(L1.PointAtNormalizedLength(0));
-                               
-                pts.Add(L1.PointAtNormalizedLength(a));
-
-                pts.Add(L1.PointAtNormalizedLength(1));
-
+                foreach (double p in param)
+                {
+                    pts.Add(L1.PointAtNormalizedLength(p));
+                }
+               
             }
 
             for (int i = 0;i < pts.Count;i++)
@@ -123,28 +129,18 @@ namespace Master.Components
 
                 foreach (BarClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
-                    
-                    double a = 0.5;                                             // * parameter for midnode 
+                                                  
                     double tol = 0.001;
 
-                    if (l.axis.PointAtStart.DistanceTo(nodes[i].pt)<tol)
+                    foreach (double p in param)
                     {
-                        l.startNode = nodes[i];
+                        if (l.axis.PointAtNormalizedLength(p).DistanceTo(nodes[i].pt) < tol)
+                        {
+                            l.midNode = nodes[i];
+                        }
                     }
 
-
-                    if (l.axis.PointAtNormalizedLength(a).DistanceTo(nodes[i].pt)< tol)
-                    {
-                        l.midNode = nodes[i];
-                    }
-
-                    
-
-                    if (l.axis.PointAtEnd.DistanceTo(nodes[i].pt)< tol)
-                    {
-                        l.endNode = nodes[i];
-                    }
-
+                 
 
                 }
 

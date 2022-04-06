@@ -36,6 +36,7 @@ namespace Master.Components
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
             pManager.AddNumberParameter("x-position", "Pos", "x-Position", GH_ParamAccess.item);
+            pManager.AddGenericParameter("ElementStiffnessMatrixClass", "keClass", "matrixClass elementstiffnessMatrix and degree of shapefunctions", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -69,6 +70,7 @@ namespace Master.Components
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
             List<NodeClass> nodes = new List<NodeClass>();
+            MatrixClass mc = new MatrixClass();
             double x = new double();
 
 
@@ -76,9 +78,11 @@ namespace Master.Components
             DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
             DA.GetData(3, ref x);
+            DA.GetData(4, ref  mc);
 
-            
 
+            Matrix<double> ke = mc.elementMatrix;
+            double deg = mc.deg;
 
             
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
@@ -116,7 +120,7 @@ namespace Master.Components
 
 
 
-            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg);
+            CreateGlobalStiffnesMatrix(bars, ke,  pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg);
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
@@ -569,7 +573,7 @@ namespace Master.Components
 
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, Matrix<double> _ke ,  List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg)
 
         {
 
