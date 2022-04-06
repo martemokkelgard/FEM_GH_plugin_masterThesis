@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateBar : GH_Component
+    public class CreateBarBilinear : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBar()
-          : base("CreateBar", "Nickname",
+        public CreateBarBilinear()
+          : base("CreateBarBilinear", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -175,7 +175,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("A5FAD6C5-F8A4-44BC-A8D3-FDF88A0CB043"); }
+            get { return new Guid("fe5563f1-5582-4065-a219-fb8ffa5aaec0"); }
         }
     }
 }
