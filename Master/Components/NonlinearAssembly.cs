@@ -89,11 +89,11 @@ namespace Master.Components
                 
                 double a = 0.5;                                             // * parameter for midnode 
 
-                pts.Add(L1.PointAtNormalizedLength(0));
-                               
-                pts.Add(L1.PointAtNormalizedLength(a));
+                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6)));
 
-                pts.Add(L1.PointAtNormalizedLength(1));
+                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6)));
+
+                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6)));
 
             }
 
@@ -643,7 +643,7 @@ namespace Master.Components
                 double cz = zl / l;
 
                 double s = (p2.Z - p1.Z) / l;
-                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p2.Y), 2), 0.5)) / l;
+                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
