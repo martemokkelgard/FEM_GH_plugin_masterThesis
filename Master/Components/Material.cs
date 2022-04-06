@@ -14,7 +14,7 @@ namespace Master.Components
         public Material()
           : base("Material", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "Properties")
         {
         }
 
@@ -77,7 +77,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("6445C831-20BE-46BA-8488-BFBA926A7BF0"); }
+            get { return new Guid("0e3b608a-f51e-44a6-9bd0-6671f57735ae"); }
         }
     }
 }

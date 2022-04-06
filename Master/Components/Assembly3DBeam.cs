@@ -22,7 +22,7 @@ namespace Master.Components
         public Assembly3DBeam()
           : base("Assembly3DBeam", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -630,7 +630,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DDB74701-399A-4352-B4DC-1F175E566460"); }
+            get { return new Guid("636f5fd6-350e-40f6-9b59-0caff8cd5608"); }
         }
     }
 }
