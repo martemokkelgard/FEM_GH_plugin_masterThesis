@@ -6,7 +6,7 @@
     <Title>Master</Title>
     <Description>Description of Master</Description>
     <TargetExt>.gha</TargetExt>
-    <BaseOutputPath>C:\Program Files\Rhino 7\Plug-ins\Marthe_Nanna\</BaseOutputPath>
+    <BaseOutputPath>C:\Program Files\Rhino 7\Plug-ins\Marthe_Nanna</BaseOutputPath>
   </PropertyGroup>
   
   <ItemGroup>
