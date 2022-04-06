@@ -59,8 +59,8 @@ namespace Master
 
             if (h > w)
             {
-                a = h / 2;
-                b = w / 2;
+                a = h / 2.0;
+                b = w / 2.0;
 
                 J = a * Math.Pow(b, 3) * ( 16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4)) ) ); //polar moment of interia
             }

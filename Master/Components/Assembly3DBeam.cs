@@ -22,7 +22,7 @@ namespace Master.Components
         public Assembly3DBeam()
           : base("Assembly3DBeam", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 

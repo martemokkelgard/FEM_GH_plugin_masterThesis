@@ -15,15 +15,15 @@ using MathNet.Numerics.Integration;
 
 namespace Master.Components
 {
-    public class NonlinearAssembly : GH_Component
+    public class LinearAssembly : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public NonlinearAssembly()
-          : base("NonlinearAssembly", "Nickname",
+        public LinearAssembly()
+          : base("LinearAssembly", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -686,7 +686,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("DDB74701-399A-4352-B4DC-1F175E566460"); }
+            get { return new Guid("e989e816-9e07-4039-bff9-209a2b3f8a2c"); }
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Master.Components
         public CreatePointLoad()
           : base("PointLoad", "Nickname",
               "Description",
-              "Løve", "3DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -89,7 +89,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("ED282DDC-4338-474F-BBB1-0B01FD70D9F5"); }
+            get { return new Guid("fbce87aa-ea31-4b05-8d7d-965624236ceb"); }
         }
     }
 }
