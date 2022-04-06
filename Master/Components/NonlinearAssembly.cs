@@ -454,7 +454,12 @@ namespace Master.Components
 
             foreach (BarClass b in bars)
             {
+                //trying
+
                 
+
+
+
 
                 Curve currentLine = b.axis;
                 double L = currentLine.GetLength();
@@ -463,23 +468,23 @@ namespace Master.Components
                 
                 double N1 = 1 - x / L;                                                                      //axial translation in node 1
                 double N2 = x / L;                                                                          //axial translation in node 2
-                double N3 = 1 - 3 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2 * Math.Pow(x, 3) / Math.Pow(L, 3);  //translation node 1
-                double N4 = -x * (1 - 2 * x / L + Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 1
-                double N5 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * Math.Pow(x, 3) / Math.Pow(L, 3);      //translation node 2
+                double N3 = 1 - 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2.0 * Math.Pow(x, 3) / Math.Pow(L, 3);  //translation node 1
+                double N4 = -x * (1 - 2.00 * x / L + Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 1
+                double N5 = 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * Math.Pow(x, 3) / Math.Pow(L, 3);      //translation node 2
                 double N6 = x * (x / L - Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 2
 
 
-                double dN1 = -1 / L;
-                double dN2 = 1 / L;
-                double dN3 = -6 * x / Math.Pow(L, 2) + 6 * Math.Pow(x, 2) / Math.Pow(L, 3);
-                double dN4 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 4 * x / L + 1;
+                double dN1 = -1.0 / L;
+                double dN2 = 1.0 / L;
+                double dN3 = -6.0 * x / Math.Pow(L, 2) + 6.0 * Math.Pow(x, 2) / Math.Pow(L, 3);
+                double dN4 = 3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) - 4 * x / L + 1;
                 double dN5 = -dN3;
-                double dN6 = 3 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * x / L;
+                double dN6 = 3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * x / L;
 
-                double ddN3 = -6 / Math.Pow(L, 2) + 12 * x / Math.Pow(L, 3);
-                double ddN4 = 6 * x / Math.Pow(L, 2) - 4 / L;
-                double ddN5 = 6 / Math.Pow(L, 2) - 12 * x / Math.Pow(L, 3);
-                double ddN6 = 6 * x / Math.Pow(L, 2) - 2 / L;
+                double ddN3 = -6.0 / Math.Pow(L, 2) + 12.0 * x / Math.Pow(L, 3);
+                double ddN4 = 6.0 * x / Math.Pow(L, 2) - 4.0 / L;
+                double ddN5 = 6.0 / Math.Pow(L, 2) - 12.0 * x / Math.Pow(L, 3);
+                double ddN6 = 6.0 * x / Math.Pow(L, 2) - 2.0 / L;
 
 
                 // første rad blir ux = N1*ux1 + N2*ux2
@@ -572,13 +577,13 @@ namespace Master.Components
                 double cz = zl / l;
 
                 double s = (p2.Z - p1.Z) / l;
-                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p2.Y), 2), 0.5)) / l;
+                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,       -den*c / (l*l)},
+                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
 
                 var T = t.DiagonalStack(t);
