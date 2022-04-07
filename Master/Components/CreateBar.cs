@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateBeam2D : GH_Component
+    public class CreateBar : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBeam2D()
-          : base("CreateBar2D", "Nickname",
+        public CreateBar()
+          : base("CreateBar", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
