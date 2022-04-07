@@ -83,7 +83,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("d64b9e8a-60d4-41ea-9175-742c48c8a889"); }
+            get { return new Guid("057ddbc0-f916-4ff1-bb2b-81d1b2659d06"); }
         }
     }
 }

@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Material : GH_Component
+    public class CreatePointLoad2D : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Material class.
+        /// Initializes a new instance of the Load class.
         /// </summary>
-        public Material()
-          : base("Material", "Nickname",
+        public CreatePointLoad2D()
+          : base("CreatePointLoad", "Nickname",
               "Description",
-              "Panda", "Properties")
+              "Panda", "2DBeam")
         {
         }
 
@@ -23,9 +23,10 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: S355", GH_ParamAccess.item, "s355");
-            pManager.AddNumberParameter("Density", "D", "density of the material, default: 7.8e-6 kg/mm^3", GH_ParamAccess.item, 0.0000078 );
-            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material (in [N/mm^2], default 210000 N/mm^2", GH_ParamAccess.item,210000);
+            pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
+            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all inputted points, or different loads for each inputted point or lines", GH_ParamAccess.item);
+
+
         }
 
         /// <summary>
@@ -33,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("material", "M", "materialClass object", GH_ParamAccess.item);
+            pManager.AddGenericParameter("PointLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -42,20 +43,31 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            //input
-            string Name = "C14";
-            double d = 100;
-            double E = 100000;
 
-            DA.GetData(0, ref Name);
-            DA.GetData(1, ref d);
-            DA.GetData(2, ref E);
+            //input
+            List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
+            Vector3d Vecs = new Vector3d();
+
+
+            if (!DA.GetDataList(0, pointList)) return;
+            if (!DA.GetData(1, ref Vecs)) return;
+
+
 
             //code
-            MaterialClass mat = new MaterialClass(Name, d, E);
+
+
+            List<LoadClass2D> loads = new List<LoadClass2D>();
+
+            for (int i = 0; i < pointList.Count; i++)
+            {
+                loads.Add(new LoadClass2D(pointList[i], Vecs));
+            }
+
+
 
             //output
-            DA.SetData(0, mat);
+            DA.SetDataList(0, loads);
 
         }
 
@@ -77,7 +89,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("7ef19a41-0dd1-4ccf-96c1-1d28b3da6147"); }
+            get { return new Guid("2d8c9339-d0cc-43fa-b90a-4a9a85c58f17"); }
         }
     }
 }

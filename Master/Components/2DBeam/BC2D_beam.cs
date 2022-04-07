@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Material : GH_Component
+    public class BC2D_beam : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Material class.
+        /// Initializes a new instance of the BoundaryConditions class.
         /// </summary>
-        public Material()
-          : base("Material", "Nickname",
+        public BC2D_beam()
+          : base("BC2D_beam", "Nickname",
               "Description",
-              "Panda", "Properties")
+              "Panda", "2DBeam")
         {
         }
 
@@ -23,9 +23,10 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: S355", GH_ParamAccess.item, "s355");
-            pManager.AddNumberParameter("Density", "D", "density of the material, default: 7.8e-6 kg/mm^3", GH_ParamAccess.item, 0.0000078 );
-            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material (in [N/mm^2], default 210000 N/mm^2", GH_ParamAccess.item,210000);
+            pManager.AddPointParameter("Points", "P", "Points for BCs", GH_ParamAccess.list);
+            pManager.AddBooleanParameter("Ux", "Ux", "Ux: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Uz", "Uz", "Uz: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Rx", "Rx", "Rx: false = free", GH_ParamAccess.item, false);
         }
 
         /// <summary>
@@ -33,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("material", "M", "materialClass object", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Boundary Conditions", "BCs", "BcClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -43,20 +44,26 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string Name = "C14";
-            double d = 100;
-            double E = 100000;
+            List<Point3d> pt = new List<Point3d>();
+            bool x = false;
+            bool z = false;
+            bool rx = false;
 
-            DA.GetData(0, ref Name);
-            DA.GetData(1, ref d);
-            DA.GetData(2, ref E);
+            if (!DA.GetDataList(0, pt)) return;
+            if (!DA.GetData(1, ref x)) return;
+            if (!DA.GetData(2, ref z)) return;
+            if (!DA.GetData(3, ref rx)) return;
 
-            //code
-            MaterialClass mat = new MaterialClass(Name, d, E);
+            List<BCClass2D> BCs = new List<BCClass2D>();
+
+
+            foreach (Point3d p in pt)
+            {
+                BCs.Add(new BCClass2D(p, x, z, rx));
+            }
 
             //output
-            DA.SetData(0, mat);
-
+            DA.SetDataList(0, BCs);
         }
 
         /// <summary>
@@ -77,7 +84,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("7ef19a41-0dd1-4ccf-96c1-1d28b3da6147"); }
+            get { return new Guid("f512a17c-33a8-45e6-8028-34a496900916"); }
         }
     }
 }

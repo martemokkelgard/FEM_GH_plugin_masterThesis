@@ -64,9 +64,9 @@ namespace Master.Components
             
             
 
-            List<BarClass> bars = new List<BarClass>();
-            List<LoadClass> lc = new List<LoadClass>();
-            List<BcClass> bcc = new List<BcClass>();
+            List<BeamClass2D> bars = new List<BeamClass2D>();
+            List<LoadClass2D> lc = new List<LoadClass2D>();
+            List<BCClass2D> bcc = new List<BCClass2D>();
 
            
             DA.GetDataList(0, bars);
@@ -84,7 +84,7 @@ namespace Master.Components
             //code
 
             List<Point3d> pts = new List<Point3d>();
-            foreach (BarClass b in bars)
+            foreach (BeamClass2D b in bars)
             {
                 
                 if (!pts.Contains(b.startNode.pt))
@@ -142,7 +142,7 @@ namespace Master.Components
            
             List<double> strain = new List<double>();   //strain and stress
             List<double> stress = new List<double>();
-            foreach (BarClass b in bars)
+            foreach (BeamClass2D b in bars)
             {
                 double originLength = b.axis.Length;
                 double deformedLength = liness[b.Id].Length;
@@ -214,7 +214,7 @@ namespace Master.Components
 
         }
 
-        private List<int> CreateBCList( List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
+        private List<int> CreateBCList( List<BCClass2D> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
         {
             
             //List<int> BCs = new List<int>();
@@ -264,7 +264,7 @@ namespace Master.Components
             return tree;
         }
         */
-        private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
+        private Vector<double> CreateLoadList(List<LoadClass2D> _lc, List<Point3d> _Pts)
         {
 
             Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 3]);
@@ -325,7 +325,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
+        private static void CreateForces(List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
@@ -335,7 +335,7 @@ namespace Master.Components
             Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 2]);
 
-            foreach (BarClass b in bars)
+            foreach (BeamClass2D b in bars)
             {
                 Line currentLine = b.axis;
                 double L = currentLine.Length*1000;
@@ -411,7 +411,7 @@ namespace Master.Components
             rotation = rot;
         }
 
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
+        private static void CreateGlobalStiffnesMatrix(List<BeamClass2D> bars, List<Point3d> points, out Matrix<double> k_tot)
 
         {
 
@@ -419,7 +419,7 @@ namespace Master.Components
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
 
-            foreach (BarClass b in bars)
+            foreach (BeamClass2D b in bars)
             {
 
 
