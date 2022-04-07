@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Section : GH_Component
+    public class Section2D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Sectioncs class.
         /// </summary>
-        public Section()
-          : base("Sectioncs", "Nickname",
+        public Section2D()
+          : base("Section2D", "Nickname",
               "Description",
               "Panda", "Properties")
         {
@@ -58,7 +58,7 @@ namespace Master.Components
             DA.GetData(4,ref tw);
                
             //code
-            SectionClass sec = new SectionClass(Name, h, w, tf, tw);
+            SectionClass2D sec = new SectionClass2D(Name, h, w, tf, tw);
            
 
             //output

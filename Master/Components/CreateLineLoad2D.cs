@@ -50,11 +50,11 @@ namespace Master.Components
 
             //code
 
-            List<LoadClass> loads = new List<LoadClass>();
+            List<LoadClass2D> loads = new List<LoadClass2D>();
 
             for (int i = 0; i < lines.Count; i++)
             {
-                loads.Add(new LoadClass(lines[i], Vecs));
+                loads.Add(new LoadClass2D(lines[i], Vecs));
 
             }
 

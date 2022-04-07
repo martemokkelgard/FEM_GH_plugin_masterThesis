@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Material : GH_Component
+    public class Material2D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Material class.
         /// </summary>
-        public Material()
-          : base("Material", "Nickname",
+        public Material2D()
+          : base("Material2D", "Nickname",
               "Description",
               "Panda", "Properties")
         {
@@ -52,7 +52,7 @@ namespace Master.Components
             DA.GetData(2, ref E);
 
             //code
-            MaterialClass mat = new MaterialClass(Name, d, E);
+            MaterialClass2D mat = new MaterialClass2D(Name, d, E);
 
             //output
             DA.SetData(0, mat);

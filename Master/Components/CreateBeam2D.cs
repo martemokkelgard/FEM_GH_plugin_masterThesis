@@ -46,19 +46,19 @@ namespace Master.Components
             //input
             string name = "Bar";
             List<Line> lines = new List<Line>();
-            MaterialClass mat = new MaterialClass();
-            SectionClass sec = new SectionClass();
+            MaterialClass2D mat = new MaterialClass2D();
+            SectionClass2D sec = new SectionClass2D();
             DA.GetData(0, ref name);
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
-            List<BarClass> bars = new List<BarClass>();
+            List<BeamClass2D> bars = new List<BeamClass2D>();
 
             
             //code
             foreach (Line l in lines)  //making barsClass objects of lines
             { 
-                bars.Add(new BarClass("trussBar", l, sec, mat));
+                bars.Add(new BeamClass2D("trussBar", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
@@ -84,10 +84,10 @@ namespace Master.Components
 
             }
 
-            List<NodeClass> nodes = new List<NodeClass>();  //making nodeClass objects of points
+            List<NodeClass2D> nodes = new List<NodeClass2D>();  //making nodeClass objects of points
             foreach (Point3d p in pts)
             {
-                nodes.Add(new NodeClass(p));
+                nodes.Add(new NodeClass2D(p));
             }
 
             
@@ -95,7 +95,7 @@ namespace Master.Components
             {
                 nodes[i].Id = i;
 
-                foreach (BarClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
+                foreach (BeamClass2D l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
 
 

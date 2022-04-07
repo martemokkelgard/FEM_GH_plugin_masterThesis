@@ -8,18 +8,18 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class NodeClass
+    internal class NodeClass2D
     {
         public int Id;
         public Line axis;
         public Point3d pt;
 
-        public NodeClass()
+        public NodeClass2D()
         {
             
         }
 
-        public NodeClass(Point3d _pt) //use barclass.axis
+        public NodeClass2D(Point3d _pt) //use barclass.axis
         {
             pt = _pt;
 

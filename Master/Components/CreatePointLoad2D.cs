@@ -57,11 +57,11 @@ namespace Master.Components
             //code
 
 
-            List<LoadClass> loads = new List<LoadClass>();
+            List<LoadClass2D> loads = new List<LoadClass2D>();
 
             for (int i = 0; i < pointList.Count; i++)
             {
-                loads.Add(new LoadClass(pointList[i], Vecs));
+                loads.Add(new LoadClass2D(pointList[i], Vecs));
             }
 
 

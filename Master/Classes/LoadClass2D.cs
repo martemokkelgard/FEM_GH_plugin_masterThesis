@@ -8,7 +8,7 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class LoadClass
+    internal class LoadClass2D
     {
         public Point3d coordinate;
         public Vector3d LoadVec;
@@ -17,11 +17,11 @@ namespace Master
         public Point3d enPt;
         public bool Id;
 
-        public LoadClass()
+        public LoadClass2D()
         { }
 
 
-        public LoadClass(Point3d _coordinate, Vector3d _LoadVec)
+        public LoadClass2D(Point3d _coordinate, Vector3d _LoadVec)
         {
            
             coordinate = _coordinate;
@@ -30,7 +30,7 @@ namespace Master
                 
         }
 
-        public LoadClass(Line _line, Vector3d _LoadVec)
+        public LoadClass2D(Line _line, Vector3d _LoadVec)
         {
             line = _line;
             LoadVec = _LoadVec/2;
