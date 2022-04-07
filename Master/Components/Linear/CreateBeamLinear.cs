@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateBarLinear : GH_Component
+    public class CreateBeamLinear : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBarLinear()
-          : base("CreateBarLinear", "Nickname",
+        public CreateBeamLinear()
+          : base("CreateBeamLinear", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
@@ -35,7 +35,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string name = "Bar";
+            string name = "Beam";
             List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
@@ -59,7 +59,7 @@ namespace Master.Components
             //code
             foreach (Curve l in lines)  //making barsClass objects of lines
             {
-                bars.Add(new BeamClassLinear("trussBar", l, sec, mat));
+                bars.Add(new BeamClassLinear("beam", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects

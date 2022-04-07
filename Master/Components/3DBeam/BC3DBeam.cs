@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class BC2D_beam : GH_Component
+    public class BC3DBeam : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the BoundaryConditions class.
         /// </summary>
-        public BC2D_beam()
-          : base("BC2D_beam", "Nickname",
+        public BC3DBeam()
+          : base("BC3DBeam", "Nickname",
               "Description",
-              "Panda", "2DBeam")
+              "Panda", "3DBeam")
         {
         }
 
@@ -23,10 +23,13 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Points", "P", "Points for BCs", GH_ParamAccess.list);
+            pManager.AddPointParameter("Points","P", "Points for BCs", GH_ParamAccess.list);
             pManager.AddBooleanParameter("Ux", "Ux", "Ux: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Uy", "Uy", "Uy: false = free", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Uz", "Uz", "Uz: false = free", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Rx", "Rx", "Rx: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Ry", "Ry", "Ry: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Rz", "Rz", "Rz: false = free", GH_ParamAccess.item, false);
         }
 
         /// <summary>
@@ -46,20 +49,27 @@ namespace Master.Components
             //input
             List<Point3d> pt = new List<Point3d>();
             bool x = false;
+            bool y = false;
             bool z = false;
             bool rx = false;
+            bool ry = false;
+            bool rz = false;
+
 
             if (!DA.GetDataList(0, pt)) return;
             if (!DA.GetData(1, ref x)) return;
-            if (!DA.GetData(2, ref z)) return;
-            if (!DA.GetData(3, ref rx)) return;
+            if (!DA.GetData(2, ref y)) return;
+            if (!DA.GetData(3, ref z)) return;
+            if (!DA.GetData(4, ref rx)) return;
+            if (!DA.GetData(5, ref ry)) return;
+            if (!DA.GetData(6, ref rz)) return;
 
-            List<BCClass2D> BCs = new List<BCClass2D>();
-
+            List<BcClass> BCs = new List<BcClass>();
+          
 
             foreach (Point3d p in pt)
             {
-                BCs.Add(new BCClass2D(p, x, z, rx));
+                BCs.Add(new BcClass(p, x, y, z, rx, ry, rz ));
             }
 
             //output
@@ -84,7 +94,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("f512a17c-33a8-45e6-8028-34a496900916"); }
+            get { return new Guid("af95171f-3b5c-4e23-866d-58642e5021b2"); }
         }
     }
 }
