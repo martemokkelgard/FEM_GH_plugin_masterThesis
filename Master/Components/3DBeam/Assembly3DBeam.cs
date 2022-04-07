@@ -62,7 +62,7 @@ namespace Master.Components
             //input
 
 
-            List<BarClass> bars = new List<BarClass>();
+            List<BeamClass> bars = new List<BeamClass>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
 
@@ -73,7 +73,7 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();
-            foreach (BarClass b in bars)
+            foreach (BeamClass b in bars)
             {
                 
                 if (!pts.Contains(b.startNode.pt))
@@ -127,7 +127,7 @@ namespace Master.Components
             
             List<double> strain = new List<double>();   //strain and stress
             List<double> stress = new List<double>();
-            foreach (BarClass b in bars)
+            foreach (BeamClass b in bars)
             {
                 double originLength = b.axis.Length;
                 double deformedLength = liness[b.Id].Length;
@@ -334,7 +334,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BarClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
+        private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
@@ -346,7 +346,7 @@ namespace Master.Components
             Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
 
-            foreach (BarClass b in bars)
+            foreach (BeamClass b in bars)
             {
 
                 Line currentLine = b.axis;
@@ -477,14 +477,14 @@ namespace Master.Components
             //rotation = new List<Vector<double>>(ST_rot);
         }
 
-        private static void CreateGlobalStiffnesMatrix(List<BarClass> bars, List<Point3d> points, out Matrix<double> k_tot)
+        private static void CreateGlobalStiffnesMatrix(List<BeamClass> bars, List<Point3d> points, out Matrix<double> k_tot)
 
         {
 
             int dofs = points.Count * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
 
-            foreach (BarClass b in bars)
+            foreach (BeamClass b in bars)
             {
 
 
