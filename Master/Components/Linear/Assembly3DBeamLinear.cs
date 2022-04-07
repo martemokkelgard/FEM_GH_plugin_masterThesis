@@ -15,13 +15,13 @@ using MathNet.Numerics.Integration;
 
 namespace Master.Components
 {
-    public class LinearAssembly : GH_Component
+    public class Assembly3DBeamLinear : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public LinearAssembly()
-          : base("LinearAssembly", "Nickname",
+        public Assembly3DBeamLinear()
+          : base("Assembly3DBeamLinear", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
@@ -32,7 +32,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Beams", "B", "BeamClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
             pManager.AddNumberParameter("x-position", "Pos", "x-Position", GH_ParamAccess.item);
@@ -246,6 +246,8 @@ namespace Master.Components
             return BCsIndex;
         }
 
+        /*
+
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
@@ -264,6 +266,7 @@ namespace Master.Components
 
             return tree;
         }
+        */
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {

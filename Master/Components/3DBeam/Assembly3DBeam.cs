@@ -31,7 +31,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Beams", "B", "BeamClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
         }

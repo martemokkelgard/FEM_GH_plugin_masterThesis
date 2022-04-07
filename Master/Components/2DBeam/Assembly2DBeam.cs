@@ -31,7 +31,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Beams", "B", "BeamClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
         }
@@ -340,8 +340,8 @@ namespace Master.Components
                 Line currentLine = b.axis;
                 double L = currentLine.Length*1000;
                 double LL = Math.Pow(L, 2);
-                double mat = ( b.material.youngsModolus * b.section.I) / ( Math.Pow(L,3) );
-                double my = (LL * b.section.CSA) / b.section.I;
+                double mat = ( b.material.youngsModolus * b.section.Iy) / ( Math.Pow(L,3) );
+                double my = (LL * b.section.CSA) / b.section.Iy;
                 Point3d p1 = new Point3d(Math.Round(currentLine.From.X,10), Math.Round(currentLine.From.Y, 10), Math.Round(currentLine.From.Z, 10));
                 Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 10), Math.Round(currentLine.To.Y, 10), Math.Round(currentLine.To.Z, 10));
                 
@@ -426,8 +426,8 @@ namespace Master.Components
                 Line currentLine = b.axis;
                 double L = currentLine.Length * 1000;
                 double LL = Math.Pow(L, 2);
-                double mat = (b.material.youngsModolus * b.section.I) / (Math.Pow(L, 3));
-                double my = (LL * b.section.CSA) / b.section.I;
+                double mat = (b.material.youngsModolus * b.section.Iy) / (Math.Pow(L, 3));
+                double my = (LL * b.section.CSA) / b.section.Iy;
                 //Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
                 //Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 Point3d p1 = currentLine.From;

@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class BoundaryConditions : GH_Component
+    public class BC3DBeam : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the BoundaryConditions class.
         /// </summary>
-        public BoundaryConditions()
-          : base("BoundaryConditions", "Nickname",
+        public BC3DBeam()
+          : base("BC3DBeam", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {

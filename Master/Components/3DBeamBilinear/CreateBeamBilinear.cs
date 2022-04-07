@@ -35,7 +35,7 @@ namespace Master.Components._3DBeamBilinear
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace Master.Components._3DBeamBilinear
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string name = "Bar";
+            string name = "Beam";
             List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
@@ -71,7 +71,7 @@ namespace Master.Components._3DBeamBilinear
             //code
             foreach (Curve l in lines)  //making barsClass objects of lines
             {
-                bars.Add(new BeamClassBilinear("trussBar", l, sec, mat));
+                bars.Add(new BeamClassBilinear("beam", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects

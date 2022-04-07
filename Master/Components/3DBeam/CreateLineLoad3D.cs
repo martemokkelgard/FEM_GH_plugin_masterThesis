@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateLineLoad : GH_Component
+    public class CreateLineLoad3D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the CreateLineLoad class.
         /// </summary>
-        public CreateLineLoad()
-          : base("CreateLineLoad", "Nickname",
+        public CreateLineLoad3D()
+          : base("CreateLineLoad3D", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
