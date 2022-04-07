@@ -65,7 +65,7 @@ namespace Master.Components
             //input
 
 
-            List<BeamClass> bars = new List<BeamClass>();
+            List<BeamClassLinear> bars = new List<BeamClassLinear>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
             double x = new double();
@@ -78,7 +78,7 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();
-            foreach (BeamClass b in bars)
+            foreach (BeamClassLinear b in bars)
             {
 
                 if (!pts.Contains(b.startNode.pt))
@@ -339,7 +339,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> Lk_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
+        private static void CreateForces(List<BeamClassLinear> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> Lk_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> rotation, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -360,7 +360,7 @@ namespace Master.Components
             List<Vector<double>> u_lst = new List<Vector<double>>();
             List<double> M_lst = new List<double>();
 
-            foreach (BeamClass b in bars)
+            foreach (BeamClassLinear b in bars)
             {
 
 
@@ -438,7 +438,7 @@ namespace Master.Components
         }
 
 
-        private static void CreateGenerelizedShapeFunc(List<BeamClass> bars, Matrix<double> k_tot, double X, out Matrix<double> N, out Matrix<double> dN)
+        private static void CreateGenerelizedShapeFunc(List<BeamClassLinear> bars, Matrix<double> k_tot, double X, out Matrix<double> N, out Matrix<double> dN)
         {
 
             Matrix<double> _N = DenseMatrix.OfArray(new double[6, 12]);
@@ -446,7 +446,7 @@ namespace Master.Components
 
 
 
-            foreach (BeamClass b in bars)
+            foreach (BeamClassLinear b in bars)
             {
                 //trying
 
@@ -523,7 +523,7 @@ namespace Master.Components
 
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BeamClass> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> L_k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BeamClassLinear> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> L_k_eg)
 
         {
 
@@ -532,7 +532,7 @@ namespace Master.Components
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[6, 6]);
             List<Matrix<double>> LK_eG = new List<Matrix<double>>();
 
-            foreach (BeamClass b in bars)
+            foreach (BeamClassLinear b in bars)
             {
 
 
