@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateLineLoad : GH_Component
+    public class BC2D_beam : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the CreateLineLoad class.
+        /// Initializes a new instance of the BoundaryConditions class.
         /// </summary>
-        public CreateLineLoad()
-          : base("CreateLineLoad", "Nickname",
+        public BC2D_beam()
+          : base("BC2D_beam", "Nickname",
               "Description",
               "Panda", "2DBeam")
         {
@@ -23,8 +23,10 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddLineParameter("Line", "L", "Lines to add distributed load to", GH_ParamAccess.list);
-            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all lines", GH_ParamAccess.item);
+            pManager.AddPointParameter("Points","P", "Points for BCs", GH_ParamAccess.list);
+            pManager.AddBooleanParameter("Ux", "Ux", "Ux: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Uz", "Uz", "Uz: false = free", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Rx", "Rx", "Rx: false = free", GH_ParamAccess.item, false);
         }
 
         /// <summary>
@@ -32,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("LineLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Boundary Conditions", "BCs", "BcClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -42,25 +44,26 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            Vector3d Vecs = new Vector3d();
-            List<Line> lines = new List<Line>();
+            List<Point3d> pt = new List<Point3d>();
+            bool x = false;
+            bool z = false;
+            bool rx = false;
 
-            if (!DA.GetDataList(0, lines)) return;
-            if (!DA.GetData(1, ref Vecs)) return;
+            if (!DA.GetDataList(0, pt)) return;
+            if (!DA.GetData(1, ref x)) return;
+            if (!DA.GetData(2, ref z)) return;
+            if (!DA.GetData(3, ref rx)) return;
 
-            //code
+            List<BcClass> BCs = new List<BcClass>();
+          
 
-            List<LoadClass> loads = new List<LoadClass>();
-
-            for (int i = 0; i < lines.Count; i++)
+            foreach (Point3d p in pt)
             {
-                loads.Add(new LoadClass(lines[i], Vecs));
-
+                BCs.Add(new BcClass(p, x, z, rx ));
             }
 
-
             //output
-            DA.SetDataList(0, loads);
+            DA.SetDataList(0, BCs);
         }
 
         /// <summary>
@@ -81,7 +84,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("1e7fd7a0-0fc1-47a1-8dd8-af4c50507d5f"); }
+            get { return new Guid("f512a17c-33a8-45e6-8028-34a496900916"); }
         }
     }
 }

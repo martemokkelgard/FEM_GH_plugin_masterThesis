@@ -6,12 +6,12 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreatePointLoad : GH_Component
+    public class CreatePointLoad2D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Load class.
         /// </summary>
-        public CreatePointLoad()
+        public CreatePointLoad2D()
           : base("PointLoad", "Nickname",
               "Description",
               "Panda", "2DBeam")
