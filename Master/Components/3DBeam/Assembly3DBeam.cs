@@ -241,6 +241,8 @@ namespace Master.Components
             return BCsIndex;
         }
 
+        /*
+
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
@@ -259,6 +261,8 @@ namespace Master.Components
 
             return tree;
         }
+
+        */
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {

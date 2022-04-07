@@ -52,13 +52,13 @@ namespace Master.Components
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
-            List<BarClass> bars = new List<BarClass>();
+            List<BarClass2DTruss> bars = new List<BarClass2DTruss>();
 
             
             //code
             foreach (Line l in lines)  //making barsClass objects of lines
             { 
-                bars.Add(new BarClass("trussBar", l, sec, mat));
+                bars.Add(new BarClass2DTruss("trussBar", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
@@ -95,7 +95,7 @@ namespace Master.Components
             {
                 nodes[i].Id = i;
 
-                foreach (BarClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
+                foreach (BarClass2DTruss l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
 
 
