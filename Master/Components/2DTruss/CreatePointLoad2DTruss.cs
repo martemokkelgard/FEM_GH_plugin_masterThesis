@@ -54,10 +54,10 @@ namespace Master.Components._2DTruss
             //code
 
 
-            List<LoadClass> loads = new List<LoadClass>();
+            List<LoadClass2DTruss> loads = new List<LoadClass2DTruss>();
             for (int i = 0; i < pointList.Count; i++)
             {
-                loads.Add(new LoadClass(pointList[i], Vecs));
+                loads.Add(new LoadClass2DTruss(pointList[i], Vecs));
             }
 
 

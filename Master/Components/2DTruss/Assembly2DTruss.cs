@@ -131,17 +131,18 @@ namespace Master.Components
             for (int i = 0; i < pts.Count; i++)
             {
 
-                displNodes.Add(new Point3d(pts[i].X + def[2 * i] / 1000, pts[i].Y, pts[i].Z + def[2 * i + 1] / 1000));
+                displNodes.Add(new Point3d(pts[i].X + def[2 * i]/1000 , pts[i].Y, pts[i].Z + def[2 * i + 1]/1000 ));
             }
 
             List<Line> liness = new List<Line>();
 
+            
             for (int i = 0; i < displNodes.Count - 1; i++)
             {
                 Line line = new Line(displNodes[i], displNodes[i + 1]);
                 liness.Add(line);
             }
-
+            
             List<double> strain = new List<double>();   //strain and stress
             List<double> stress = new List<double>();
             foreach (BarClass2DTruss b in bars)
