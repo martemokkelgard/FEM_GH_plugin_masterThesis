@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace Master.Components
+namespace Master.Components._2DTruss
 {
-    public class CreateLineLoad : GH_Component
+    public class CreatePointLoad2DTruss : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the CreateLineLoad class.
+        /// Initializes a new instance of the CreatePoitLoad2DTruss class.
         /// </summary>
-        public CreateLineLoad()
-          : base("CreateLineLoad", "Nickname",
+        public CreatePointLoad2DTruss()
+          : base("CreatePointLoad2DTruss", "Nickname",
               "Description",
-              "Panda", "3DBeam")
+              "Panda", "2DTruss")
         {
         }
 
@@ -23,8 +23,9 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddLineParameter("Line", "L", "Lines to add distributed load to", GH_ParamAccess.list);
-            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all lines", GH_ParamAccess.item);
+            pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
+            pManager.AddVectorParameter("LoadVector", "L", "Load magnitude [N].Give either one load to be applied to all inputted points, or different loads for each inputted load", GH_ParamAccess.item);
+
         }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("LineLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("PointLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -41,26 +42,29 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            //input
-            Vector3d Vecs = new Vector3d();
-            List<Line> lines = new List<Line>();
 
-            if (!DA.GetDataList(0, lines)) return;
+            //input
+            List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
+            Vector3d Vecs = new Vector3d();
+
+            if (!DA.GetDataList(0, pointList)) return;
             if (!DA.GetData(1, ref Vecs)) return;
+
 
             //code
 
+
             List<LoadClass> loads = new List<LoadClass>();
-
-            for (int i = 0; i < lines.Count; i++)
+            for (int i = 0; i < pointList.Count; i++)
             {
-                loads.Add(new LoadClass(lines[i], Vecs));
-
+                loads.Add(new LoadClass(pointList[i], Vecs));
             }
+
 
 
             //output
             DA.SetDataList(0, loads);
+
         }
 
         /// <summary>
@@ -81,7 +85,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("1b6fd7da-f9d7-4d42-863a-71175e7448ea"); }
+            get { return new Guid("BA9770BA-3116-49F0-92AD-C0E577D1260D"); }
         }
     }
 }

@@ -6,13 +6,13 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateBar : GH_Component
+    public class CreateBeam3D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBar()
-          : base("CreateBar", "Nickname",
+        public CreateBeam3D()
+          : base("CreateBeam3D", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
@@ -34,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string name = "Bar";
+            string name = "Beam";
             List<Line> lines = new List<Line>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
@@ -52,13 +52,13 @@ namespace Master.Components
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
-            List<BarClass2DTruss> bars = new List<BarClass2DTruss>();
+            List<BeamClass> bars = new List<BeamClass>();
 
             
             //code
             foreach (Line l in lines)  //making barsClass objects of lines
             { 
-                bars.Add(new BarClass2DTruss("trussBar", l, sec, mat));
+                bars.Add(new BeamClass("Beam", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
@@ -95,7 +95,7 @@ namespace Master.Components
             {
                 nodes[i].Id = i;
 
-                foreach (BarClass2DTruss l in bars)       //finding the nodeClass object that is start/end node of barClass objects
+                foreach (BeamClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
 
 

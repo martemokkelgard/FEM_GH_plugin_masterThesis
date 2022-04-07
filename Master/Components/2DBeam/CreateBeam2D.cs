@@ -12,7 +12,7 @@ namespace Master.Components
         /// Initializes a new instance of the Beam class.
         /// </summary>
         public CreateBeam2D()
-          : base("CreateBar2D", "Nickname",
+          : base("CreateBeam2D", "Nickname",
               "Description",
               "Panda", "2DBeam")
         {
@@ -34,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,10 +44,10 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string name = "Bar";
+            string name = "Beam";
             List<Line> lines = new List<Line>();
-            MaterialClass2D mat = new MaterialClass2D();
-            SectionClass2D sec = new SectionClass2D();
+            MaterialClass mat = new MaterialClass();
+            SectionClass sec = new SectionClass();
             DA.GetData(0, ref name);
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
@@ -58,7 +58,7 @@ namespace Master.Components
             //code
             foreach (Line l in lines)  //making barsClass objects of lines
             {
-                bars.Add(new BeamClass2D("trussBar", l, sec, mat));
+                bars.Add(new BeamClass2D("beam", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
