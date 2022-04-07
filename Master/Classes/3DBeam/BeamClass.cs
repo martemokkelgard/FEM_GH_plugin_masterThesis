@@ -8,7 +8,7 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class BarClass
+    internal class BeamClass
     {
         public string Name;
         public int Id;
@@ -20,10 +20,10 @@ namespace Master
         
 
 
-        public BarClass()
+        public BeamClass()
         { }
         
-        public BarClass(string _Name, Line _line, SectionClass _section, MaterialClass _material) 
+        public BeamClass(string _Name, Line _line, SectionClass _section, MaterialClass _material) 
         {
             Name = _Name;
             axis= _line;
