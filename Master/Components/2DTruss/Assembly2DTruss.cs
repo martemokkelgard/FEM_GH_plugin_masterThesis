@@ -136,13 +136,13 @@ namespace Master.Components
 
             List<Line> liness = new List<Line>();
 
-            /*
+            
             for (int i = 0; i < displNodes.Count - 1; i++)
             {
                 Line line = new Line(displNodes[i], displNodes[i + 1]);
                 liness.Add(line);
             }
-            */
+            
             List<double> strain = new List<double>();   //strain and stress
             List<double> stress = new List<double>();
             foreach (BarClass2DTruss b in bars)
