@@ -11,15 +11,17 @@ using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using MathNet.Numerics.Integration;
 
+
+
 namespace Master.Components
 {
-    public class Assembly3DBeamBilinear : GH_Component
+    public class NonlinearAssembly2 : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Assembly3DBeamBilinear class.
+        /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public Assembly3DBeamBilinear()
-          : base("Assembly3DBeamBilinear", "Nickname",
+        public NonlinearAssembly2()
+          : base("NonlinearAssembly", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
@@ -30,10 +32,11 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Beams", "B", "BeamClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Bar", "B", "BarClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Boundary Conditions", "BC", "BcClass object", GH_ParamAccess.list);
             pManager.AddGenericParameter("Loads", "L", "LoadClass object", GH_ParamAccess.list);
             pManager.AddNumberParameter("x-position", "Pos", "x-Position", GH_ParamAccess.item);
+            pManager.AddGenericParameter("ElementStiffnessMatrixClass", "keClass", "matrixClass elementstiffnessMatrix and degree of shapefunctions", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -63,35 +66,41 @@ namespace Master.Components
             //input
 
 
-            List<BeamClassBilinear> bars = new List<BeamClassBilinear>();
+            List<BeamClassNonLin> beams = new List<BeamClassNonLin>();
             List<LoadClass> lc = new List<LoadClass>();
             List<BcClass> bcc = new List<BcClass>();
             List<NodeClass> nodes = new List<NodeClass>();
+            MatrixClass mc = new MatrixClass();
             double x = new double();
 
 
-            DA.GetDataList(0, bars);
+            DA.GetDataList(0, beams);
             DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
             DA.GetData(3, ref x);
+            DA.GetData(4, ref mc);
 
 
+            Matrix<double> ke = mc.elementMatrix;
+            double deg = mc.deg;
+            Matrix<double> N = mc.N;
+            Matrix<double> dN = mc.dN;
 
-
+            List<double> param = new List<double>();
+            for (int i = 0; i < deg + 1; i++)
+            {
+                param.Add(i / deg);
+            }
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
 
-            for (int i = 0; i < bars.Count; i++)
+            for (int i = 0; i < beams.Count; i++)
             {
-                Curve L1 = bars[i].axis;
-
-                double a = 0.5;                                             // * parameter for midnode 
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6)));
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6)));
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6)));
+                Curve L1 = beams[i].axis;
+                foreach (double p in param)
+                {
+                    pts.Add(L1.PointAtNormalizedLength(p));
+                }
 
             }
 
@@ -99,8 +108,8 @@ namespace Master.Components
             {
                 for (int j = 0; j < pts.Count; j++)
                 {
-                    double tole = 0.00001;
-                    if (pts[i].DistanceTo(pts[j]) < tole && i != j)
+                    double tol = 0.00001;
+                    if (pts[i].DistanceTo(pts[j]) < tol && i != j)
                     {
                         pts.Remove(pts[j]);
                     }
@@ -114,25 +123,24 @@ namespace Master.Components
 
 
 
-            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg);
+            CreateGlobalStiffnesMatrix(beams, ke, pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg);
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
             CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
-            Matrix<double> invK = K_red.Inverse();
+            //Matrix<double> invK = K_red.Inverse();
 
-            var def = invK.Multiply(R);
-
+            //var def = invK.Multiply(R_red);
             var displNodes = new List<Point3d>();
 
-            //Vector<double> def = K_red.Cholesky().Solve(R);     //r
+            Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
-            CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
+            
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
+            CreateForces(beams, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -248,7 +256,6 @@ namespace Master.Components
             return BCsIndex;
         }
 
-        /*
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
@@ -267,7 +274,6 @@ namespace Master.Components
 
             return tree;
         }
-        */
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
@@ -357,7 +363,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BeamClassBilinear> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
+        private static void CreateForces(List<BeamClassNonLin> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -378,7 +384,7 @@ namespace Master.Components
             List<double> M_lst = new List<double>();
 
 
-            foreach (BeamClassBilinear b in bars)
+            foreach (BeamClassNonLin b in bars)
             {
 
 
@@ -386,7 +392,7 @@ namespace Master.Components
                 var my = b.material.v;
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
-                int node3 = b.midNode.Id;
+                int node3 = b.midNodes.Id;
 
                 v[0] = _def[node1 * 6];
                 v[1] = _def[node1 * 6 + 1];
@@ -478,7 +484,7 @@ namespace Master.Components
         }
 
 
-        private static void CreateGenerelizedShapeFunc(List<BeamClassBilinear> bars, double X, out Matrix<double> N, out Matrix<double> dN)
+        private static void CreateGenerelizedShapeFunc(List<BeamClassNonLin> bars, double X, out Matrix<double> N, out Matrix<double> dN)
         {
 
             Matrix<double> _N = DenseMatrix.OfArray(new double[6, 18]);
@@ -486,12 +492,12 @@ namespace Master.Components
 
 
 
-            foreach (BeamClassBilinear b in bars)
+            foreach (BeamClassNonLin b in bars)
             {
 
 
                 Curve currentLine = b.axis;
-                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
+                double L = currentLine.GetLength() * 1000.00;
                 var x = X * L;
 
 
@@ -570,24 +576,23 @@ namespace Master.Components
 
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BeamClassBilinear> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BeamClassNonLin> bars, Matrix<double> _ke, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg)
 
         {
 
             int dofs = (points.Count) * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[18, 18]);
-            Matrix<double> T = DenseMatrix.OfArray(new double[18, 18]);
 
             List<Matrix<double>> ke_lst = new List<Matrix<double>>();
 
 
-            foreach (BeamClassBilinear b in bars)
+            foreach (BeamClassNonLin b in bars)
             {
 
 
                 Curve currentLine = b.axis;
-                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
+                double L = currentLine.GetLength() * 1000.00;
 
 
 
@@ -637,26 +642,26 @@ namespace Master.Components
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = Math.Round(currentLine.GetLength(),5);
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
                 double cy = yl / l;
                 double cz = zl / l;
 
-                double s = (p2.Z - p1.Z) / (l);
+                double s = (p2.Z - p1.Z) / l;
                 double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
+                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,       -den*c / (l*l)},
                 });
 
                 var T_t = t.DiagonalStack(t);
-                var T_tt = T_t.DiagonalStack(T_t);
-                T = T_tt.DiagonalStack(T_t);
+                var T = T_t.DiagonalStack(T_t);
+                T = T.DiagonalStack(T_t);
 
 
 
@@ -693,7 +698,7 @@ namespace Master.Components
                 int node2 = b.endNode.Id;
                 int node3 = b.midNode.Id;
 
-                int tol = 5;
+                int tol = 15;
 
                 for (int i = 0; i < K_eG.RowCount / 3; i++)
                 {
@@ -771,7 +776,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("F423749C-38E2-4E3F-9FE8-2E91444D9062"); }
+            get { return new Guid("A4B9D9D7-4125-4BAA-9AA1-4CE34A7471CF"); }
         }
     }
 }

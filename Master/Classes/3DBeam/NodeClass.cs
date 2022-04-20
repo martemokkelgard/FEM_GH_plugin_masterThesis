@@ -11,7 +11,7 @@ namespace Master
     internal class NodeClass
     {
         public int Id;
-        public Line axis;
+        public Curve axis;
         public Point3d pt;
 
         public NodeClass()
