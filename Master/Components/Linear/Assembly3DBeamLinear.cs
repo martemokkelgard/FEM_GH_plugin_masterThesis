@@ -105,10 +105,10 @@ namespace Master.Components
 
             Matrix<double> invK = K_red.Inverse();
 
-            //var def = invK.Multiply(R_red);
+            var def = invK.Multiply(R);
             var displNodes = new List<Point3d>();
 
-            Vector<double> def = K_red.Cholesky().Solve(R);     //r
+            //Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
@@ -532,7 +532,7 @@ namespace Master.Components
 
             int dofs = points.Count * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
-            Matrix<double> K_eG = DenseMatrix.OfArray(new double[6, 6]);
+            Matrix<double> K_eG = DenseMatrix.OfArray(new double[12, 12]);
             List<Matrix<double>> LK_eG = new List<Matrix<double>>();
 
             foreach (BeamClassLinear b in bars)

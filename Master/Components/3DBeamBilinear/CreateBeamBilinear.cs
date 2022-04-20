@@ -126,7 +126,7 @@ namespace Master.Components._3DBeamBilinear
                     double a = 0.5;                                             // * parameter for midnode 
                     double tol = 0.001;
 
-                    if (l.axis.PointAtStart.DistanceTo(nodes[i].pt) < tol)
+                    if (l.axis.PointAtNormalizedLength(0).DistanceTo(nodes[i].pt) < tol)
                     {
                         l.startNode = nodes[i];
                     }
@@ -139,7 +139,7 @@ namespace Master.Components._3DBeamBilinear
 
 
 
-                    if (l.axis.PointAtEnd.DistanceTo(nodes[i].pt) < tol)
+                    if (l.axis.PointAtNormalizedLength(1).DistanceTo(nodes[i].pt) < tol)
                     {
                         l.endNode = nodes[i];
                     }

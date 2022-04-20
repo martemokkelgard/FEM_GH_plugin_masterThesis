@@ -120,12 +120,13 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
-            //Matrix<double> invK = K_red.Inverse();
+            Matrix<double> invK = K_red.Inverse();
 
-            //var def = invK.Multiply(R_red);
+            var def = invK.Multiply(R);
+
             var displNodes = new List<Point3d>();
 
-            Vector<double> def = K_red.Cholesky().Solve(R);     //r
+            //Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
             CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
@@ -490,7 +491,7 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = currentLine.GetLength() * 1000.00;
+                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
                 var x = X * L;
 
 
@@ -576,6 +577,7 @@ namespace Master.Components
             int dofs = (points.Count) * 6;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[18, 18]);
+            Matrix<double> T = DenseMatrix.OfArray(new double[18, 18]);
 
             List<Matrix<double>> ke_lst = new List<Matrix<double>>();
 
@@ -585,7 +587,7 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = currentLine.GetLength() * 1000.00;
+                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
 
 
 
@@ -635,26 +637,26 @@ namespace Master.Components
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.GetLength();
+                double l = Math.Round(currentLine.GetLength(),5);
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
                 double cy = yl / l;
                 double cz = zl / l;
 
-                double s = (p2.Z - p1.Z) / l;
+                double s = (p2.Z - p1.Z) / (l);
                 double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,       -den*c / (l*l)},
+                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
 
                 var T_t = t.DiagonalStack(t);
-                var T = T_t.DiagonalStack(T_t);
-                T = T.DiagonalStack(T_t);
+                var T_tt = T_t.DiagonalStack(T_t);
+                T = T_tt.DiagonalStack(T_t);
 
 
 
@@ -691,7 +693,7 @@ namespace Master.Components
                 int node2 = b.endNode.Id;
                 int node3 = b.midNode.Id;
 
-                int tol = 15;
+                int tol = 5;
 
                 for (int i = 0; i < K_eG.RowCount / 3; i++)
                 {
