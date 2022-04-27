@@ -15,12 +15,12 @@ using MathNet.Numerics.Integration;
 
 namespace Master.Components
 {
-    public class NonlinearAssembly2 : GH_Component
+    public class NonlinearAssembly : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Assembly2DTruss class.
         /// </summary>
-        public NonlinearAssembly2()
+        public NonlinearAssembly()
           : base("NonlinearAssembly", "Nickname",
               "Description",
               "Panda", "3DBeam")
@@ -62,7 +62,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-
+            /*
             //input
 
 
@@ -290,7 +290,7 @@ namespace Master.Components
             int sizeOfR = globalIds.Count*6;
             */
 
-
+            /*
 
             Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 6]);
 
@@ -753,11 +753,11 @@ namespace Master.Components
 
             K_red = K_tott;
 
-
+            */
 
         }
 
-
+            
         /// <summary>
         /// Provides an Icon for the component.
         /// </summary>

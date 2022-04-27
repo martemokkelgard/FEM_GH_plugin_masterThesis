@@ -252,7 +252,6 @@ namespace Master.Components
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-
             int count = 0;
             foreach (Vector<double> vec in vecLst)
             {
@@ -261,10 +260,8 @@ namespace Master.Components
                 {
                     tree.Append(new GH_Number(num), path);
                 }
-
                 count++;
             }
-
             return tree;
         }
         */
@@ -491,7 +488,7 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
+                double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
                 var x = X * L;
 
 
@@ -536,9 +533,10 @@ namespace Master.Components
                 {N1,   0,      0,     0,     0,      0,    N2,      0,     0,     0,     0,     0,    N3,    0,     0,    0,     0,      0},
                 {0,   N4,      0,     0,     0,     N5,     0,     N6,     0,     0,     0,    N7,    0,    N8,     0,    0,     0,     N9},
                 {0,    0,     N4,     0,    -N5,     0,     0,     0,     N6,     0,   -N7,     0,    0,     0,     N8,   0,    -N9,     0},
-                {0,    0,      0,    N1,     0,      0,     0,     0,      0,    N2,     0,     0,    N3,    0,     0,    0,     0,      0},
-                {0,    dN4,    0,     0,     0,    dN5,     0,     dN6,    0,     0,     0,   dN7,    0,    dN8,    0,    0,     0,    dN9},
+                {0,    0,      0,    N1,     0,      0,     0,     0,      0,    N2,     0,     0,    0,    0,      0,    N3,     0,      0},
                 {0,    0,    dN4,     0,   -dN5,     0,     0,     0,    dN6,     0,   -dN7,    0,    0,     0,    dN8,   0,    -dN9,    0},
+                {0,    dN4,    0,     0,     0,    dN5,     0,     dN6,    0,     0,     0,   dN7,    0,    dN8,    0,    0,     0,    dN9},
+                
 
                 });
 
@@ -552,8 +550,9 @@ namespace Master.Components
                 {0,   dN4,     0,     0,      0,    dN5,     0,    dN6,     0,      0,     0,     dN7,     0,     dN8,    0,     0,      0,     dN9},
                 {0,    0,    dN4,     0,   -dN5,      0,     0,      0,    dN6,     0,   -dN7,     0,      0,      0,    dN8,    0,    -dN9,      0},
                 {0,    0,     0,    dN1,      0,      0,     0,      0,     0,    dN2,     0,      0,      0,      0,     0,    dN3,     0,       0},
-                {0,    ddN4,    0,    0,      0,    ddN5,    0,     ddN6,   0,      0,     0,    ddN7,     0,    ddN8,    0,     0,      0,     ddN9},
                 {0,     0,    ddN4,   0,   -ddN5,     0,     0,      0,    ddN6,    0,   -ddN7,    0,      0,      0,    ddN8,   0,    -ddN9,     0},
+                {0,    ddN4,    0,    0,      0,    ddN5,    0,     ddN6,   0,      0,     0,    ddN7,     0,    ddN8,    0,     0,      0,     ddN9},
+                
 
                 });
 
@@ -587,7 +586,7 @@ namespace Master.Components
 
 
                 Curve currentLine = b.axis;
-                double L = Math.Round(currentLine.GetLength() * 1000.00,2);
+                double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
 
 
 
@@ -632,12 +631,12 @@ namespace Master.Components
                 Point3d p2 = b.endNode.pt;
                 Point3d p3 = b.midNode.pt;
 
-
+                
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = Math.Round(currentLine.GetLength(),5);
+                double l = Math.Round(currentLine.GetLength(), 5);
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
@@ -646,14 +645,73 @@ namespace Master.Components
 
                 double s = (p2.Z - p1.Z) / (l);
                 double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
-
+                
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
                         {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
+                /*
+                Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+                Plane plane = new Plane(p1, vecX);
+                Vector3d vecY = plane.XAxis;
+                Vector3d vecZ = plane.YAxis;
 
+                vecX.Unitize();
+                vecY.Unitize();
+                vecZ.Unitize();
+
+
+
+                Vector3d unitX = new Vector3d(1, 0, 0);
+                Vector3d unitY = new Vector3d(0, 1, 0);
+                Vector3d unitZ = new Vector3d(0, 0, 1);
+
+                Plane xyplane = new Plane(p1, unitZ);
+                Vector3d mapXY = new Vector3d(vecZ.X, vecZ.Y, 0);
+                Plane newxyplane = new Plane(p1, vecZ);
+                Vector3d y3 = Vector3d.CrossProduct(unitZ, vecZ);
+
+                double beta = Vector3d.VectorAngle(unitZ, vecZ);
+                Vector3d control = new Vector3d(0,0,0);
+                double alpha;
+                double gamma;
+                if (mapXY == control)
+                {
+                    alpha = 0;
+                }
+                else
+                {
+                    alpha = Vector3d.VectorAngle(unitX, mapXY);
+                }
+
+                if (y3 == control)
+                {
+                    gamma = 0;
+                }
+                else
+                {
+                    gamma = Vector3d.VectorAngle(vecY, y3);
+                }
+
+                
+
+                double ca = Math.Cos(alpha);
+                double cb = Math.Cos(beta);
+                double cg = Math.Cos(gamma);
+
+                double sa = Math.Sin(alpha);
+                double sb = Math.Sin(beta);
+                double sg = Math.Sin(gamma);
+
+                Matrix<double> t = DenseMatrix.OfArray(new double[,]
+                {
+                        {ca*cb*cg-sa*sg,   sa*cb*cg+ca*sg,     -sb*cg},
+                        {-ca*cb*sg-sa*cg,   -sa*cb*sg+ca*cg,    sb*sg},
+                        {ca*sb,                sa*sb,            cb},
+                });
+                */
                 var T_t = t.DiagonalStack(t);
                 var T_tt = T_t.DiagonalStack(T_t);
                 T = T_tt.DiagonalStack(T_t);
