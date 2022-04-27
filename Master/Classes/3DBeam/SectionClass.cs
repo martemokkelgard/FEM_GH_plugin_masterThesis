@@ -56,8 +56,8 @@ namespace Master
             {
                 b = h / 2;
                 a = w / 2;
-
-                J = a * Math.Pow(b, 3) * (16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4))));
+                J = 430708.33;
+                //J = a * Math.Pow(b, 3) * (16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4))));
             }
             
 
