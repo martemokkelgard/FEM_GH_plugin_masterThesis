@@ -531,11 +531,11 @@ namespace Master.Components
                 _N = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
                 {N1,   0,      0,     0,     0,      0,    N2,      0,     0,     0,     0,     0,    N3,    0,     0,    0,     0,      0},
-                {0,   N4,      0,     0,     0,     N5,     0,     N6,     0,     0,     0,    N7,    0,    N8,     0,    0,     0,     N9},
-                {0,    0,     N4,     0,    -N5,     0,     0,     0,     N6,     0,   -N7,     0,    0,     0,     N8,   0,    -N9,     0},
-                {0,    0,      0,    N1,     0,      0,     0,     0,      0,    N2,     0,     0,    0,    0,      0,    N3,     0,      0},
-                {0,    0,    dN4,     0,   -dN5,     0,     0,     0,    dN6,     0,   -dN7,    0,    0,     0,    dN8,   0,    -dN9,    0},
-                {0,    dN4,    0,     0,     0,    dN5,     0,     dN6,    0,     0,     0,   dN7,    0,    dN8,    0,    0,     0,    dN9},
+                {0,   N4,      0,     0,     0,     -N5,    0,     N6,     0,     0,     0,    -N7,    0,    N8,     0,    0,     0,     -N9},
+                {0,    0,     N4,     0,    N5,      0,     0,     0,     N6,     0,    N7,      0,    0,     0,     N8,   0,    N9,     0},
+                {0,    0,      0,    N1,     0,      0,     0,     0,      0,    N2,     0,      0,     0,    0,      0,    N3,     0,      0},
+                {0,    0,    dN4,     0,   dN5,      0,     0,     0,    dN6,     0,   dN7,      0,     0,     0,    dN8,   0,    dN9,    0},
+                {0,    dN4,    0,     0,     0,    -dN5,    0,    dN6,     0,     0,     0,   -dN7,    0,    dN8,    0,    0,     0,    -dN9},
                 
 
                 });
@@ -546,12 +546,12 @@ namespace Master.Components
 
                 _dN = Matrix<double>.Build.DenseOfArray(new double[,]
                 {
-                {dN1,   0,     0,     0,      0,      0,    dN2,     0,     0,      0,     0,      0,     dN3,     0,     0,     0,      0,       0},
-                {0,   dN4,     0,     0,      0,    dN5,     0,    dN6,     0,      0,     0,     dN7,     0,     dN8,    0,     0,      0,     dN9},
-                {0,    0,    dN4,     0,   -dN5,      0,     0,      0,    dN6,     0,   -dN7,     0,      0,      0,    dN8,    0,    -dN9,      0},
-                {0,    0,     0,    dN1,      0,      0,     0,      0,     0,    dN2,     0,      0,      0,      0,     0,    dN3,     0,       0},
-                {0,     0,    ddN4,   0,   -ddN5,     0,     0,      0,    ddN6,    0,   -ddN7,    0,      0,      0,    ddN8,   0,    -ddN9,     0},
-                {0,    ddN4,    0,    0,      0,    ddN5,    0,     ddN6,   0,      0,     0,    ddN7,     0,    ddN8,    0,     0,      0,     ddN9},
+                {dN1,   0,     0,     0,      0,      0,    dN2,       0,     0,      0,     0,      0,     dN3,     0,     0,     0,      0,       0},
+                {0,   dN4,     0,     0,      0,    -dN5,     0,     dN6,     0,      0,     0,     -dN7,     0,     dN8,    0,     0,      0,     -dN9},
+                {0,    0,    dN4,     0,    dN5,      0,      0,      0,    dN6,      0,   dN7,     0,      0,      0,    dN8,    0,    dN9,      0},
+                {0,    0,     0,    dN1,      0,      0,      0,      0,     0,     dN2,     0,      0,      0,      0,     0,    dN3,     0,       0},
+                {0,     0,    ddN4,   0,   ddN5,      0,      0,      0,    ddN6,    0,   ddN7,    0,      0,      0,    ddN8,   0,    ddN9,     0},
+                {0,    ddN4,    0,    0,      0,    -ddN5,    0,     ddN6,   0,      0,     0,    -ddN7,     0,    ddN8,    0,     0,      0,     -ddN9},
                 
 
                 });
@@ -597,11 +597,11 @@ namespace Master.Components
 
 
                 double Y1 = (5092.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y2 = (-1138.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
-                double Y3 = (-512.00 / 5.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y4 = (-384.00 / 7.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
-                double Y5 = (-1508.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
-                double Y6 = (-242.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y2 = (1138.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y3 = (512.00 / 5.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
+                double Y4 = (384.00 / 7.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
+                double Y5 = (1508.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 3));
+                double Y6 = (242.00 / 35.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
                 double Y7 = (332.00 / 35.00) * b.material.youngsModolus * b.section.Iz / L;
                 double Y8 = (128.00 / 5.00) * b.material.youngsModolus * b.section.Iz / (Math.Pow(L, 2));
                 double Y9 = (64.00 / 7.00) * b.material.youngsModolus * b.section.Iz / L;
@@ -610,11 +610,11 @@ namespace Master.Components
                 double Y12 = (256.00 / 7.00) * b.material.youngsModolus * b.section.Iz / L;
 
                 double Z1 = (5092.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z2 = (-1138.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
-                double Z3 = (-512.00 / 5.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z4 = (-384.00 / 7.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
-                double Z5 = (-1508.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
-                double Z6 = (-242.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z2 = (1138.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z3 = (512.00 / 5.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
+                double Z4 = (384.00 / 7.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
+                double Z5 = (1508.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 3));
+                double Z6 = (242.00 / 35.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
                 double Z7 = (332.00 / 35.00) * b.material.youngsModolus * b.section.Iy / L;
                 double Z8 = (128.00 / 5.00) * b.material.youngsModolus * b.section.Iy / (Math.Pow(L, 2));
                 double Z9 = (64.00 / 7.00) * b.material.youngsModolus * b.section.Iy / L;
@@ -720,24 +720,26 @@ namespace Master.Components
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                 {
-                        {X1,  0,   0,   0,    0,    0,   X2,    0,    0,   0,    0,    0,    X3,    0,     0,    0,     0,     0},
-                        {0,  Y1,   0,   0,    0,   Y2,    0,   Y3,    0,   0,    0,    Y4,    0,    Y5,    0,    0,     0,    Y6},
-                        {0,   0,   Z1,  0,   Z2,    0,    0,    0,   Z3,   0,    Z4,   0,     0,    0,     Z5,   0,    Z6,    0},
-                        {0,   0,   0,   C1,   0,    0,    0,    0,   0,   C2,    0,    0,     0,    0,     0,    C3,    0,    0},
-                        {0,   0,  Z2,   0,   Z7,    0,    0,    0,   Z8,   0,    Z9,   0,     0,    0,    -Z6,   0,    Z10,   0},
-                        {0,   Y2,  0,   0,    0,   Y7,    0,   Y8,    0,   0,    0,    Y9,    0,   -Y6,    0,    0,     0,   Y10},
-                        {X2,  0,   0,   0,    0,    0,   X4,    0,    0,   0,    0,    0,    X2,    0,     0,    0,     0,     0},
-                        {0,  Y3,   0,   0,    0,    Y8,   0,   Y11,   0,   0,    0,    0,     0,   Y3,     0,    0,     0,   -Y8},
-                        {0,   0,  Z3,   0,   Z8,    0,    0,    0,   Z11,  0,    0,    0,     0,    0,    Z3,    0,    -Z8,   0},
-                        {0,   0,   0,  C2,    0,    0,    0,    0,    0,   C4,   0,    0,     0,    0,     0,    C2,    0,     0},
-                        {0,   0,  Z4,   0,   Z9,    0,    0,    0,    0,   0,   Z12,   0,     0,    0,    -Z4,   0,    Z9,    0},
-                        {0,  Y4,   0,   0,    0,   Y9,    0,    0,    0,   0,    0,    Y12,   0,   -Y4,    0,    0,     0,    Y9},
-                        {X3,  0,   0,   0,    0,    0,   X2,    0,    0,   0,    0,    0,    X1,    0,     0,    0,     0,     0},
-                        {0,  Y5,   0,   0,    0,   -Y6,   0,    Y3,   0,   0,    0,   -Y4,    0,   Y1,     0,    0,     0,   -Y2},
-                        {0,   0,  Z5,   0,   -Z6,   0,    0,    0,   Z3,   0,   -Z4,   0,     0,    0,     Z1,   0,    -Z2,   0},
-                        {0,   0,   0,  C3,    0,    0,    0,    0,    0,   C2,   0,    0,     0,    0,     0,   C1,     0,     0},
-                        {0,   0,  Z6,   0,   Z10,   0,    0,    0,   -Z8,  0,   Z9,    0,     0,    0,    -Z2,   0,    Z7,    0},
-                        {0,  Y6,   0,   0,    0,   Y10,   0,  -Y8,    0,   0,    0,    Y9,    0,   -Y2,    0,    0,     0,    Y7},
+                        {X1,  0,   0,   0,    0,     0,       X2,   0,    0,    0,    0,     0,      X3,    0,     0,    0,     0,     0},
+                        {0,  Y1,   0,   0,    0,    Y2,       0,   -Y3,   0,    0,    0,    Y4,       0,   -Y5,    0,    0,     0,     Y6},
+                        {0,   0,   Z1,  0,   -Z2,    0,       0,    0,   -Z3,   0,   -Z4,    0,       0,    0,    -Z5,   0,    -Z6,     0},
+                        {0,   0,   0,   C1,   0,     0,       0,    0,    0,   C2,    0,     0,       0,    0,     0,    C3,    0,     0},
+                        {0,   0,  -Z2,   0,   Z7,    0,       0,    0,   Z8,    0,    Z9,    0,       0,    0,     Z6,   0,    Z10,   0},
+                        {0,   Y2,  0,   0,    0,    Y7,       0,   -Y8,   0,    0,    0,     Y9,      0,   -Y6,     0,    0,     0,   Y10},
+
+                        {X2,  0,   0,   0,    0,     0,      X4,    0,    0,    0,    0,     0,      X2,    0,     0,    0,     0,     0},
+                        {0,  -Y3,  0,   0,    0,    -Y8,      0,   Y11,   0,    0,    0,     0,       0,   -Y3,    0,    0,     0,    Y8},
+                        {0,   0,  -Z3,   0,   Z8,    0,       0,    0,   Z11,   0,    0,     0,       0,    0,    -Z3,   0,    -Z8,    0},
+                        {0,   0,   0,  C2,    0,     0,       0,    0,    0,    C4,   0,     0,       0,    0,     0,    C2,    0,     0},
+                        {0,   0,  -Z4,   0,   Z9,    0,       0,    0,    0,    0,   Z12,    0,       0,    0,    Z4,    0,    Z9,     0},
+                        {0,  Y4,   0,   0,    0,    Y9,       0,    0,    0,    0,    0,     Y12,     0,   -Y4,    0,    0,     0,    Y9},
+
+                        {X3,  0,   0,   0,    0,     0,      X2,    0,    0,    0,    0,     0,       X1,    0,     0,    0,     0,     0},
+                        {0, -Y5,   0,   0,    0,    -Y6,      0,   -Y3,   0,    0,    0,    -Y4,      0,   Y1,     0,    0,     0,   -Y2},
+                        {0,   0,  -Z5,  0,    Z6,    0,       0,    0,   -Z3,   0,   Z4,     0,       0,    0,     Z1,   0,    Z2,     0},
+                        {0,   0,   0,  C3,    0,     0,       0,    0,    0,    C2,   0,     0,       0,    0,     0,   C1,     0,     0},
+                        {0,   0,  -Z6,  0,    Z10,   0,       0,    0,   -Z8,   0,   Z9,     0,       0,    0,     Z2,   0,    Z7,     0},
+                        {0,   Y6,  0,   0,    0,    Y10,     0,    Y8,    0,    0,    0,     Y9,      0,   -Y2,    0,    0,     0,    Y7},
 
 
                 });
