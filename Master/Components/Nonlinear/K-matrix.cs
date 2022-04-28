@@ -10,6 +10,8 @@ using MathNet.Numerics.LinearAlgebra.Factorization;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using MathNet.Numerics.Integration;
+using MathNet.Symbolics;
+
 
 namespace Master.Components.Nonlinear
 {
@@ -48,15 +50,47 @@ namespace Master.Components.Nonlinear
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            
             int deg = 1;
+            int dofs = 6 * (deg + 1);
+
 
             DA.GetData(0, ref deg);
 
+            Vector<double> Nq = DenseVector.OfArray(new double[dofs]);
+            var x = SymbolicExpression.Variable("x");
+            Convert.ToDouble(x);
+
+
             for (int i = 0; i < (deg+1) *2; i++)
             {
-
+                Nq[i] = Math.Pow(x, i);
             }
 
+            
+
+            Matrix<double> ke = DenseMatrix.OfArray(new double[dofs, dofs]);    //empty ke stiffness matrix
+
+            for (int i = 0; i < (deg +1); i++)
+            {
+                for (int j = 0; j < (deg +1); j++)
+                {
+                    ke[i * 6, j * 6] = k1[i, j];
+                    ke[i * 6 + 3, j * 6 + 3] = k2[i, j];
+
+                    ke[i * 6 + 1, j * 6 + 1] = ky[i * 2, j * 2];
+                    ke[i * 6 + 1, j * 6 + 5] = ky[i * 2, j * 2 + 1];
+
+                    ke[i * 6 + 2, j * 6 + 2] = kz[i * 2, j * 2];
+                    ke[i * 6 + 2, j * 6 + 4] = kz[i * 2, j * 2 + 1];
+
+                    ke[i * 6 + 4, j * 6 + 2] = kz[i * 2 + 1, j * 2];
+                    ke[i * 6 + 4, j * 6 + 4] = kz[i * 2 + 1, j * 2 + 1];
+
+                    ke[i * 6 + 5, j * 6 + 1] = ky[i * 2 + 1, j * 2];
+                    ke[i * 6 + 5, j * 6 + 5] = ky[i * 2 + 1, j * 2 + 1];
+                }
+            }
 
         }
 

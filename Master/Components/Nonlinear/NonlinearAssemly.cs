@@ -62,7 +62,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-            /*
+            
             //input
 
 
@@ -277,7 +277,7 @@ namespace Master.Components
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
-            /*
+            /
             List<int> globalIds = new List<int>();
             foreach (var b in _Bars)
             {
@@ -288,9 +288,9 @@ namespace Master.Components
             globalIds.Distinct();
             
             int sizeOfR = globalIds.Count*6;
-            */
+            
 
-            /*
+            
 
             Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 6]);
 
@@ -753,7 +753,7 @@ namespace Master.Components
 
             K_red = K_tott;
 
-            */
+            
 
         }
 
