@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Grasshopper" Version="7.13.21348.13001" IncludeAssets="compile;build" />
     <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
+    <PackageReference Include="MathNet.Symbolics" Version="0.24.0" />
   </ItemGroup>
   
   <PropertyGroup Condition="$(Configuration) == 'Debug' AND $([MSBuild]::IsOSPlatform(Windows))">

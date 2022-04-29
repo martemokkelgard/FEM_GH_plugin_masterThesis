@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace Master.Components._3DBeamBilinear
+namespace Master.Components
 {
-    public class CreateBeamBilinear : GH_Component
+    public class CreateBeamNonlinear : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the CreateBeamBilinear class.
+        /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBeamBilinear()
-          : base("CreateBeamBilinear", "Nickname",
+        public CreateBeamNonlinear()
+          : base("CreateBeamNonlinear", "Nickname",
               "Description",
               "Panda", "3DBeam")
         {
@@ -27,6 +27,7 @@ namespace Master.Components._3DBeamBilinear
             pManager.AddCurveParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
             pManager.AddGenericParameter("material", "M", "MaterialClass", GH_ParamAccess.item);
             pManager.AddGenericParameter("section", "S", "Section of the bar", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Degree", "Deg", "Degree of nonlinearity", GH_ParamAccess.item, 1);
 
         }
 
@@ -35,7 +36,7 @@ namespace Master.Components._3DBeamBilinear
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -49,11 +50,13 @@ namespace Master.Components._3DBeamBilinear
             List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
+            double deg = 1;
             DA.GetData(0, ref name);
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
-            List<BeamClassBilinear> bars = new List<BeamClassBilinear>();
+            DA.GetData(4, ref deg);
+            List<BeamClassNonLin> beams = new List<BeamClassNonLin>();
 
             /*
             lines[0].PointAtNormalizedLength(0);
@@ -71,13 +74,20 @@ namespace Master.Components._3DBeamBilinear
             //code
             foreach (Curve l in lines)  //making barsClass objects of lines
             {
-                bars.Add(new BeamClassBilinear("beam", l, sec, mat));
+                beams.Add(new BeamClassNonLin("Beam", l, sec, mat));
             }
 
-            for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
+            for (int i = 0; i < beams.Count; i++)   //giving id to beamClass objects
             {
-                bars[i].Id = i;
+                beams[i].Id = i;
             }
+
+            List<double> param = new List<double>();
+            for (int i = 0; i < deg + 1; i++)
+            {
+                param.Add(i / deg);
+            }
+
 
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
@@ -85,14 +95,10 @@ namespace Master.Components._3DBeamBilinear
             for (int i = 0; i < lines.Count; i++)
             {
                 Curve L1 = lines[i];
-
-                double a = 0.5;                                             // * parameter for midnode 
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6)));
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6)));
-
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6)));
+                foreach (double p in param)
+                {
+                    pts.Add(L1.PointAtNormalizedLength(p));
+                }
 
             }
 
@@ -120,29 +126,21 @@ namespace Master.Components._3DBeamBilinear
                 nodes[i].Id = i;
 
 
-                foreach (BeamClassBilinear l in bars)       //finding the nodeClass object that is start/end node of barClass objects
+                foreach (BeamClassNonLin l in beams)       //finding the nodeClass object that is start/end node of barClass objects
                 {
 
-                    double a = 0.5;                                             // * parameter for midnode 
                     double tol = 0.001;
 
-                    if (l.axis.PointAtNormalizedLength(0).DistanceTo(nodes[i].pt) < tol)
+                    foreach (double p in param)
                     {
-                        l.startNode = nodes[i];
+                        if (l.axis.PointAtNormalizedLength(p).DistanceTo(nodes[i].pt) < tol)
+                        {
+                             
+                            int u = ((int)(p * deg));
+                            l.nodes[u] = nodes[i];
+                        }
                     }
 
-
-                    if (l.axis.PointAtNormalizedLength(a).DistanceTo(nodes[i].pt) < tol)
-                    {
-                        l.midNode = nodes[i];
-                    }
-
-
-
-                    if (l.axis.PointAtNormalizedLength(1).DistanceTo(nodes[i].pt) < tol)
-                    {
-                        l.endNode = nodes[i];
-                    }
 
 
                 }
@@ -153,7 +151,7 @@ namespace Master.Components._3DBeamBilinear
 
 
             //output
-            DA.SetDataList(0, bars);
+            DA.SetDataList(0, beams);
         }
 
         /// <summary>
@@ -174,7 +172,7 @@ namespace Master.Components._3DBeamBilinear
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("fe5563f1-5582-4065-a219-fb8ffa5aaec0"); }
+            get { return new Guid("636494A3-78AA-42DE-BBF0-7FC418618C2D"); }
         }
     }
 }

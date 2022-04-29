@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows;
 using System.Collections.Generic;
 
 using Grasshopper.Kernel;
@@ -338,6 +339,8 @@ namespace Master.Components
 
         }
 
+        
+
         private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
@@ -395,16 +398,75 @@ namespace Master.Components
                 double cz = zl / l;
 
                 double s = ( p2.Z - p1.Z ) / l;
-                double c = ( Math.Pow( Math.Pow((p2.X - p1.X),2) + Math.Pow((p2.Y - p2.Y),2 ) , 0.5) ) / l ;
-
+                double c = ( Math.Pow( Math.Pow((p2.X - p1.X),2) + Math.Pow((p2.Y - p1.Y),2 ) , 0.5) ) / l ;
+                /*
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
                         {(xl*zl*c - l*yl*s)/den,      (yl*zl*c + l*xl*s) / den,     -den*c / (l*l)},
                 });
+                
+                */
+                Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+                Plane plane = new Plane(p1, vecX);
+                Vector3d vecY = plane.XAxis;
+                Vector3d vecZ = plane.YAxis;
 
-               
+                vecX.Unitize();
+                vecY.Unitize();
+                vecZ.Unitize();
+
+
+
+                Vector3d unitX = new Vector3d(1, 0, 0);
+                Vector3d unitY = new Vector3d(0, 1, 0);
+                Vector3d unitZ = new Vector3d(0, 0, 1);
+
+                Plane xyplane = new Plane(p1, unitZ);
+                Vector3d mapXY = new Vector3d(vecZ.X, vecZ.Y, 0);
+                Plane newxyplane = new Plane(p1, vecZ);
+                Vector3d y3 = Vector3d.CrossProduct(unitZ, vecZ);
+
+                double beta = Vector3d.VectorAngle(unitZ, vecZ);
+                Vector3d control = new Vector3d(0, 0, 0);
+                double alpha;
+                double gamma;
+                if (mapXY == control)
+                {
+                    alpha = 0;
+                }
+                else
+                {
+                    alpha = Vector3d.VectorAngle(unitX, mapXY);
+                }
+
+                if (y3 == control)
+                {
+                    gamma = 0;
+                }
+                else
+                {
+                    gamma = Vector3d.VectorAngle(vecY, y3);
+                }
+
+
+
+                double ca = Math.Cos(alpha);
+                double cb = Math.Cos(beta);
+                double cg = Math.Cos(gamma);
+
+                double sa = Math.Sin(alpha);
+                double sb = Math.Sin(beta);
+                double sg = Math.Sin(gamma);
+
+                Matrix<double> t = DenseMatrix.OfArray(new double[,]
+                {
+                        {ca*cb*cg-sa*sg,   sa*cb*cg+ca*sg,     -sb*cg},
+                        {-ca*cb*sg-sa*cg,   -sa*cb*sg+ca*cg,    sb*sg},
+                        {ca*sb,                sa*sb,            cb},
+                });
+
                 var T = t.DiagonalStack(t);
                 T = T.DiagonalStack(T);
                 
@@ -416,7 +478,7 @@ namespace Master.Components
                         {0,  Y1,  0,   0,   0,   Y2,  0,  -Y1,  0,   0,   0,   Y2},
                         {0,  0,   Z1,  0,  -Z2,  0,   0,   0,  -Z1,  0,  -Z2,  0},
                         {0,  0,   0,   C,   0,   0,   0,   0,   0,  -C,   0,   0},
-                        {0,  0 , -Z2,  0,   Z3,  0,   0,   0,   Z2,  0,   Z4,  0},
+                        {0,  0, -Z2,   0,   Z3,  0,  0,   0,  Z2,   0,   Z4,  0},
                         {0,  Y2,  0,   0,   0,   Y3,  0,  -Y2,  0,   0,   0,   Y4},
                         {-X, 0,   0,   0,   0,   0,   X,   0,   0,   0,   0,   0},
                         {0, -Y1,  0,   0,   0,  -Y2,  0,   Y1,  0,   0,   0,  -Y2},
@@ -586,7 +648,9 @@ namespace Master.Components
 
         }
 
-        private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tott, Vector<double> Rvec, out Matrix<double> K_red, out Vector<double> R_red)
+
+
+    private static void CreateReducedStiffnesMatrix(List<int> _BC, Matrix<double> K_tott, Vector<double> Rvec, out Matrix<double> K_red, out Vector<double> R_red)
         {
 
             
