@@ -50,6 +50,7 @@ namespace Master.Components.Nonlinear
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            /*
             
             int deg = 1;
             int dofs = 6 * (deg + 1);
@@ -91,7 +92,7 @@ namespace Master.Components.Nonlinear
                     ke[i * 6 + 5, j * 6 + 5] = ky[i * 2 + 1, j * 2 + 1];
                 }
             }
-
+            */
         }
 
         /// <summary>
