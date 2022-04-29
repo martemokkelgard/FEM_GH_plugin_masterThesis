@@ -60,8 +60,10 @@ namespace Master.Components
         /// </summary>
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
+
         {
 
+            /*
             
             //input
 
@@ -214,9 +216,10 @@ namespace Master.Components
             DA.SetData(7, M);
             DA.SetData(8, umax);
 
-
+            
         }
 
+            
         private List<int> CreateBCList(List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
         {
 
@@ -277,7 +280,7 @@ namespace Master.Components
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
-            /
+            
             List<int> globalIds = new List<int>();
             foreach (var b in _Bars)
             {
@@ -360,9 +363,9 @@ namespace Master.Components
             }
 
             return LoadValue;
-
+            */
         }
-
+            /*
         private static void CreateForces(List<BeamClassNonLin> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
@@ -390,6 +393,7 @@ namespace Master.Components
 
                 var E = b.material.youngsModolus;
                 var my = b.material.v;
+
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
                 int node3 = b.midNodes.Id;
@@ -754,9 +758,9 @@ namespace Master.Components
             K_red = K_tott;
 
             
-
+            
         }
-
+            */
             
         /// <summary>
         /// Provides an Icon for the component.
