@@ -6,6 +6,7 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
+    
     public class CreateBeamNonlinear : GH_Component
     {
         /// <summary>
@@ -45,6 +46,7 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
+            /*
             //input
             string name = "Beam";
             List<Curve> lines = new List<Curve>();
@@ -58,7 +60,7 @@ namespace Master.Components
             DA.GetData(4, ref deg);
             List<BeamClassNonLin> beams = new List<BeamClassNonLin>();
 
-            /*
+            
             lines[0].PointAtNormalizedLength(0);
             lines[0].PointAtNormalizedLength(0.5);
             lines[0].PointAtNormalizedLength(1);
@@ -68,7 +70,7 @@ namespace Master.Components
             lines[0].PointAt(minpdomain);
             lines[0].PointAt(middomain);
             lines[0].PointAt(maxpdomain);
-            */
+            
 
 
             //code
@@ -152,6 +154,7 @@ namespace Master.Components
 
             //output
             DA.SetDataList(0, beams);
+            */
         }
 
         /// <summary>

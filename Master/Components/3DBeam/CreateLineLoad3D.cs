@@ -43,7 +43,7 @@ namespace Master.Components
         {
             //input
             Vector3d Vecs = new Vector3d();
-            List<Line> lines = new List<Line>();
+            List<Curve> lines = new List<Curve>();
 
             if (!DA.GetDataList(0, lines)) return;
             if (!DA.GetData(1, ref Vecs)) return;
