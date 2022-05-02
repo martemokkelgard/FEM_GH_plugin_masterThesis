@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
@@ -48,8 +49,9 @@ namespace Master.Components
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.list);
             pManager.AddNumberParameter("umax", "Umax", "maximum displacement ", GH_ParamAccess.item);
+            pManager.AddLineParameter("moment diagram", "ben", "to see the moment ", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -114,7 +116,7 @@ namespace Master.Components
 
 
 
-            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg);
+            CreateGlobalStiffnesMatrix(bars, pts, out Matrix<double> k_tot, out List<Matrix<double>> k_eg, out List<Matrix<double>> T_List, out List<Matrix<double>> T_List_six);
 
             var R = Vector<double>.Build.DenseOfArray(LoadList.ToArray());
 
@@ -132,7 +134,7 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax);
+            CreateForces(bars, pts, def, k_eg, N, dN,T_List, T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out List<double> M, out double umax, out List<Line>  crv);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -203,8 +205,9 @@ namespace Master.Components
             DA.SetDataList(4, displNodes);
             DA.SetDataList(5, strain);
             DA.SetDataList(6, def);
-            DA.SetData(7, M);
+            DA.SetDataList(7, M);
             DA.SetData(8, umax);
+            DA.SetDataList(9, crv);
 
 
         }
@@ -354,7 +357,7 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BeamClassBilinear> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax)
+        private static void CreateForces(List<BeamClassBilinear> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> k_eg, Matrix<double> N, Matrix<double> dN, List<Matrix<double>>  T_List, List<Matrix<double>> T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out List<double> M, out double umax, out List<Line> crv)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> u = SparseVector.OfEnumerable(new double[6]);
@@ -369,11 +372,13 @@ namespace Master.Components
             Vector<double> forc = SparseVector.OfEnumerable(new double[points.Count * 3]);
 
             double u_Max = 0;
-
+            List<Line> bending = new List<Line>();
 
             List<Vector<double>> u_lst = new List<Vector<double>>();
             List<double> M_lst = new List<double>();
 
+            Vector<double> dNN = DenseVector.OfEnumerable(new double[18]);
+            List<Point3d> curve_pts = new List<Point3d>();
 
             foreach (BeamClassBilinear b in bars)
             {
@@ -410,8 +415,12 @@ namespace Master.Components
                 //displacement
 
                 var B = dN;
-                u = N.Multiply(v);
+                Matrix<double> T_six_trans = T_List_six[b.Id].Transpose();
+                v = T_List[b.Id] * v;       //transponerer v
 
+                u = N.Multiply(v);
+                u = T_six_trans.Multiply(u);
+                
 
                 u_lst.Add(u);
 
@@ -423,15 +432,65 @@ namespace Master.Components
                     u_Max = u_max;
                 }
 
+
+                //create strain
+
+                Curve currentLine = b.axis;
+                double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
+                double n = 10;
+                var x = 0.0;
+                
+                for (int i = 0; i < n+1; i++)
+
+                {
+                    double ddN4 = 396.00 * x / Math.Pow(L, 3) - 46.00 / Math.Pow(L, 2) - 816.00 * Math.Pow(x, 2) / Math.Pow(L, 4) + 480.00 * Math.Pow(x, 3) / Math.Pow(L, 5);
+                    double ddN5 = -78.00 * x / Math.Pow(L, 2) + 12.00 / L + 144.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 80.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
+
+                    double ddN6 = 32.00 / Math.Pow(L, 2) - 192.00 * x / Math.Pow(L, 3) + 192.00 * Math.Pow(x, 2) / Math.Pow(L, 4);
+                    double ddN7 = -192.00 * x / Math.Pow(L, 2) + 16.00 / L + 480.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 320.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
+
+                    double ddN8 = 14.00 / Math.Pow(L, 2) - 204.00 * x / Math.Pow(L, 3) + 624.00 * Math.Pow(x, 2) / Math.Pow(L, 4) - 480.00 * Math.Pow(x, 3) / Math.Pow(L, 5);
+                    double ddN9 = -30.00 * x / Math.Pow(L, 2) + 2.00 / L + 96.00 * Math.Pow(x, 2) / Math.Pow(L, 3) - 80.00 * Math.Pow(x, 3) / Math.Pow(L, 4);
+
+                    dNN = DenseVector.OfEnumerable(new double[]
+
+                    { 0,   0,  ddN4, 0,  ddN5,   0,   0,   0,   ddN6,  0,  ddN7,   0,   0,   0,   ddN8,    0,   ddN9,   0}
+                    );
+
+                    double wxx = dNN.DotProduct(v);
+                    _M = E * b.section.Iy * wxx;       //langs xy plan. varierer langs z ( gange med h/2)
+                    M_lst.Add(_M);
+
+                    x += L / n;
+                    
+                    Point3d main1 = b.axis.PointAtNormalizedLength(0);
+                    Point3d main2 = b.axis.PointAtNormalizedLength(1);
+                    Vector3d vec = new Vector3d(main2.X-main1.X, main2.Y-main1.Y, main2.Z-main1.Z);
+                    Plane plan = new Plane(main1, vec , new Vector3d(0, 1, 0));
+                    Vector3d norm = plan.Normal;
+                    norm.Unitize();
+                    Point3d st = b.axis.PointAtNormalizedLength((L/n * i)/L);
+                    Point3d en = new Point3d(st.X + norm.X * _M / 10000000, st.Y + norm.Y * _M / 10000000, st.Z + norm.Z * _M / 10000000);
+
+                    
+
+                    curve_pts.Add(en);
+
+                }
+                
+                
+                
+
+                //bending = new Polyline(curve_pts);
+
+
                 eps = B.Multiply(v);        //strain (3)
 
+                
+
                 sigma = E * eps;            //stress = E*3
+
                 S = k_eg[b.Id].Multiply(v);
-
-                _M = E * b.section.Iy * eps[2];
-
-                M_lst.Add(_M);
-
 
                 forc[node1 * 3] += S[0];
                 forc[node1 * 3 + 1] += S[1];
@@ -463,6 +522,16 @@ namespace Master.Components
 
             }
 
+            for (int i = 1; i < curve_pts.Count; i++)
+            {
+                Line line = new Line(curve_pts[i - 1], curve_pts[i]);
+                bending.Add(line);
+            }
+            Line line1 = new Line(bars[0].startNode.pt, curve_pts[0]);
+            Line line2 = new Line(bars[bars.Count-1].endNode.pt, curve_pts[curve_pts.Count-1]);
+            bending.Add(line1);
+            bending.Add(line2);
+
 
             forces = forc;
             moment = mom;
@@ -471,6 +540,7 @@ namespace Master.Components
             umax = u_Max;
             _u = u_lst;
             M = M_lst;
+            crv = bending;
 
         }
 
@@ -480,7 +550,7 @@ namespace Master.Components
 
             Matrix<double> _N = DenseMatrix.OfArray(new double[6, 18]);
             Matrix<double> _dN = DenseMatrix.OfArray(new double[6, 18]);
-
+            
 
 
             foreach (BeamClassBilinear b in bars)
@@ -548,20 +618,22 @@ namespace Master.Components
                 {
                 {dN1,   0,     0,     0,      0,      0,    dN2,       0,     0,      0,     0,      0,     dN3,     0,     0,     0,      0,       0},
                 {0,   dN4,     0,     0,      0,    -dN5,     0,     dN6,     0,      0,     0,     -dN7,     0,     dN8,    0,     0,      0,     -dN9},
-                {0,    0,    dN4,     0,    dN5,      0,      0,      0,    dN6,      0,   dN7,     0,      0,      0,    dN8,    0,    dN9,      0},
+                {0,    0,    dN4,     0,    dN5,      0,      0,      0,    dN6,      0,   dN7,      0,      0,      0,    dN8,    0,    dN9,      0},
                 {0,    0,     0,    dN1,      0,      0,      0,      0,     0,     dN2,     0,      0,      0,      0,     0,    dN3,     0,       0},
-                {0,     0,    ddN4,   0,   ddN5,      0,      0,      0,    ddN6,    0,   ddN7,    0,      0,      0,    ddN8,   0,    ddN9,     0},
+                {0,     0,    ddN4,   0,   ddN5,      0,      0,      0,    ddN6,    0,   ddN7,      0,      0,      0,    ddN8,   0,    ddN9,     0},
                 {0,    ddN4,    0,    0,      0,    -ddN5,    0,     ddN6,   0,      0,     0,    -ddN7,     0,    ddN8,    0,     0,      0,     -ddN9},
                 
 
                 });
 
+                
 
-
+                
             }
 
             N = _N;
             dN = _dN;
+
         }
 
 
@@ -569,7 +641,7 @@ namespace Master.Components
 
 
 
-        private static void CreateGlobalStiffnesMatrix(List<BeamClassBilinear> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg)
+        private static void CreateGlobalStiffnesMatrix(List<BeamClassBilinear> bars, List<Point3d> points, out Matrix<double> k_tot, out List<Matrix<double>> k_eg, out List<Matrix<double>> T_list, out List<Matrix<double>> T_list_six)
 
         {
 
@@ -577,8 +649,11 @@ namespace Master.Components
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
             Matrix<double> K_eG = DenseMatrix.OfArray(new double[18, 18]);
             Matrix<double> T = DenseMatrix.OfArray(new double[18, 18]);
+            List<Matrix<double>> transformationmatrix = new List<Matrix<double>>();
+            List<Matrix<double>> tranmatrix_six = new List<Matrix<double>>();
 
             List<Matrix<double>> ke_lst = new List<Matrix<double>>();
+
 
 
             foreach (BeamClassBilinear b in bars)
@@ -645,6 +720,8 @@ namespace Master.Components
 
                 double s = (p2.Z - p1.Z) / (l);
                 double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
+
+
                 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
@@ -652,6 +729,9 @@ namespace Master.Components
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
                         {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
+
+                
+
                 /*
                 Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
                 Plane plane = new Plane(p1, vecX);
@@ -716,7 +796,8 @@ namespace Master.Components
                 var T_tt = T_t.DiagonalStack(T_t);
                 T = T_tt.DiagonalStack(T_t);
 
-
+                transformationmatrix.Add(T);
+                tranmatrix_six.Add(T_t);
 
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
                 {
@@ -745,6 +826,7 @@ namespace Master.Components
                 });
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double> KG = Tt.Multiply(ke);
+
                 K_eG = KG.Multiply(T);
 
                 ke_lst.Add(K_eG);
@@ -780,6 +862,8 @@ namespace Master.Components
 
             k_tot = K_tot;
             k_eg = ke_lst;
+            T_list = transformationmatrix;
+            T_list_six = tranmatrix_six;
 
         }
 
