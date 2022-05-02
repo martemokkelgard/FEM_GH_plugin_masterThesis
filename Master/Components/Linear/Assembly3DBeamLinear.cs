@@ -51,7 +51,7 @@ namespace Master.Components
             pManager.AddLineParameter("Deformed Geometry", "defGeo", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.list);
             pManager.AddNumberParameter("umax", "Umax", "maximum displacement ", GH_ParamAccess.item);
         }
 
@@ -221,6 +221,7 @@ namespace Master.Components
             DA.SetDataList(7, stress);
             DA.SetData(8, M);
             DA.SetData(9, umax);
+
 
 
         }
@@ -422,11 +423,15 @@ namespace Master.Components
                 eps = B.Multiply(v);        //strain (3)
 
                 sigma = E * eps;            //stress = E*3
+
                 S = Lk_eg[b.Id].Multiply(v);
 
-                _M = E * b.section.Iy * eps[4];
+                _M = E * b.section.Iy * eps[2];
 
                 M_lst.Add(_M);
+
+                
+                
 
                 disp[node1 * 3] += S[0];
                 disp[node1 * 3 + 1] += S[1];
