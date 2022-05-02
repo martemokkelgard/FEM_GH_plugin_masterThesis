@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
-
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 using MathNet.Numerics.LinearAlgebra;
@@ -11,6 +10,8 @@ using MathNet.Numerics.LinearAlgebra.Factorization;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Types;
 using MathNet.Numerics.Integration;
+using System.Windows.Media;
+
 
 namespace Master.Components
 {
@@ -47,11 +48,16 @@ namespace Master.Components
             pManager.AddPointParameter("Forces [N]", "F", "Forces in points", GH_ParamAccess.list);
             pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
+            pManager.AddLineParameter("Defomed Geometry", "DefGeo", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.list);
             pManager.AddNumberParameter("umax", "Umax", "maximum displacement ", GH_ParamAccess.item);
+
             pManager.AddLineParameter("moment diagram", "ben", "to see the moment ", GH_ParamAccess.list);
+
+            
+
         }
 
         /// <summary>
@@ -143,6 +149,8 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[6 * i] / 1000, pts[i].Y + def[6 * i + 1] / 1000, pts[i].Z + def[6 * i + 2] / 1000));
             }
 
+            
+
 
 
             //lage lister med displacement
@@ -170,7 +178,7 @@ namespace Master.Components
 
 
 
-            foreach (Vector uu in u)
+            foreach (Vector<double> uu in u)
             {
 
                 int tol = 6;
@@ -194,6 +202,22 @@ namespace Master.Components
 
             }
 
+            //Lager deformed geometry
+
+            List<Line> deformedgeometry = new List<Line>();
+
+            foreach (BeamClassBilinear b in bars)
+            {
+                Point3d p1 = new Point3d(b.startNode.pt.X +(def[b.startNode.Id * 6] /1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6+1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6+2] / 1000.00));
+                Point3d p2 = new Point3d(b.midNode.pt.X + (def[b.midNode.Id * 6] / 1000.00), b.midNode.pt.Y + (def[b.midNode.Id * 6 + 1] / 1000.00), b.midNode.pt.Z + (def[b.midNode.Id * 6 +2] / 1000.00));
+                Point3d p3 = new Point3d(b.endNode.pt.X + (def[b.endNode.Id * 6] / 1000.00), b.endNode.pt.Y + (def[b.endNode.Id * 6 + 1] / 1000.00), b.endNode.pt.Z + (def[b.endNode.Id * 6 + 2] / 1000.00));
+                Line line1 = new Line(p1, p2);
+                Line line2 = new Line(p2, p3);
+
+                deformedgeometry.Add(line1);
+                deformedgeometry.Add(line2);
+
+            }
 
 
             //output
@@ -203,11 +227,13 @@ namespace Master.Components
             DA.SetDataList(3, mom_lst);
             //DA.SetDataTree(1, outTree);
             DA.SetDataList(4, displNodes);
-            DA.SetDataList(5, strain);
-            DA.SetDataList(6, def);
-            DA.SetDataList(7, M);
-            DA.SetData(8, umax);
-            DA.SetDataList(9, crv);
+            DA.SetDataList(5, deformedgeometry);
+            DA.SetDataList(6, strain);
+            DA.SetDataList(7, def);
+            DA.SetData(8, M);
+            DA.SetData(9, umax);
+            DA.SetDataList(10, crv);
+
 
 
         }
@@ -706,12 +732,16 @@ namespace Master.Components
                 Point3d p2 = b.endNode.pt;
                 Point3d p3 = b.midNode.pt;
 
-                
+
+
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = Math.Round(currentLine.GetLength(), 5);
+               
+
+                Line linearL1 = new Line(p1, p2);
+                double l = Math.Round(linearL1.Length, 5);
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
@@ -722,15 +752,67 @@ namespace Master.Components
                 double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
 
 
-                
-                Matrix<double> t = DenseMatrix.OfArray(new double[,]
+
+                Matrix<double> t1 = DenseMatrix.OfArray(new double[,]
+
                 {
                         {cx,                                     cy,                   cz},
                         {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
                         {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
 
+
+                /*
+               
+                double xl1 = (p3.X - p1.X);
+                double yl1 = (p3.Y - p1.Y);
+                double zl1 = (p3.Z - p1.Z);
+
+                double xl2 = (p2.X - p3.X);
+                double yl2 = (p2.Y - p3.Y);
+                double zl2 = (p2.Z - p3.Z);
+
+                Line linearL1 = new Line(p3, p2);
+                double l1 = Math.Round(linearL1.Length, 5);
+                double den1 = l1 * Math.Pow(Math.Pow(xl1, 2) + Math.Pow(yl1, 2), 0.5);
+
+                double cx1 = xl1 / l1;
+                double cy1 = yl1 / l1;
+                double cz1 = zl1 / l1;
+
+                double s1 = (p3.Z - p1.Z) / (l1);
+                double c1 = (Math.Pow(Math.Pow((p3.X - p1.X), 2) + Math.Pow((p3.Y - p1.Y), 2), 0.5)) / l1;
                 
+                Matrix<double> t1 = DenseMatrix.OfArray(new double[,]
+                {
+                        {cx1,                                     cy1,                   cz1},
+                        {-(xl1*zl1*s1 + l1*yl1*c1) / den1,     -(yl1*zl1*s1 - l1*xl1*c1) / den1,     den1*s1/(l1*l1)},
+                        {(xl1*zl1*c1 - l1*yl1*s1)/den1,         (yl1*zl1*c1 + l1*xl1*s1) / den1,    -den1*c1 / (l1*l1)},
+                });
+
+
+
+
+                Line linearL2 = new Line(p1,p3);
+                double l2 = Math.Round(linearL2.Length, 5);
+                double den2 = l2 * Math.Pow(Math.Pow(xl2, 2) + Math.Pow(yl2, 2), 0.5);
+
+                double cx2 = xl2 / l2;
+                double cy2 = yl2 / l2;
+                double cz2 = zl2 / l2;
+
+                double s2 = (p2.Z - p3.Z) / (l2);
+                double c2 = (Math.Pow(Math.Pow((p2.X - p3.X), 2) + Math.Pow((p2.Y - p3.Y), 2), 0.5)) / l2;
+
+                Matrix<double> t2 = DenseMatrix.OfArray(new double[,]
+                {
+                        {cx2,                                     cy2,                   cz2},
+                        {-(xl2*zl2*s2 + l2*yl2*c2) / den2,     -(yl2*zl2*s2 - l2*xl2*c2) / den2,     den2*s2/(l2*l2)},
+                        {(xl2*zl2*c2 - l2*yl2*s2)/den2,         (yl2*zl2*c2 + l2*xl2*s2) / den2,    -den2*c2 / (l2*l2)},
+                });
+
+                */
+
 
                 /*
                 Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
@@ -792,9 +874,10 @@ namespace Master.Components
                         {ca*sb,                sa*sb,            cb},
                 });
                 */
-                var T_t = t.DiagonalStack(t);
+                var T_t = t1.DiagonalStack(t1);
                 var T_tt = T_t.DiagonalStack(T_t);
                 T = T_tt.DiagonalStack(T_t);
+                
 
                 transformationmatrix.Add(T);
                 tranmatrix_six.Add(T_t);
