@@ -48,6 +48,7 @@ namespace Master.Components
             pManager.AddPointParameter("Forces [N]", "F", "Forces in points", GH_ParamAccess.list);
             pManager.AddPointParameter("Moment [Nmm]", "R", "Rotation in points", GH_ParamAccess.list);
             pManager.AddPointParameter("DisplacementOfNodes", "displ", "Deformed geometry", GH_ParamAccess.list);
+            pManager.AddLineParameter("Deformed Geometry", "defGeo", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Moment in x", "M", "Moment ", GH_ParamAccess.list);
@@ -190,6 +191,22 @@ namespace Master.Components
 
             }
 
+            //Lager deformed geometry
+
+            List<Line> deformedgeometry = new List<Line>();
+
+            foreach (BeamClassLinear b in bars)
+            {
+                Point3d p1 = new Point3d(b.startNode.pt.X + (def[b.startNode.Id * 6] / 1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6 + 1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6 + 2] / 1000.00));
+                Point3d p2 = new Point3d(b.endNode.pt.X + (def[b.endNode.Id * 6] / 1000.00), b.endNode.pt.Y + (def[b.endNode.Id * 6 + 1] / 1000.00), b.endNode.pt.Z + (def[b.endNode.Id * 6 + 2] / 1000.00));
+                Line line1 = new Line(p1, p2);
+                
+
+                deformedgeometry.Add(line1);
+                
+
+            }
+
 
 
             //output
@@ -199,10 +216,12 @@ namespace Master.Components
             DA.SetDataList(3, mom_lst);
             //DA.SetDataTree(1, outTree);
             DA.SetDataList(4, displNodes);
-            DA.SetDataList(5, strain);
-            DA.SetDataList(6, stress);
-            DA.SetDataList(7, M);
-            DA.SetData(8, umax);
+            DA.SetDataList(5, deformedgeometry);
+            DA.SetDataList(6, strain);
+            DA.SetDataList(7, stress);
+            DA.SetData(8, M);
+            DA.SetData(9, umax);
+
 
 
         }

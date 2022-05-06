@@ -15,6 +15,14 @@
     <PackageReference Include="MathNet.Symbolics" Version="0.24.0" />
   </ItemGroup>
   
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Windows.Presentation" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  
   <PropertyGroup Condition="$(Configuration) == 'Debug' AND $([MSBuild]::IsOSPlatform(Windows))">
     <StartProgram>C:\Program Files\Rhino 7\System\Rhino.exe</StartProgram>
     <StartArguments></StartArguments>
