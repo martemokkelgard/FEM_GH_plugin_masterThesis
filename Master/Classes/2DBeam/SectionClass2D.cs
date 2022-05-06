@@ -35,6 +35,7 @@ namespace Master
             tf = _tf;
             CSA = w * h - ((w - 2 * tw) * (h - 2 * tf));
             I = (1 / (12.0000) * w * Math.Pow(h, 3)) - (1 / (12.0000) * (w - 2 * tw) * Math.Pow((h - 2 * tf), 3));
+            
 
         }
     }
