@@ -101,6 +101,7 @@ namespace Master.Components
             Matrix<double> invK = K_red.Inverse();
 
             //var def = invK.Multiply(R_red);
+
             var displNodes = new List<Point3d>();
 
             Vector<double> def = K_red.Cholesky().Solve(R);

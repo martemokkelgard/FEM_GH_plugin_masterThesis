@@ -462,6 +462,7 @@ namespace Master.Components
                     M_lst.Add(_M);
 
                     x += L / n;
+
                     
                     Point3d main1 = b.axis.PointAtNormalizedLength(0);
                     Point3d main2 = b.axis.PointAtNormalizedLength(1);
