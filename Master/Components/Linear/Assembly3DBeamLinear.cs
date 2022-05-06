@@ -442,9 +442,9 @@ namespace Master.Components
 
                 {
                     double ddN3 = -6.0 / Math.Pow(L, 2) + 12.0 * x / Math.Pow(L, 3);
-                    double ddN4 = 6.0 * x / Math.Pow(L, 2) - 4.0 / L;
+                    double ddN4 = -6.0 * x / Math.Pow(L, 2) + 4.0 / L;
                     double ddN5 = 6.0 / Math.Pow(L, 2) - 12.0 * x / Math.Pow(L, 3);
-                    double ddN6 = 6.0 * x / Math.Pow(L, 2) - 2.0 / L;
+                    double ddN6 = -6.0 * x / Math.Pow(L, 2) + 2.0 / L;
 
                     dNN = DenseVector.OfEnumerable(new double[]
 
@@ -461,12 +461,19 @@ namespace Master.Components
                     //Point3d main2 = b.axis.PointAtNormalizedLength(1);
                     //Point3d mid = b.axis.PointAtNormalizedLength(0.5);
                     Vector3d vector = b.axis.CurvatureAt((L / n) / L);
+                    Vector3d nullVec = new Vector3d(0,0,0);
                     //Vector3d vec = new Vector3d(main2.X-main1.X, main2.Y-main1.Y, main2.Z-main1.Z);
                     //Plane plan = new Plane(main1, vec , new Vector3d(0, 1, 0));
                     //Vector3d norm = plan.Normal;
                     vector.Unitize();
                     Point3d st = b.axis.PointAtNormalizedLength((L / n * i) / L);
-                    Point3d en = new Point3d(st.X + vector.X * _M / 10000000, st.Y - vector.Y * _M / 10000000, st.Z + vector.Z * _M / 10000000);
+                    
+                    if (vector == nullVec)
+                    {
+                        vector = new Vector3d(0,0,1);
+                    }
+                    
+                    Point3d en = new Point3d(st.X + vector.X * _M / 10000000, st.Y + vector.Y * _M / 10000000, st.Z + vector.Z * _M / 10000000);
 
 
 
@@ -606,28 +613,28 @@ namespace Master.Components
 
                 Curve currentLine = b.axis;
                 double L = currentLine.GetLength();
-                var x = X * L;
+                double x = X * L;
 
 
-                double N1 = 1 - x / L;                                                                      //axial translation in node 1
+                double N1 = 1.0 - x / L;                                                                      //axial translation in node 1
                 double N2 = x / L;                                                                          //axial translation in node 2
-                double N3 = 1 - 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2.0 * Math.Pow(x, 3) / Math.Pow(L, 3);  //translation node 1
-                double N4 = -x * (1 - 2.00 * x / L + Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 1
-                double N5 = 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * Math.Pow(x, 3) / Math.Pow(L, 3);      //translation node 2
+                double N3 = 1.0 - 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2.0 * Math.Pow(x, 3) / Math.Pow(L, 3);  //translation node 1
+                double N4 = -x * (1.0 - 2.00 * x / L + Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 1
+                double N5 = 3.00 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2.0 * Math.Pow(x, 3) / Math.Pow(L, 3);      //translation node 2
                 double N6 = x * (x / L - Math.Pow(x, 2) / Math.Pow(L, 2));                                 //rotation node 2
 
 
                 double dN1 = -1.0 / L;
                 double dN2 = 1.0 / L;
                 double dN3 = -6.0 * x / Math.Pow(L, 2) + 6.0 * Math.Pow(x, 2) / Math.Pow(L, 3);
-                double dN4 = 3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) - 4 * x / L + 1;
+                double dN4 = -3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) + 4 * x / L - 1.0;
                 double dN5 = -dN3;
-                double dN6 = 3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) - 2 * x / L;
+                double dN6 = -3.0 * Math.Pow(x, 2) / Math.Pow(L, 2) + 2.0 * x / L;
 
                 double ddN3 = -6.0 / Math.Pow(L, 2) + 12.0 * x / Math.Pow(L, 3);
-                double ddN4 = 6.0 * x / Math.Pow(L, 2) - 4.0 / L;
+                double ddN4 = -6.0 * x / Math.Pow(L, 2) + 4.0 / L;
                 double ddN5 = 6.0 / Math.Pow(L, 2) - 12.0 * x / Math.Pow(L, 3);
-                double ddN6 = 6.0 * x / Math.Pow(L, 2) - 2.0 / L;
+                double ddN6 = -6.0 * x / Math.Pow(L, 2) + 2.0 / L;
 
 
                 // første rad blir ux = N1*ux1 + N2*ux2
@@ -709,33 +716,33 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), -Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), -Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));  //negative values for y to get it in the same coordinatsystem as we use
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));  //negative values for y to get it in the same coordinatsystem as we use
 
 
                 Vector3d unitX = new Vector3d(1, 0, 0);
-                Vector3d unitY = new Vector3d(0, -1, 0);
+                Vector3d unitY = new Vector3d(0, 1, 0);
                 Vector3d unitZ = new Vector3d(0, 0, 1);
 
-                Vector3d vecz = new Vector3d();
+                Vector3d vec1z = new Vector3d();
+
+                Vector3d nullvec = new Vector3d(0, 0, 0);
+                Vector3d vec1x = b.axis.TangentAt(0);
                 
 
-                Vector3d vecx = b.axis.TangentAt(0);
-                Vector3d vec1x = new Vector3d(vecx.X, -vecx.Y, vecx.Z);
-
-                if (vec1x == unitX)
+                if (b.axis.CurvatureAt(0) == nullvec)
                 {
-                    vecz = unitZ;
+                    vec1z = unitZ;
                 }
                 else
                 {
-                    vecz = b.axis.CurvatureAt(0);
+                    vec1z = b.axis.CurvatureAt(0);
                 }
 
-                Vector3d vec1z = new Vector3d(vecz.X, -vecz.Y, vecz.Z);
+                
 
-                Vector3d vecy = Vector3d.CrossProduct(vec1z, vec1x);
-                Vector3d vec1y = new Vector3d(vecy.X, -vecy.Y, vecy.Z);
+                Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
+                
 
                 vec1z.Unitize();
                 vec1x.Unitize();
@@ -765,9 +772,11 @@ namespace Master.Components
                 Matrix<double> tr = DenseMatrix.OfArray(new double[,]
                 {
                         {_1l1,   _1m1,     _1n1},
-                        {_1l2,   -_1m2,     _1n2},
+                        {_1l2,   _1m2,     _1n2},
                         {_1l3,   _1m3,     _1n3},
                 });
+
+                t.CoerceZero(0.00001);
 
 
                 /*
@@ -855,7 +864,7 @@ namespace Master.Components
                 });
                 */
 
-                var T_t = t.DiagonalStack(tr);
+                var T_t = t.DiagonalStack(t);
                 var T = T_t.DiagonalStack(T_t);
 
                 transformationmatrix.Add(T);
@@ -883,6 +892,8 @@ namespace Master.Components
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double> KG = Tt.Multiply(ke);
                 K_eG = KG.Multiply(T);
+
+                K_eG.CoerceZero(0.00001);
 
                 LK_eG.Add(K_eG);
 
