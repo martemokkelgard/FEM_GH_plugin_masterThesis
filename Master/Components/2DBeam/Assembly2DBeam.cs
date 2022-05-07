@@ -120,7 +120,7 @@ namespace Master.Components
             //Vector<double> def = K_red.Cholesky().Solve(R);
 
 
-            CreateForces(bars, pts, def, out Vector<double> forces, out Vector<double> rotation);
+            CreateForces(bars, pts, def, out Vector<double> forces, out Vector<double> moment);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -174,12 +174,12 @@ namespace Master.Components
                 }
             }
 
-            for (int i = 0; i < rotation.Count; i++)
+            for (int i = 0; i < moment.Count; i++)
             { 
 
-                if (Math.Abs(rotation[i]) <= 0.00001)
+                if (Math.Abs(moment[i]) <= 0.00001)
                 {
-                    rotation[i] = 0;
+                    moment[i] = 0;
                 }
 
             }
@@ -193,7 +193,7 @@ namespace Master.Components
                 if (BCList.Contains(i * 3) | BCList.Contains(i * 3 + 1) | BCList.Contains(i * 3 + 2))
                 {
                     force_lst.Add(new Point3d(forces[i * 2], 0.00, forces[i * 2 + 1]));
-                    mom_lst.Add(new Point3d(0.00, rotation[i], 0.00));
+                    mom_lst.Add(new Point3d(0.00, moment[i], 0.00));
                     force_mom_pos.Add(pts[i]);
                 }
 
@@ -325,14 +325,14 @@ namespace Master.Components
 
         }
 
-        private static void CreateForces(List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
+        private static void CreateForces(List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> moment)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
             //List<Vector<double>> ST = new List<Vector<double>>();
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
 
-            Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count]);
+            Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count]);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 2]);
 
             foreach (BeamClass2D b in bars)
@@ -367,10 +367,10 @@ namespace Master.Components
                                     {
                         {  my,    0,        0,       -my,     0,        0},
                         {  0,   12.00,   -6.00*L,     0,   -12.00,   -6.00*L},
-                        {  0,  -6.00*L,   4.00*LL,    0,   6.00*L,  2.00*LL},
+                        {  0,  -6.00*L,   4.00*LL,    0,   6.00*L,   2.00*LL},
                         {-my,     0,        0,        my,     0,         0},
                         {  0,  -12.00,    6.00*L,     0,    12.00,    6.00*L},
-                        {  0,   -6.00*L,  2.00*LL,    0,   6.00*L,   4.00*LL}
+                        {  0,   -6.00*L,  2.00*LL,    0,    6.00*L,   4.00*LL}
                                     });
                 ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -393,22 +393,17 @@ namespace Master.Components
                 disp[node1 * 2] += S[0];
                 disp[node1 * 2 + 1] += S[1];
                 
-                disp[node2 * 2] -= S[3];
-                disp[node2 * 2 + 1] -= S[4];
+                disp[node2 * 2] += S[3];
+                disp[node2 * 2 + 1] += S[4];
                 
 
-                rot[node1] += S[2];
-                
-                rot[node2] -= S[5];
-                
-
+                mom[node1] += S[2];
+                mom[node2] += S[5];
 
 
              }
-
-
             forces = disp;
-            rotation = rot;
+            moment = mom;
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BeamClass2D> bars, List<Point3d> points, out Matrix<double> k_tot)
@@ -446,10 +441,10 @@ namespace Master.Components
 
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                     {
-                        { c, s, 0, 0, 0 ,0},
-                        {-s, c, 0, 0, 0 ,0},
-                        {0, 0, 1, 0, 0 ,0 },
-                        { 0, 0 ,0,c, s, 0},
+                        { c, s, 0, 0, 0, 0},
+                        {-s, c, 0, 0, 0, 0},
+                        { 0, 0, 1, 0, 0, 0},
+                        { 0, 0 ,0, c, s, 0},
                         { 0, 0 ,0,-s, c, 0},
                         { 0, 0 ,0, 0, 0, 1}
                                     });

@@ -49,7 +49,7 @@ namespace Master.Components.Linear
             pManager.AddPointParameter("Displacement of Nodes", "displ", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "S", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("displace (w) ", "w", "displacement with Nq ", GH_ParamAccess.list);
+            pManager.AddGenericParameter("displace (w) ", "w", "displacement with Nq ", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Master.Components.Linear
             //Vector<double> def = K_red.Cholesky().Solve(R);
 
 
-            CreateForces(x, bars, pts, def, out List<Vector<double>> displace, out Vector<double> forces, out Vector<double> rotation);
+            CreateForces(x, bars, pts, def, out List<Matrix<double>> displace, out Vector<double> forces, out Vector<double> moment);
 
 
             for (int i = 0; i < pts.Count; i++)
@@ -164,6 +164,7 @@ namespace Master.Components.Linear
             List<Point3d> mom_lst = new List<Point3d>();
             List<Point3d> disp_lst = new List<Point3d>();
             List<Point3d> rot_lst = new List<Point3d>();
+            List<Point3d> w_list = new List<Point3d>();
 
             List<Point3d> force_mom_pos = new List<Point3d>();
 
@@ -176,12 +177,12 @@ namespace Master.Components.Linear
                 }
             }
 
-            for (int i = 0; i < rotation.Count; i++)
+            for (int i = 0; i < moment.Count; i++)
             {
 
-                if (Math.Abs(rotation[i]) <= 0.00001)
+                if (Math.Abs(moment[i]) <= 0.00001)
                 {
-                    rotation[i] = 0;
+                    moment[i] = 0;
                 }
 
             }
@@ -195,7 +196,8 @@ namespace Master.Components.Linear
                 if (BCList.Contains(i * 3) | BCList.Contains(i * 3 + 1) | BCList.Contains(i * 3 + 2))
                 {
                     force_lst.Add(new Point3d(forces[i * 2], 0.00, forces[i * 2 + 1]));
-                    mom_lst.Add(new Point3d(0.00, rotation[i], 0.00));
+                    mom_lst.Add(new Point3d(0.00, moment[i], 0.00));
+                    w_list.Add(new Point3d(0.00, displace[i][i,i], 0.00));
                     force_mom_pos.Add(pts[i]);
                 }
 
@@ -213,7 +215,7 @@ namespace Master.Components.Linear
             DA.SetDataList(5, displNodes);
             DA.SetDataList(6, strain);
             DA.SetDataList(7, stress);
-            DA.SetDataList(8, displace);
+            DA.SetDataList(8, w_list);
 
         }
 
@@ -328,16 +330,17 @@ namespace Master.Components.Linear
 
         }
 
-        private static void CreateForces(double x, List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out List<Vector<double>> displace, out Vector<double> forces, out Vector<double> rotation)
+        private static void CreateForces(double x, List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out List<Matrix<double>> displace, out Vector<double> forces, out Vector<double> moment)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
             //List<Vector<double>> ST = new List<Vector<double>>();
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
+            Matrix<double> v_shape = DenseMatrix.OfArray(new double[4, 1]);
 
-            Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count]);
+            Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count]);
             Vector<double> force = SparseVector.OfEnumerable(new double[points.Count * 2]);
-            List<Vector<double>> w_lst = new List<Vector<double>>(); 
+            List<Matrix<double>> w_lst = new List<Matrix<double>>(); 
 
             foreach (BeamClass2D b in bars)
             {
@@ -354,6 +357,8 @@ namespace Master.Components.Linear
 
                 double mat = (E * I) / (1 + alpha);
 
+                double X = x * L;
+
 
                 Point3d p1 = currentLine.PointAtStart;
                 Point3d p2 = currentLine.PointAtEnd;
@@ -369,16 +374,15 @@ namespace Master.Components.Linear
 
                 Matrix<double> Nq = SparseMatrix.OfArray(new double[,]
                 {
-                    {1, x, Math.Pow(x,2), Math.Pow(x,3) }
+                    {1, X, Math.Pow(X,2), Math.Pow(X,3) }
                 });
 
                 Matrix<double> Amatrix = SparseMatrix.OfArray(new double[,]
                 {
-                    {1.0,    0,     0,        0,    0,      0 },
-                    {0,     1.0,     0,       0,   0,       0 },
-                    {0,      0,       -1.0,     0,     -alpha * LL / 2.0},
-                    {1,      L,     LL,       LLL },
-                    {0,   -1.0,    -2.0*L,   -LL*(6+alpha)/2.0 }
+                    {1.0,     0,      0,          0},
+                    {0,     -1.0,     0,     -alpha * LL / 2.0},
+                    {1.0,      L,     LL,       LLL},
+                    {0,     -1.0,    -2.0*L,   -LL*(6+alpha)/2.0 }
                 });
 
 
@@ -395,16 +399,22 @@ namespace Master.Components.Linear
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
 
                         {
-                        {  E*A/L,    0,             0,          -E*A/L,       0,               0},
-                        {  0,    12.0/LLL,      -6.0/LL,           0,      -12.0/LLL,      -6.00*LL},
-                        {  0,    -6.0/LL,     (4.0 + alpha)/L,     0,       6.00/LL,      (2.0 - alpha)/L},
-                        {-E*A/L,    0,               0,          E*A/L,       0,               0},
-                        {  0,     -12.0/LLL,      6.00/LL,         0,       12.0/LLL,      6.0/LL},
-                        {  0,     -6.00*LL,   (2.0 - alpha)/L,     0,       6.0/LL,       (4.0 + alpha)/L}
+                        {  E*A/L* 1/mat,            0,             0,        -E*A/L * 1/mat,         0,               0},
+                        {       0,              12.0/LLL,      -6.0/LL,             0,          -12.0/LLL,         -6.00/LL},
+                        {       0,              -6.0/LL,     (4.0 + alpha)/L,       0,           6.00/LL,      (2.0 - alpha)/L},
+                        {-E*A/L * 1/mat,           0,             0,         E*A/L * 1/mat,          0,               0},
+                        {       0,             -12.0/LLL,      6.00/LL,              0,           12.0/LLL,          6.0/LL},
+                        {       0,             -6.00/LL,      (2.0 - alpha)/L,       0,            6.0/LL,       (4.0 + alpha)/L}
                         });
 
+                
                 var Ainv = Amatrix.Inverse();
-                        
+                /*
+                var A1 = Ainv.RemoveColumn(0);
+                var A2 = A1.RemoveColumn(2);
+                var A3 = A2.RemoveRow(0);
+                var Ause = A3.RemoveRow(2);
+                */
 
                 Matrix<double> Ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -415,6 +425,18 @@ namespace Master.Components.Linear
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
 
+                // only takes in the z displacement and ry rotation, since this the the values we have in the A and Nq matrix.
+                v_shape[0,0] = _def[node1 * 3 + 1];
+                v_shape[1,0] = _def[node1 * 3 + 2];
+                v_shape[2,0] = _def[node2 * 3 + 1];
+                v_shape[3,0] = _def[node2 * 3 + 2];
+
+                
+                var w = (Nq.Multiply(Ainv)).Multiply(v_shape);
+
+
+                w_lst.Add(w);
+
                 v[0] = _def[node1 * 3];
                 v[1] = _def[node1 * 3 + 1];
                 v[2] = _def[node1 * 3 + 2];
@@ -422,19 +444,14 @@ namespace Master.Components.Linear
                 v[4] = _def[node2 * 3 + 1];
                 v[5] = _def[node2 * 3 + 2];
 
-                var w = Nq.Multiply(Ainv).Multiply(v);
-                w_lst.Add(w);
-
                 S = K_eG.Multiply(v);
 
                 force[node1 * 2] += S[0];
                 force[node1 * 2 + 1] += S[1];
                 force[node2 * 2] += S[3];
                 force[node2 * 2 + 1] += S[4];
-
-
-                rot[node1] += S[2];
-                rot[node2] += S[5];
+                mom[node1] += S[2];
+                mom[node2] += S[5];
 
 
 
@@ -443,7 +460,7 @@ namespace Master.Components.Linear
 
             displace = w_lst;
             forces = force;
-            rotation = rot;
+            moment = mom;
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BeamClass2D> bars, List<Point3d> points, out Matrix<double> k_tot)
@@ -499,12 +516,12 @@ namespace Master.Components.Linear
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
 
                         {
-                        {  E*A/L,    0,             0,          -E*A/L,       0,               0},
-                        {  0,    12.0/LLL,      -6.0/LL,           0,      -12.0/LLL,      -6.00*LL},
-                        {  0,    -6.0/LL,     (4.0 + alpha)/L,     0,       6.00/LL,      (2.0 - alpha)/L},
-                        {-E*A/L,    0,               0,          E*A/L,       0,               0},
-                        {  0,     -12.0/LLL,      6.00/LL,         0,       12.0/LLL,      6.0/LL},
-                        {  0,     -6.00*LL,   (2.0 - alpha)/L,     0,       6.0/LL,       (4.0 + alpha)/L}
+                        { E*A/L * 1/mat,    0,              0,          -E*A/L *1/mat,       0,               0},
+                        {  0,           12.0/LLL,      -6.0/LL,                0,      -12.0/LLL,      -6.00/LL},
+                        {  0,           -6.0/LL,     (4.0 + alpha)/L,          0,       6.00/LL,      (2.0 - alpha)/L},
+                        {-E*A/L *1/mat,    0,               0,          E*A/L * 1/mat,       0,               0},
+                        {  0,          -12.0/LLL,      6.00/LL,                0,       12.0/LLL,      6.0/LL},
+                        {  0,          -6.00/LL,    (2.0 - alpha)/L,           0,       6.0/LL,       (4.0 + alpha)/L}
                         });
                 Matrix<double> Ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
