@@ -391,7 +391,8 @@ namespace Master.Components
             Vector<double> sigma = SparseVector.OfEnumerable(new double[6]);
             Vector<double> S;
 
-            Vector<double> v = SparseVector.OfEnumerable(new double[18]);
+            Vector<double> v = DenseVector.OfEnumerable(new double[18]);
+            Vector<double> vl = DenseVector.OfEnumerable(new double[12]);
             var _M = new double();
 
             Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count * 3]);
@@ -444,7 +445,7 @@ namespace Master.Components
 
                 var B = dN;
                 Matrix<double> T_six_trans = T_List_six[b.Id].Transpose();
-                var vl = T_List[b.Id] * v;       //transponerer v
+                vl = T_List[b.Id] * v;       //transponerer v
 
                 u = N.Multiply(vl);
                 u = T_six_trans.Multiply(u);
@@ -491,19 +492,24 @@ namespace Master.Components
 
                     x += L / n;
 
-                    
                     //Point3d main1 = b.axis.PointAtNormalizedLength(0);
                     //Point3d main2 = b.axis.PointAtNormalizedLength(1);
-                    //Point3d mid =  b.axis.PointAtNormalizedLength(0.5);
+                    //Point3d mid = b.axis.PointAtNormalizedLength(0.5);
                     Vector3d vector = b.axis.CurvatureAt((L / n) / L);
+                    Vector3d nullVec = new Vector3d(0, 0, 0);
                     //Vector3d vec = new Vector3d(main2.X-main1.X, main2.Y-main1.Y, main2.Z-main1.Z);
                     //Plane plan = new Plane(main1, vec , new Vector3d(0, 1, 0));
                     //Vector3d norm = plan.Normal;
                     vector.Unitize();
-                    Point3d st = b.axis.PointAtNormalizedLength((L/n * i)/L);
+                    Point3d st = b.axis.PointAtNormalizedLength((L / n * i) / L);
+
+                    if (vector == nullVec)
+                    {
+                        vector = new Vector3d(0, 0, 1);
+                    }
+
                     Point3d en = new Point3d(st.X + vector.X * _M / 10000000, st.Y + vector.Y * _M / 10000000, st.Z + vector.Z * _M / 10000000);
 
-                    
 
                     curve_pts.Add(en);
 
@@ -749,8 +755,36 @@ namespace Master.Components
                 Point3d p3 = b.midNode.pt;
 
 
+                Vector3d unitX = new Vector3d(1, 0, 0);
+                Vector3d unitY = new Vector3d(0, 1, 0);
+                Vector3d unitZ = new Vector3d(0, 0, 1);
 
-                Vector3d vec1z = b.axis.CurvatureAt(0);
+                Vector3d vec1z = new Vector3d();
+
+                Vector3d nullvec = new Vector3d(0, 0, 0);
+                Vector3d vec1x = b.axis.TangentAt(0);
+
+
+                if (b.axis.CurvatureAt(0) == nullvec)
+                {
+                    vec1z = unitZ;
+                }
+                else
+                {
+                    vec1z = b.axis.CurvatureAt(0);
+                }
+
+
+
+                Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
+
+
+                vec1z.Unitize();
+                vec1x.Unitize();
+                vec1y.Unitize();
+
+
+                //Vector3d vec1z = b.axis.CurvatureAt(0);
                 Vector3d vec2z = b.axis.CurvatureAt(0.5);
                 Vector3d vec3z = b.axis.CurvatureAt(1);
                 vec1z.Unitize();
@@ -758,24 +792,19 @@ namespace Master.Components
                 vec3z.Unitize();
 
 
-                Vector3d vec1x = b.axis.TangentAt(0);
+                //Vector3d vec1x = b.axis.TangentAt(0);
                 Vector3d vec2x = b.axis.TangentAt(0.5);
                 Vector3d vec3x = b.axis.TangentAt(1);
                 vec1x.Unitize();
                 vec2x.Unitize();
                 vec3x.Unitize();
 
-                Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
+                //Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
                 Vector3d vec2y = Vector3d.CrossProduct(vec2z, vec2x);
                 Vector3d vec3y = Vector3d.CrossProduct(vec3z, vec3x);
                 vec1y.Unitize();
                 vec2y.Unitize();
                 vec3y.Unitize();
-
-
-                Vector3d unitX = new Vector3d(1, 0, 0);
-                Vector3d unitY = new Vector3d(0, 1, 0);
-                Vector3d unitZ = new Vector3d(0, 0, 1);
 
                 //transformation in startnode
                 
@@ -791,7 +820,7 @@ namespace Master.Components
                 double _1m3 = Math.Cos(Vector3d.VectorAngle(vec1z, unitY));
                 double _1n3 = Math.Cos(Vector3d.VectorAngle(vec1z, unitZ));
 
-
+                /*
 
                 //transformation in midnode
 
@@ -821,7 +850,7 @@ namespace Master.Components
                 double _3m3 = Math.Cos(Vector3d.VectorAngle(vec3z, unitY));
                 double _3n3 = Math.Cos(Vector3d.VectorAngle(vec3z, unitZ));
 
-
+                */
 
                 Matrix<double> t1 = DenseMatrix.OfArray(new double[,]
                 {
@@ -829,6 +858,8 @@ namespace Master.Components
                         {_1l2,   _1m2,     _1n2},
                         {_1l3,   _1m3,     _1n3},
                 });
+
+                /*
 
                 Matrix<double> t2 = DenseMatrix.OfArray(new double[,]
                 {
@@ -844,6 +875,7 @@ namespace Master.Components
                         {_3l3,   _3m3,     _3n3},
                 });
 
+                */
 
                 /*
                 double xl = (p2.X - p1.X);
@@ -988,12 +1020,18 @@ namespace Master.Components
                         {ca*sb,                sa*sb,            cb},
                 });
                 */
+                //var T_t1 = t1.DiagonalStack(t1);
+                //var T_t2 = t2.DiagonalStack(t2);
+                //var T_t3 = t3.DiagonalStack(t3);
+                //var T_tt = T_t1.DiagonalStack(T_t2);
+                //T = T_tt.DiagonalStack(T_t3);
+
                 var T_t1 = t1.DiagonalStack(t1);
-                var T_t2 = t2.DiagonalStack(t2);
-                var T_t3 = t3.DiagonalStack(t3);
-                var T_tt = T_t1.DiagonalStack(T_t2);
-                T = T_tt.DiagonalStack(T_t3);
-                
+                var T_ = T_t1.DiagonalStack(T_t1);
+                T = T_.DiagonalStack(T_t1);
+
+                T.CoerceZero(0.0001);
+                T_t1.CoerceZero(0.0001);
 
                 transformationmatrix.Add(T);
                 tranmatrix_six.Add(T_t1);
@@ -1027,6 +1065,8 @@ namespace Master.Components
                 Matrix<double> KG = Tt.Multiply(ke);
 
                 K_eG = KG.Multiply(T);
+                K_eG.CoerceZero(0.00001);
+
 
                 ke_lst.Add(K_eG);
 
