@@ -24,7 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name of bar", GH_ParamAccess.item);
-            pManager.AddLineParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
+            pManager.AddCurveParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
             pManager.AddGenericParameter("material", "M", "MaterialClass", GH_ParamAccess.item);
             pManager.AddGenericParameter("section", "S", "Section of the bar", GH_ParamAccess.item);
         }
@@ -45,7 +45,7 @@ namespace Master.Components
         {
             //input
             string name = "Beam";
-            List<Line> lines = new List<Line>();
+            List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
             DA.GetData(0, ref name);
@@ -56,7 +56,7 @@ namespace Master.Components
 
             
             //code
-            foreach (Line l in lines)  //making barsClass objects of lines
+            foreach (Curve l in lines)  //making barsClass objects of lines
             { 
                 bars.Add(new BeamClass("Beam", l, sec, mat));
             }
@@ -71,15 +71,15 @@ namespace Master.Components
 
             for (int i = 0; i < lines.Count; i++)
             {
-                Line L1 = lines[i];
+                Curve L1 = lines[i];
 
-                if (!pts.Contains(L1.From))
+                if (!pts.Contains(L1.PointAtStart))
                 {
-                    pts.Add(L1.From);
+                    pts.Add(L1.PointAtStart);
                 }
-                if (!pts.Contains(L1.To))
+                if (!pts.Contains(L1.PointAtEnd))
                 {
-                    pts.Add(L1.To);
+                    pts.Add(L1.PointAtEnd);
                 }
 
             }
@@ -99,11 +99,11 @@ namespace Master.Components
                 {
 
 
-                    if (l.axis.From == nodes[i].pt)
+                    if (l.axis.PointAtStart == nodes[i].pt)
                     {
                         l.startNode = nodes[i];
                     }
-                    if (l.axis.To == nodes[i].pt)
+                    if (l.axis.PointAtEnd == nodes[i].pt)
                     {
                         l.endNode = nodes[i];
                     }

@@ -23,7 +23,8 @@ namespace Master
         public double J;
         public double a;
         public double b;
-        
+        public double Asteg;
+
 
 
         public SectionClass()
@@ -42,7 +43,8 @@ namespace Master
             CSA = w * h -((w-2*tw)*(h-2*tf));
             Iy = ( 1 / (12.00) * w * Math.Pow(h,3) ) - ( 1 / (12.00) * (w - 2*tw) * Math.Pow( (h - 2*tf), 3) );
             Iz = (1 / (12.00) * h * Math.Pow(w, 3)) - (1 / (12.00) * (h - 2 * tf) * Math.Pow((w - 2 * tw), 3));
-           
+            Asteg = (h - 2 * tf) * 2;
+
 
             if (h > w)
             {

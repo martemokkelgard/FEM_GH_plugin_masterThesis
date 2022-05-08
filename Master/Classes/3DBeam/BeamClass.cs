@@ -14,7 +14,7 @@ namespace Master
         public int Id;
         public SectionClass section;
         public MaterialClass material;
-        public Line axis;
+        public Curve axis;
         public NodeClass startNode;
         public NodeClass endNode;
         
@@ -23,7 +23,7 @@ namespace Master
         public BeamClass()
         { }
         
-        public BeamClass(string _Name, Line _line, SectionClass _section, MaterialClass _material) 
+        public BeamClass(string _Name, Curve _line, SectionClass _section, MaterialClass _material) 
         {
             Name = _Name;
             axis= _line;

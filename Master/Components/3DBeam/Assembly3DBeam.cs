@@ -101,12 +101,13 @@ namespace Master.Components
             Matrix<double> invK = K_red.Inverse();
 
             //var def = invK.Multiply(R_red);
+
             var displNodes = new List<Point3d>();
 
             Vector<double> def = K_red.Cholesky().Solve(R);
 
 
-            CreateForces(bars, pts, def, out Vector<double> forces, out Vector<double> rotation);
+            CreateForces(bars, pts, def, out Vector<double> forces, out Vector<double> moment);
 
 
             for (int i =0; i< pts.Count; i++)
@@ -130,7 +131,7 @@ namespace Master.Components
             List<double> stress = new List<double>();
             foreach (BeamClass b in bars)
             {
-                double originLength = b.axis.Length;
+                double originLength = b.axis.GetLength();
                 double deformedLength = liness[b.Id].Length;
 
                 double dL = originLength - deformedLength;
@@ -170,7 +171,7 @@ namespace Master.Components
 
             //removing smaller values than 1e-6 to zero due to numerical error
             forces.CoerceZero(1e-6);
-            rotation.CoerceZero(1e-6);
+            moment.CoerceZero(1e-6);
 
             // endrer output til liste med punkter
             for (int i = 0; i < pts.Count; i++)
@@ -181,7 +182,7 @@ namespace Master.Components
                 if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1 ) | BCList.Contains(i * 6 + 2) | BCList.Contains(i * 6 + 3) | BCList.Contains(i * 6 + 4) | BCList.Contains(i * 6 + 5) )
                     {
                         force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
-                        mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
+                        mom_lst.Add(new Point3d(moment[i * 3], moment[i * 3 + 1], moment[i * 3 + 2]));
 
                     }
                 
@@ -221,7 +222,7 @@ namespace Master.Components
                             BCsIndex.Add(6*i);
 
                         if(b.uy)
-                            BCsIndex.Add(6*i + 1);
+                            BCsIndex.Add(6 * i + 1);
 
                         if (b.uz)
                             BCsIndex.Add(6*i + 2);
@@ -341,7 +342,7 @@ namespace Master.Components
 
         
 
-        private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> rotation)
+        private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> moment)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
@@ -350,14 +351,14 @@ namespace Master.Components
             Vector<double> v = SparseVector.OfEnumerable(new double[12]);
             
 
-            Vector<double> rot = SparseVector.OfEnumerable(new double[points.Count * 3]);
-            Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> force = SparseVector.OfEnumerable(new double[points.Count * 3]);
 
             foreach (BeamClass b in bars)
             {
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length*1000;
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength()*1000;
                 double LL = Math.Pow(L, 2);
                 
                 //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
@@ -377,8 +378,8 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;    //NB! må kanskje endre J og G
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X,6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X,6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));
 
 
 
@@ -390,7 +391,7 @@ namespace Master.Components
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.Length;
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl,2) + Math.Pow(yl,2) , 0.5);
 
                 double cx = xl / l;
@@ -462,10 +463,11 @@ namespace Master.Components
 
                 Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
-                        {ca*cb*cg-sa*sg,   sa*cb*cg+ca*sg,     -sb*cg},
-                        {-ca*cb*sg-sa*cg,   -sa*cb*sg+ca*cg,    sb*sg},
-                        {ca*sb,                sa*sb,            cb},
+                        {cx,                                     cy,                   cz},
+                        {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
+                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,       -den*c / (l*l)},
                 });
+
 
                 var T = t.DiagonalStack(t);
                 T = T.DiagonalStack(T);
@@ -504,32 +506,29 @@ namespace Master.Components
                 v[6] = _def[node2 * 6];
                 v[7] = _def[node2 * 6 + 1];
                 v[8] = _def[node2 * 6 + 2];
-                v[9] =_def[node2 * 6 + 3];
+                v[9] = _def[node2 * 6 + 3];
                 v[10] = _def[node2 * 6 + 4];
                 v[11] = _def[node2 * 6 + 5];
 
 
-
                 S = K_eG.Multiply(v);
 
+                force[node1 * 3] += S[0];
+                force[node1 * 3 + 1] += S[1];
+                force[node1 * 3 + 2] += S[ 2];
+
+                force[node2 * 3] += S[6];
+                force[node2 * 3 +1] += S[ 7];
+                force[node2 * 3 + 2] += S[8];
 
 
-                disp[node1 * 3] += S[0];
-                disp[node1 * 3 + 1] += S[1];
-                disp[node1 * 3 + 2] += S[ 2];
+                mom[node1 * 3] += S[3];
+                mom[node1 * 3 + 1] += S[4];
+                mom[node1 * 3 + 2] += S[5];
 
-                disp[node2 * 3] -= S[6];
-                disp[node2 * 3 +1] -= S[ 7];
-                disp[node2 * 3 + 2] -= S[8];
-
-
-                rot[node1 * 3] += S[3];
-                rot[node1 * 3 + 1] += S[4];
-                rot[node1 * 3 + 2] += S[5];
-
-                rot[node2 * 3] -= S[9];
-                rot[node2 * 3 + 1] -= S[10];
-                rot[node2 * 3 + 2] -= S[11];
+                mom[node2 * 3] += S[9];
+                mom[node2 * 3 + 1] += S[10];
+                mom[node2 * 3 + 2] += S[11];
 
                 
 
@@ -537,8 +536,8 @@ namespace Master.Components
             }
             
 
-            forces = disp;
-            rotation = rot;     
+            forces = force;
+            moment = mom;     
             //forces = new List<Vector<double>>(ST_disp);
             //rotation = new List<Vector<double>>(ST_rot);
         }
@@ -554,11 +553,9 @@ namespace Master.Components
             {
 
 
-                Line currentLine = b.axis;
-                double L = currentLine.Length * 1000;
-                //double LL = Math.Pow(L, 2);
+                Curve currentLine = b.axis;
+                double L = currentLine.GetLength() * 1000;
 
-                //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
 
 
                 double X = b.section.CSA * b.material.youngsModolus / L;
@@ -575,15 +572,15 @@ namespace Master.Components
                 double C = (b.material.G * b.section.J) / L;    //NB! må kanskje endre J og G
 
 
-                Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 6), Math.Round(currentLine.From.Y, 6), Math.Round(currentLine.From.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 6), Math.Round(currentLine.To.Y, 6), Math.Round(currentLine.To.Z, 6));
+                Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));
 
 
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
 
-                double l = currentLine.Length;
+                double l = currentLine.GetLength();
                 double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
 
                 double cx = xl / l;
