@@ -41,7 +41,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddMatrixParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
+            pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -66,8 +66,13 @@ namespace Master.Components
             ngp = Convert.ToInt32(ngp);
             int p = Convert.ToInt32(pp);
 
-            List<double> Xi = new List<double>();
-            List<double> GPW = new List<double>();
+            //List<double> Xi = new List<double>();
+            //List<double> GPW = new List<double>();
+
+            var GPW = getGPW(Convert.ToInt32(ngp));
+
+
+            /*
             if (ngp == 2)
             {
                 Xi.Add(-Math.Sqrt(1.0 / 3.0));
@@ -75,6 +80,7 @@ namespace Master.Components
                 GPW.Add(1.0);
                 GPW.Add(1.0);
             }
+            */
 
             //control points
 
@@ -87,8 +93,9 @@ namespace Master.Components
 
             int dim = pu + 1 + pv + 1;
             Matrix<double> k_e = DenseMatrix.OfArray(new double[dim, dim]);
+            Matrix<double> k_ee = DenseMatrix.OfArray(new double[4, 4]);
 
-            for (int n = 0; n < Xi.Count; n++)
+            for (int n = 0; n < ngp; n++)
             {
                 //info
                 var info = new List<string>() { "code for NURBS" };
@@ -107,8 +114,8 @@ namespace Master.Components
                 //double xi = 0.49;
 
                 //basic shape function degree 0
-                List<double> N0v = getN0(kVv, Xi[n]);
-                List<double> N0u = getN0(kVu, Xi[n]);
+                List<double> N0v = getN0(kVv, GPW[0, n]);
+                List<double> N0u = getN0(kVu, GPW[0, n]);
                 string N0string = "N0 = ";
                 foreach (var n0 in N0v)
                     N0string = N0string + " " + n0;
@@ -116,10 +123,10 @@ namespace Master.Components
 
                 //basic shape function degree 1 and higher
                 int d = 1;
-                List<double> Nu = getN(kVu, Xi[n], pu);
-                List<double> dNu = getdN(kVu, Xi[n], pu, d);
-                List<double> Nv = getN(kVv, Xi[n], pv);
-                List<double> dNv = getdN(kVv, Xi[n], pv, d);
+                List<double> Nu = getN(kVu, GPW[0, n], pu);
+                List<double> dNu = getdN(kVu, GPW[0, n], pu, d);
+                List<double> Nv = getN(kVv, GPW[0, n], pv);
+                List<double> dNv = getdN(kVv, GPW[0, n], pv, d);
                 string Nstring = "N = ";
                 foreach (var nshp in Nv)
                     Nstring = Nstring + " " + nshp;
@@ -137,10 +144,10 @@ namespace Master.Components
 
                 int db = 2;   //derived d-times
                 List<double> B = new List<double>();
-                double B0 = getdN(kVv, Xi[n], pv, db)[0] + getdN(kVv, Xi[n], pv, db)[1];
-                double B1 = getdN(kVv, Xi[n], pv, db)[2] + getdN(kVv, Xi[n], pv, db)[3];
-                double B2 = L / 3 * getdN(kVv, Xi[n], pv, db)[1];
-                double B3 = -L / 3 * getdN(kVv, Xi[n], pv, db)[2];
+                double B0 = getdN(kVv, GPW[0,n], pv, db)[0] + getdN(kVv, GPW[0, n], pv, db)[1];
+                double B1 = getdN(kVv, GPW[0, n], pv, db)[2] + getdN(kVv, GPW[0, n], pv, db)[3];
+                double B2 = L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[1];
+                double B3 = -L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[2];
                 B.Add(B0);B.Add(B1);B.Add(B2);B.Add(B3);
 
 
@@ -153,19 +160,18 @@ namespace Master.Components
                 {
                     for (int b = 0; b < Nu.Count; b++)
                     {
-                        k_e[3*a,3*b] += (E * A / (J * J)) * dNu[a] * dNu[b] * J * GPW[n];
+                        k_e[3*a,3*b] += (E * A / (J * J)) * dNu[a] * dNu[b] * J * GPW[1,n];
                     }
                 }
 
                 
-                for (int g = 0; g < Nv.Count/2; g++)
+                for (int g = 0; g < Nv.Count; g++)
                 {
-                    for (int e = 0; e < Nv.Count/2; e++)
+                    for (int e = 0; e < Nv.Count; e++)
+
                     {
-                        k_e[g+1,e+1] += (E * I / (J * J*J*J)) * B[e] * B[g] * J * GPW[n];
-                        k_e[g+1,4+e] += (E * I / (J * J*J*J)) * B[e] * B[g+2] * J * GPW[n];
-                        k_e[4+g, e+1] += (E * I /( J * J * J * J)) * B[e+2] * B[g] * J * GPW[n];
-                        k_e[4+g, e+4] += (E * I / (J * J * J * J)) * B[e+2] * B[g+2] * J * GPW[n];
+                        k_ee[g,e] += (E * I) / (Math.Pow(J,4)) * B[g] * B[e] * J * GPW[1,n];
+                        
                     }
                 }
 
@@ -173,8 +179,8 @@ namespace Master.Components
 
 
                 //calculate
-                int ispan = findSpan(kVv, Xi[n]);
-                info.Add("ispan for xi " + Xi[n] + " is =" + ispan);
+                int ispan = findSpan(kVv, GPW[0, n]);
+                info.Add("ispan for xi " + GPW[0, n] + " is =" + ispan);
 
                 double posX = 0;
                 double posY = 0;
@@ -198,7 +204,7 @@ namespace Master.Components
 
            
 
-            DA.SetData(0, k_e);
+            DA.SetData(0, k_ee);
         }
 
             
@@ -224,7 +230,65 @@ namespace Master.Components
             return ispan;
         }
 
+        private double[,] getGPW(int ngp)
+        {
+            double[,] gpw = new double[,] { };
+            switch (ngp)
+            {
+                case 1:
+                    double p11 = 0;
+                    double w11 = 2;
+                    gpw = new double[,] { { p11 }, { w11 } };
+                    break;
+                case 2:
+                    double p21 = -Math.Sqrt(0.33);
+                    double w21 = 1;
+                    double p22 = Math.Sqrt(0.33);
+                    double w22 = 1;
+                    gpw = new double[,] { { p21, p22 }, { w21, w22 } };
+                    break;
+                case 3:
+                    double p31 = -Math.Sqrt(0.6);
+                    double w31 = 0.55556;
+                    double p32 = 0;
+                    double w32 = 0.88889;
+                    double p33 = Math.Sqrt(0.6);
+                    double w33 = 0.55556;
+                    gpw = new double[,] { { p31, p32, p33 }, { w31, w32, w33 } };
+                    break;
+                case 4:
+                    double p41 = -Math.Sqrt(0.42857 + 0.28571 * Math.Sqrt(1.2));
+                    double w41 = (18 - Math.Sqrt(30)) / 36.0;
+                    double p42 = -Math.Sqrt(0.42857 - 0.28571 * Math.Sqrt(1.2));
+                    double w42 = (18 + Math.Sqrt(30)) / 36.0;
+                    double p43 = Math.Sqrt(0.42857 - 0.28571 * Math.Sqrt(1.2));
+                    double w43 = (18 + Math.Sqrt(30)) / 36.0;
+                    double p44 = Math.Sqrt(0.42857 + 0.28571 * Math.Sqrt(1.2));
+                    double w44 = (18 - Math.Sqrt(30)) / 36.0;
+                    gpw = new double[,] { { p41, p42, p43, p44 }, { w41, w42, w43, w44 } };
+                    break;
+                case 5:
+                    double p51 = -0.33333 * Math.Sqrt(5 + 2 * Math.Sqrt(1.42857));
+                    double w51 = (322 - 13 * Math.Sqrt(70)) / 900;
+                    double p52 = -0.33333 * Math.Sqrt(5 - 2 * Math.Sqrt(1.42857));
+                    double w52 = (322 + 13 * Math.Sqrt(70)) / 900;
+                    double p53 = 0;
+                    double w53 = (128 / 225.0);
+                    double p54 = 0.33333 * Math.Sqrt(5 - 2 * Math.Sqrt(1.42857));
+                    double w54 = (322 + 13 * Math.Sqrt(70)) / 900;
+                    double p55 = 0.33333 * Math.Sqrt(5 + 2 * Math.Sqrt(1.42857));
+                    double w55 = (322 - 13 * Math.Sqrt(70)) / 900;
+                    gpw = new double[,] { { p51, p52, p53, p54, p55 }, { w51, w52, w53, w54, w55 } };
+                    break;
 
+
+
+            }
+            return gpw;
+
+
+
+        }
         private List<double> getN(List<double> kV, double xi, int p)
         {
             List<double> N = new List<double>();
