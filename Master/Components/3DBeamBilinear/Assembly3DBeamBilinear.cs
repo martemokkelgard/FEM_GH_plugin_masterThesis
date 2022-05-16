@@ -759,12 +759,13 @@ namespace Master.Components
                 Vector3d unitY = new Vector3d(0, 1, 0);
                 Vector3d unitZ = new Vector3d(0, 0, 1);
 
-                Vector3d vec1z = new Vector3d();
+                
 
                 Vector3d nullvec = new Vector3d(0, 0, 0);
                 Vector3d vec1x = b.axis.TangentAt(0);
+                Vector3d vec1z = new Vector3d(-vec1x.Z,0,vec1x.X);
 
-
+                /*
                 if (b.axis.CurvatureAt(0) == nullvec)
                 {
                     vec1z = unitZ;
@@ -773,7 +774,7 @@ namespace Master.Components
                 {
                     vec1z = b.axis.CurvatureAt(0);
                 }
-
+                */
 
 
                 Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
@@ -851,14 +852,14 @@ namespace Master.Components
                 double _3n3 = Math.Cos(Vector3d.VectorAngle(vec3z, unitZ));
 
                 */
-
-                Matrix<double> t1 = DenseMatrix.OfArray(new double[,]
+                
+                Matrix<double> t = DenseMatrix.OfArray(new double[,]
                 {
                         {_1l1,   _1m1,     _1n1},
                         {_1l2,   _1m2,     _1n2},
                         {_1l3,   _1m3,     _1n3},
                 });
-
+                
                 /*
 
                 Matrix<double> t2 = DenseMatrix.OfArray(new double[,]
@@ -876,8 +877,8 @@ namespace Master.Components
                 });
 
                 */
-
                 /*
+                
                 double xl = (p2.X - p1.X);
                 double yl = (p2.Y - p1.Y);
                 double zl = (p2.Z - p1.Z);
@@ -906,9 +907,9 @@ namespace Master.Components
                         {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
                 });
 
-                */
+                
 
-                /*
+                
                
                 double xl1 = (p3.X - p1.X);
                 double yl1 = (p3.Y - p1.Y);
@@ -1020,13 +1021,14 @@ namespace Master.Components
                         {ca*sb,                sa*sb,            cb},
                 });
                 */
+
                 //var T_t1 = t1.DiagonalStack(t1);
                 //var T_t2 = t2.DiagonalStack(t2);
                 //var T_t3 = t3.DiagonalStack(t3);
                 //var T_tt = T_t1.DiagonalStack(T_t2);
                 //T = T_tt.DiagonalStack(T_t3);
 
-                var T_t1 = t1.DiagonalStack(t1);
+                var T_t1 = t.DiagonalStack(t);
                 var T_ = T_t1.DiagonalStack(T_t1);
                 T = T_.DiagonalStack(T_t1);
 

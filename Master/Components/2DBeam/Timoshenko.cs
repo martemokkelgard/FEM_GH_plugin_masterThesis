@@ -147,15 +147,15 @@ namespace Master.Components.Linear
             foreach (BeamClass2D b in bars)
             {
                 double originLength = b.axis.GetLength();
-                double deformedLength = liness[b.Id].Length;
+                ///double deformedLength = liness[b.Id].Length;
 
-                double dL = originLength - deformedLength;
+                //double dL = originLength - deformedLength;
 
-                double e = dL / originLength;
-                strain.Add(e);
+                //double e = dL / originLength;
+                //strain.Add(e);
 
-                double s = e * b.material.youngsModolus;
-                stress.Add(s);
+                //double s = e * b.material.youngsModolus;
+                //stress.Add(s);
             }
 
             //lage lister med displacement
@@ -197,7 +197,7 @@ namespace Master.Components.Linear
                 {
                     force_lst.Add(new Point3d(forces[i * 2], 0.00, forces[i * 2 + 1]));
                     mom_lst.Add(new Point3d(0.00, moment[i], 0.00));
-                    w_list.Add(new Point3d(0.00, displace[i][i,i], 0.00));
+                    //w_list.Add(new Point3d(0.00, displace[i][i,i], 0.00));
                     force_mom_pos.Add(pts[i]);
                 }
 
@@ -390,7 +390,7 @@ namespace Master.Components.Linear
                                     {
                         { c, s, 0, 0, 0, 0},
                         {-s, c, 0, 0, 0, 0},
-                        {0, 0,  1, 0, 0, 0},
+                        { 0, 0, 1, 0, 0, 0},
                         { 0, 0, 0, c, s, 0},
                         { 0, 0, 0,-s, c, 0},
                         { 0, 0, 0, 0, 0, 1}
@@ -424,19 +424,20 @@ namespace Master.Components.Linear
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
-
+                /*
                 // only takes in the z displacement and ry rotation, since this the the values we have in the A and Nq matrix.
                 v_shape[0,0] = _def[node1 * 3 + 1];
                 v_shape[1,0] = _def[node1 * 3 + 2];
                 v_shape[2,0] = _def[node2 * 3 + 1];
                 v_shape[3,0] = _def[node2 * 3 + 2];
 
-                
-                var w = (Nq.Multiply(Ainv)).Multiply(v_shape);
 
+                var N =  Nq.Multiply(Ainv);
+                var w = (Nq.Multiply(Ainv)).Multiply(v_shape);
+                
 
                 w_lst.Add(w);
-
+                */
                 v[0] = _def[node1 * 3];
                 v[1] = _def[node1 * 3 + 1];
                 v[2] = _def[node1 * 3 + 2];
