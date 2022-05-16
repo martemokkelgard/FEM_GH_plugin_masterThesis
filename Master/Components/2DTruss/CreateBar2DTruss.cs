@@ -61,7 +61,7 @@ namespace Master.Components._2DTruss
                 bars.Add(new BarClass2DTruss("trussBar", l, sec, mat));
             }
 
-            for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
+            for (int i = 0; i < bars.Count; i++)   //giving id to barClass objects
             {
                 bars[i].Id = i;
             }

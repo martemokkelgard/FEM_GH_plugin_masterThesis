@@ -24,7 +24,7 @@ namespace Master
         {
             Name = _Name;
         }
-
+        
 
         public MaterialClass(string _Name, double _density, double _youngsModolus)
         {

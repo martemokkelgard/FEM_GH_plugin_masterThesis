@@ -402,11 +402,12 @@ namespace Master.Components
 
                 Line currentLine = b.axis;
                 double mat = (b.section.CSA * b.material.youngsModolus) / (currentLine.Length * 1000);
+
                 Point3d p1 = currentLine.From;
                 Point3d p2 = currentLine.To;
 
-                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X);  //returns angle in rad
-                double c = Math.Cos(angle); //input angle should be in rad
+                double angle = Math.Atan2(p2.Z - p1.Z, p2.X - p1.X); 
+                double c = Math.Cos(angle); 
                 double s = Math.Sin(angle);
 
                 /*
@@ -416,12 +417,13 @@ namespace Master.Components
                         { -mat*c*c, -mat*c*s, mat*c*c, mat*c*s},
                         { -mat*c*s ,-mat*s*s ,mat*c*s, mat*s*s} };
                 */
-        Matrix<double> T = SparseMatrix.OfArray(new double[,]
+        
+                Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                 {
-                        { c, s, 0 ,0},
-                        { -s, c ,0, 0},
-                        { 0, 0, c, s},
-                        { 0 ,0 ,-s, c}
+                        { c,  s, 0, 0},
+                        { -s, c, 0, 0},
+                        { 0,  0, c, s},
+                        { 0,  0,-s, c}
                                 });
 
                 Matrix<double> ke = SparseMatrix.OfArray(new double[,]

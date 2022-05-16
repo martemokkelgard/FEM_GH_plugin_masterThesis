@@ -724,12 +724,13 @@ namespace Master.Components
                 Vector3d unitY = new Vector3d(0, 1, 0);
                 Vector3d unitZ = new Vector3d(0, 0, 1);
 
-                Vector3d vec1z = new Vector3d();
+                //Vector3d vec1z = new Vector3d();
 
                 Vector3d nullvec = new Vector3d(0, 0, 0);
                 Vector3d vec1x = b.axis.TangentAt(0);
-                
+                Vector3d vec1z = new Vector3d(-vec1x.Z, 0,vec1x.X);
 
+                /*
                 if (b.axis.CurvatureAt(0) == nullvec)
                 {
                     vec1z = unitZ;
@@ -738,7 +739,7 @@ namespace Master.Components
                 {
                     vec1z = b.axis.CurvatureAt(0);
                 }
-
+                */
                 
 
                 Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
@@ -749,7 +750,7 @@ namespace Master.Components
                 vec1y.Unitize();
 
                 
-
+                
                 double _1l1 = Math.Cos(Vector3d.VectorAngle(vec1x, unitX));
                 double _1m1 = Math.Cos(Vector3d.VectorAngle(vec1x, unitY));
                 double _1n1 = Math.Cos(Vector3d.VectorAngle(vec1x, unitZ));
@@ -777,7 +778,7 @@ namespace Master.Components
                 });
 
                 t.CoerceZero(0.00001);
-
+                
 
                 /*
                 double xl = (p2.X - p1.X);
