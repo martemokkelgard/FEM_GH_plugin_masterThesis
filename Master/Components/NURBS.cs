@@ -32,8 +32,9 @@ namespace Master.Components
         {
             pManager.AddPointParameter("ControlPoints", "CP", "Control Points", GH_ParamAccess.list);
             pManager.AddNumberParameter("ngp", "ngp", "Number of Gauss-points", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Knot", "Knot", "Knot Vector", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Deg", "Deg", "Degree", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Knot axial", "Knot", "Knot Vector", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Knot vert and rot", "Knot", "Knot Vector", GH_ParamAccess.list);
+            pManager.AddMatrixParameter("Deg", "Deg", "Degree", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -51,26 +52,34 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-            List<Point3d> ipts = new List<Point3d>();
-            int ngp = new int();
-            List<double> X = new List<double>();
-            int p = new int();
+            List<Point3d> ipts = new List<Point3d>();   //control points
+            double ngpp = new double();                        //Number of gauss points
+            List<double> X_ax = new List<double>();        //Knot vector
+            List<double> X_ver = new List<double>();
+            double pp = new double();                          //degree
 
 
 
             DA.GetDataList(0, ipts);
-            DA.GetData(1, ref ngp);
-            DA.GetDataList(2, X);
-            DA.GetData(3, ref p);
+            DA.GetData(1, ref ngpp);
+            DA.GetDataList(2, X_ax);
+            DA.GetDataList(3, X_ver);
+            DA.GetData(4, ref pp);
 
+            int ngp = Convert.ToInt32(ngpp);
+            int p = Convert.ToInt32(pp);
 
             List<double> Xi = new List<double>();
-            for (int i=0; i<ngp; i++)
-            {
-                Xi.Add(i / (ngp - 1));
-            }
+            Xi.Add(-Math.Sqrt(1.0 / 3.0));
+            Xi.Add(Math.Sqrt(1.0 / 3.0));
 
-            foreach(double xi in Xi)
+
+            int pu = 1;
+            int pv = 3;
+            int dim = pu + 1 + pv + 1;
+            Matrix<double> k_e = DenseMatrix.OfArray(new double[dim, dim]);
+
+            foreach (double xi in Xi)
             {
                 //info
                 var info = new List<string>() { "code for NURBS" };
@@ -81,109 +90,121 @@ namespace Master.Components
 
 
                 //knot vector
-                List<double> kV = X;// new List<double>(){0,0,0,0.5,1,1,1};
+                List<double> kV_ax = X_ax;// new List<double>(){-1,-1,1,1};
+                List<double> kV_vert = X_ver;// new List<double>(){-1,-1,-1,-1,1,1,1,1};
 
-                string kVstring = "KnotVec = ";
-                foreach (var v in kV)
-                    kVstring = kVstring + " " + v;
-                info.Add(kVstring);
 
                 //degree
-                int pu = 1;
-                int pv = p;
                 int n = cpts.Count;
 
                 //double xi = 0.49;
 
                 //basic shape function degree 0
-                List<double> N0 = getN0(kV, xi);
-                string N0string = "N0 = ";
-                foreach (var n0 in N0)
-                    N0string = N0string + " " + n0;
-                info.Add(N0string);
+                Vector<double> N0_ax = getN0(kV_ax, xi);
+
 
                 //basic shape function degree 1 and higher
                 int d = 1;
-                List<double> N = getN(kV, xi, p);
-                List<double> dN = getdN(kV, xi, p, d);
+                Vector<double> N_ax = getN(kV_ax, xi, 1);
+                Vector<double> dN_ax = getdN(kV_ax, xi, 1, d);
+
+                Vector<double> dN_vert = getdN(kV_ax, xi, 1, d);
                 string Nstring = "N = ";
-                foreach (var nshp in N)
-                    Nstring = Nstring + " " + nshp;
-                info.Add(Nstring);
+
 
                 //Beam properties
                 double L = 1.3;
-                double J = L / 2;
+                double J = L / 2.0;
                 double A = 0.2;
                 double I = 0.014;
-                double E = 21000;
+                double E = 1525.0;
 
 
                 //Selective basis functions (for vertical disp and rot)
 
                 int db = 2;   //derived d-times
-                double B0 = getdN(kV, xi, p, d)[0] + getdN(kV, xi, p, db)[1];
-                double B1 = getdN(kV, xi, p, d)[2] + getdN(kV, xi, p, db)[3];
-                double B2 = L / 3 * getdN(kV, xi, p, db)[1];
-                double B3 = -L / 3 * getdN(kV, xi, p, db)[2];
+                
 
 
                 //Making K-matrix
 
 
                 List<double> GPW = new List<double>() { 2, 1, }; 
-                int dim = pu + 1 + pv + 1;
-                Matrix<double> k_e = DenseMatrix.OfArray(new double[dim, dim]);
-
-                for (int a = 0; a < N.Count; a++)
-                {
-                    for (int b = 0; b < N.Count; b++)
-                    {
-                        k_e.Column(a)[b] += (E * A / J * J) * dN[a] * dN[b] * J * GPW[ngp - 1];
-                    }
-                }
                 
 
-
-
-    //calculate
-                int ispan = findSpan(kV, xi);
-                info.Add("ispan for xi " + xi + " is =" + ispan);
-
-                double posX = 0;
-                double posY = 0;
-                double posZ = 0;
-
-                for (int c = 0; c < cpts.Count; c++)
+                for (int a = 0; a < ngp; a++)
                 {
-                    posX = posX + cpts[c].X * N[c];
-                    posY = posY + cpts[c].Y * N[c];
-                    posZ = posZ + cpts[c].Z * N[c];
+                    for (int b = 0; b < 2; b++)
+                    {
+                        for(int c = 0; b < 2; b++)
+                        {
+                            k_e[3 * b, 3 * c] += (E * A / J * J) * dN_ax[c] * dN_ax[b] * J;
+                        }
+                            
+                    }
                 }
 
-                Point3d pos = new Point3d(posX, posY, posZ);
-                info.Add("Xcord = " + posX);
-                info.Add("Ycord = " + posX);
-                info.Add("Zcord = " + posX);
+                Vector<double> B_vec = SparseVector.OfEnumerable(new double[4]);
+
+                for (int a = 0; a < ngp; a++)
+                {
+                    B_vec[0] = getdN(kV_vert, xi, pv, d)[0] + getdN(kV_vert, xi, pv, db)[1];
+                    B_vec[1] = getdN(kV_vert, xi, pv, d)[2] + getdN(kV_vert, xi, pv, db)[3];
+                    B_vec[2] = L / 3 * getdN(kV_vert, xi, p, db)[1];
+                    B_vec[3] = -L / 3 * getdN(kV_vert, xi, p, db)[2];
+
+                    for (int j = 1; j < 4; j++)
+                    {
+                        for (int k = 1; k < 4; k++)
+                        {
+                            k_e[j+2, k+2] += (E * I * B_vec[j] * B_vec[k] * J);
+                        }
+
+                    }
+                }
 
 
-                infos = info;
-                opts = cpts;
-                opt = pos;
+
+                //calculate
+                /*
+                            int ispan = findSpan(kV_ax, xi);
+                            info.Add("ispan for xi " + xi + " is =" + ispan);
+
+                            double posX = 0;
+                            double posY = 0;
+                            double posZ = 0;
+
+                            for (int c = 0; c < cpts.Count; c++)
+                            {
+                                posX = posX + cpts[c].X * N[c];
+                                posY = posY + cpts[c].Y * N[c];
+                                posZ = posZ + cpts[c].Z * N[c];
+                            }
+
+                            Point3d pos = new Point3d(posX, posY, posZ);
+                            info.Add("Xcord = " + posX);
+                            info.Add("Ycord = " + posX);
+                            info.Add("Zcord = " + posX);
+
+
+                            //infos = info;
+                            //opts = cpts;
+                            //opt = pos;
+                */
+
             }
+
+            DA.SetData(0, k_e);
+
+
+
         }
-
-            
-
-
-
-    
 
         private int findSpan(List<double> kV, double xi)
         {
             int ispan = 0;
 
-            for (int i = 0; i < kV.Count - 1; i++)
+            for (int i = 0; i < kV.Count -1; i++)
             {
                 double span0 = kV[i];
                 double span1 = kV[i + 1];
@@ -197,15 +218,15 @@ namespace Master.Components
         }
 
 
-        private List<double> getN(List<double> kV, double xi, int p)
+        private Vector<double> getN(List<double> kV, double xi, int p)
         {
-            List<double> N = new List<double>();
+            Vector<double> N = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
-            List<double> N0 = getN0(kV, xi); //get basic shape function
+            Vector<double> N0 = getN0(kV, xi); //get basic shape function
 
             if (p == 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count - p-1; i++)
                 {
                     double a1 = xi - kV[i];
                     double a2 = kV[i + p] - kV[i];
@@ -220,7 +241,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * N0[i] + b * N0[i + 1];
-                    N.Add(n);
+                    N[i] = (n);
 
                 }
             }
@@ -241,7 +262,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * getN(kV, xi, p - 1)[i] + b * getN(kV, xi, p - 1)[i + 1];
-                    N.Add(n);
+                    N[i] = (n);
                 }
             }
 
@@ -250,15 +271,15 @@ namespace Master.Components
         }
 
 
-        private List<double> getdN(List<double> kV, double xi, int p, int d)
+        private Vector<double> getdN(List<double> kV, double xi, int p, int d)
         {
-            List<double> dN = new List<double>();
+            Vector<double> dN = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
-            List<double> N0 = getN0(kV, xi); //get basic shape function
+            Vector<double> N0 = getN0(kV, xi); //get basic shape function
 
-            if (d == 1)
+            if (p == 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count - p-1; i++)
                 {
                     double a1 = p;
                     double a2 = kV[i + p] - kV[i];
@@ -272,14 +293,14 @@ namespace Master.Components
                     if (b2 != 0)
                         b = b1 / b2;
 
-                    double n = a * getN(kV, xi, p - 1)[i] + b * getN(kV, xi, p - 1)[i + 1];
-                    dN.Add(n);
+                    double n = a * N0[i] + b * N0[i + 1];
+                    dN[i] = (n);
 
                 }
             }
             else if (p > 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count -p - 1; i++)
                 {
                     double a1 = p;
                     double a2 = kV[i + p] - kV[i];
@@ -294,7 +315,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * getdN(kV, xi, p - 1, d - 1)[i] + b * getdN(kV, xi, p - 1, d - 1)[i + 1];
-                    dN.Add(n);
+                    dN[i] = (n);
                 }
             }
 
@@ -303,20 +324,20 @@ namespace Master.Components
         }
 
 
-        private List<double> getN0(List<double> kV, double xi)
+        private Vector<double> getN0(List<double> kV, double xi)
         {
-            List<double> N0 = new List<double>();
+            Vector<double> N0 = SparseVector.OfEnumerable(new double[kV.Count-1]);
 
             for (int i = 0; i < kV.Count - 1; i++)
             {
                 double xi0 = kV[i];     //xi for i
                 double xi1 = kV[i + 1]; //xi for i+1
                 if (xi >= xi0 && xi < xi1)
-                { N0.Add(1); }
+                { N0[i] = (1); }
                 else if (xi == 1 && xi1 == 1 && xi0 != 1)
-                { N0.Add(1); }
+                { N0[i] = (1); }
                 else
-                { N0.Add(0); }
+                { N0[i] = (0); }
             }
             return N0;
         }

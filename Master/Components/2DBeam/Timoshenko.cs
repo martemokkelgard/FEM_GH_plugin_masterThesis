@@ -399,11 +399,11 @@ namespace Master.Components.Linear
                 Matrix<double> ke = DenseMatrix.OfArray(new double[,]
 
                         {
-                        {  E*A/L* 1/mat,            0,             0,        -E*A/L * 1/mat,         0,               0},
-                        {       0,              12.0/LLL,      -6.0/LL,             0,          -12.0/LLL,         -6.00/LL},
-                        {       0,              -6.0/LL,     (4.0 + alpha)/L,       0,           6.00/LL,      (2.0 - alpha)/L},
-                        {-E*A/L * 1/mat,           0,             0,         E*A/L * 1/mat,          0,               0},
-                        {       0,             -12.0/LLL,      6.00/LL,              0,           12.0/LLL,          6.0/LL},
+                        {  E*A/L* 1/mat,            0,             0,        -E*A/L * 1/mat,         0,               0         },
+                        {       0,              12.0/LLL,      -6.0/LL,             0,          -12.0/LLL,         -6.00/LL     },
+                        {       0,              -6.0/LL,     (4.0 + alpha)/L,       0,           6.00/LL,      (2.0 - alpha)/L  },
+                        {-E*A/L * 1/mat,           0,             0,         E*A/L * 1/mat,          0,               0         },
+                        {       0,             -12.0/LLL,      6.00/LL,              0,           12.0/LLL,          6.0/LL     },
                         {       0,             -6.00/LL,      (2.0 - alpha)/L,       0,            6.0/LL,       (4.0 + alpha)/L}
                         });
 
@@ -462,6 +462,8 @@ namespace Master.Components.Linear
             forces = force;
             moment = mom;
         }
+
+
 
         private static void CreateGlobalStiffnesMatrix(List<BeamClass2D> bars, List<Point3d> points, out Matrix<double> k_tot)
 
@@ -527,6 +529,7 @@ namespace Master.Components.Linear
                 Matrix<double> Tt = T.Transpose(); //transpose
                 Matrix<double> KG = Tt.Multiply(Ke);
                 Matrix<double> K_eG = KG.Multiply(T);
+
 
 
                 int node1 = b.startNode.Id;
