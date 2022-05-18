@@ -47,9 +47,10 @@ namespace Master.Components.Linear
             pManager.AddPointParameter("Reaction Moments [Nmm]", "M", "Moments in support points", GH_ParamAccess.list);
             pManager.AddPointParameter("Position of Supports", "PS", "Position for support points", GH_ParamAccess.list);
             pManager.AddPointParameter("Displacement of Nodes", "displ", "Deformed geometry", GH_ParamAccess.list);
+            pManager.AddLineParameter("Defomed geometry", "Deformed geometry", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain", "S", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] ", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            pManager.AddGenericParameter("displace (w) ", "w", "displacement with Nq ", GH_ParamAccess.list);
+            pManager.AddGenericParameter("displacement (w) ", "w", "displacement with Nq ", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -128,7 +129,7 @@ namespace Master.Components.Linear
             for (int i = 0; i < pts.Count; i++)
             {
 
-                displNodes.Add(new Point3d(pts[i].X + def[3 * i] / 1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2] / 1000));
+                displNodes.Add(new Point3d(pts[i].X + def[3 * i] / 1000, pts[i].Y , pts[i].Z + def[3 * i + 1] / 1000));
             }
 
             //var outTree = DataTreeFromVectorList(forces);
@@ -204,6 +205,22 @@ namespace Master.Components.Linear
             }
 
 
+            //Lager deformed geometry
+
+            List<Line> deformedgeometry = new List<Line>();
+
+            foreach (BeamClass2D b in bars)
+            {
+                Point3d p1 = new Point3d(b.startNode.pt.X + (def[b.startNode.Id * 3] / 1000.00), b.startNode.pt.Y , b.startNode.pt.Z + (def[b.startNode.Id * 3 + 1] / 1000.00));
+                Point3d p2 = new Point3d(b.endNode.pt.X + (def[b.endNode.Id * 3] / 1000.00), b.endNode.pt.Y , b.endNode.pt.Z + (def[b.endNode.Id * 3 + 1] / 1000.00));
+                Line line1 = new Line(p1, p2);
+
+
+                deformedgeometry.Add(line1);
+
+
+            }
+
 
             //output
             DA.SetDataList(0, disp_lst);
@@ -213,9 +230,10 @@ namespace Master.Components.Linear
             DA.SetDataList(4, force_mom_pos);
             //DA.SetDataTree(1, outTree);
             DA.SetDataList(5, displNodes);
-            DA.SetDataList(6, strain);
-            DA.SetDataList(7, stress);
-            DA.SetDataList(8, w_list);
+            DA.SetDataList(6, deformedgeometry);
+            DA.SetDataList(7, strain);
+            DA.SetDataList(8, stress);
+            DA.SetDataList(9, w_list);
 
         }
 
