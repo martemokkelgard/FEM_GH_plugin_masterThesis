@@ -435,7 +435,7 @@ namespace Master.Components
 
                 Curve currentLine = b.axis;
                 double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
-                double n = 10;
+                double n = 2;
                 var x = 0.0;
 
                 for (int i = 0; i < n + 1; i++)
