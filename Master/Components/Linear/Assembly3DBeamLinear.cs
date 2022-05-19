@@ -80,16 +80,19 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();
+            List<NodeClass> nodes = new List<NodeClass>();
             foreach (BeamClassLinear b in bars)
             {
 
                 if (!pts.Contains(b.startNode.pt))
                 {
                     pts.Add(b.startNode.pt);
+                    nodes.Add(b.startNode);
                 }
                 if (!pts.Contains(b.endNode.pt))
                 {
                     pts.Add(b.endNode.pt);
+                    nodes.Add(b.endNode);
                 }
             }
 
@@ -182,10 +185,10 @@ namespace Master.Components
             {
 
 
-                if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1) | BCList.Contains(i * 6 + 2))
+                if (BCList.Contains(nodes[i].Id * 6) | BCList.Contains(nodes[i].Id * 6 + 1) | BCList.Contains(nodes[i].Id * 6 + 2))
                 {
-                    force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
-                    mom_lst.Add(new Point3d(rotation[i * 3], rotation[i * 3 + 1], rotation[i * 3 + 2]));
+                    force_lst.Add(new Point3d(forces[nodes[i].Id * 3] - LoadList[nodes[i].Id * 6], forces[nodes[i].Id * 3 + 1] - LoadList[nodes[i].Id * 6 + 1], forces[nodes[i].Id * 3 + 2] - LoadList[nodes[i].Id * 6 + 2]));
+                    mom_lst.Add(new Point3d(rotation[nodes[i].Id * 3] + LoadList[nodes[i].Id * 6 + 3], rotation[nodes[i].Id * 3 + 1] + LoadList[nodes[i].Id * 6 + 4], rotation[nodes[i].Id * 3 + 2] + LoadList[nodes[i].Id * 6 + 5]));
 
                 }
 

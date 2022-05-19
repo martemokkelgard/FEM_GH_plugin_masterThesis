@@ -88,6 +88,7 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
+            
 
             for (int i = 0; i < bars.Count; i++)
             {
@@ -95,12 +96,22 @@ namespace Master.Components
 
                 double a = 0.5;                                             // * parameter for midnode 
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6)));
+                Point3d aa = new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6));
+                pts.Add(aa);
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6)));
+                Point3d bb = new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6));
+                pts.Add(bb);
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6)));
+                Point3d cc = new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6));
+                pts.Add(cc);
 
+                //NodeClass aaa = new NodeClass(aa);
+                //NodeClass bbb = new NodeClass(bb);
+                //NodeClass ccc = new NodeClass(cc);
+
+                //nodes.Add(aaa);
+                //nodes.Add(bbb);
+                //nodes.Add(ccc);
             }
 
             for (int i = 0; i < pts.Count; i++)
@@ -176,6 +187,12 @@ namespace Master.Components
 
             }
 
+            for (int i = 0; i < pts.Count;i++)
+            {
+                nodes.Add(new NodeClass(pts[i]));
+                nodes[i].Id = i;
+            }
+               
 
 
             foreach (Vector<double> uu in u)
@@ -194,8 +211,8 @@ namespace Master.Components
 
                 if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1) | BCList.Contains(i * 6 + 2))
                 {
-                    force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
-                    mom_lst.Add(new Point3d(moment[i * 3], moment[i * 3 + 1], moment[i * 3 + 2]));
+                    force_lst.Add(new Point3d(forces[nodes[i].Id * 3] - LoadList[nodes[i].Id * 6], forces[nodes[i].Id * 3 + 1] - LoadList[nodes[i].Id * 6 + 1], forces[nodes[i].Id * 3 + 2] - LoadList[nodes[i].Id * 6 + 2]));
+                    mom_lst.Add(new Point3d(moment[nodes[i].Id * 3] + LoadList[nodes[i].Id * 6 + 3], moment[nodes[i].Id * 3 + 1] + LoadList[nodes[i].Id * 6 + 4], moment[nodes[i].Id * 3 + 2] + LoadList[nodes[i].Id * 6 + 5]));
 
                 }
 
@@ -557,6 +574,7 @@ namespace Master.Components
                 mom[node2 * 3 + 1] += S[16];
                 mom[node2 * 3 + 2] += S[17];
 
+               
 
 
             }
