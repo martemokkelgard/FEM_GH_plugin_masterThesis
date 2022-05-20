@@ -479,7 +479,7 @@ namespace Master.Components
                         vector = new Vector3d(0,0,1);
                     }
                     
-                    Point3d en = new Point3d(st.X + vector.X * _M / 10000000, st.Y + vector.Y * _M / 10000000, st.Z + vector.Z * _M / 10000000);
+                    Point3d en = new Point3d(st.X - vector.X * _M / 10000000.0, st.Y - vector.Y * _M / 10000000.0, st.Z - vector.Z * _M / 10000000.0);
 
 
 
@@ -535,8 +535,8 @@ namespace Master.Components
                 Line line = new Line(curve_pts[i - 1], curve_pts[i]);
                 bending.Add(line);
             }
-            Line line1 = new Line(bars[0].startNode.pt, curve_pts[0]);
-            Line line2 = new Line(bars[bars.Count - 1].endNode.pt, curve_pts[curve_pts.Count - 1]);
+            Line line1 = new Line(bars[0].startNode.pt, -curve_pts[0]);
+            Line line2 = new Line(bars[bars.Count - 1].endNode.pt, -curve_pts[curve_pts.Count - 1]);
             bending.Add(line1);
             bending.Add(line2);
 
@@ -734,7 +734,34 @@ namespace Master.Components
 
                 Vector3d nullvec = new Vector3d(0, 0, 0);
                 Vector3d vec1x = b.axis.TangentAt(0);
-                Vector3d vec1z = new Vector3d(-vec1x.Z, 0,vec1x.X);
+
+                //Vector3d vec1z = new Vector3d();
+
+                
+                Vector3d vec1y = new Vector3d(-vec1x.Y, vec1x.X, 0);
+                
+
+                
+                /*
+                if (vec1x.Z == 0)
+                {
+                    Vector3d vec1zz = new Vector3d(0, 0 , 1);
+                    vec1z = vec1zz;
+                }
+
+                else if(vec1x.X == 0 && vec1x.Z != 0)
+                {
+                    Vector3d vec1zz = new Vector3d(0, -vec1x.Z, vec1x.X);
+                    vec1z = vec1zz;
+                }
+
+                else if (vec1x.Y == 0 && vec1x.Z != 0)
+                {
+                    Vector3d vec1zz = new Vector3d(-vec1x.Z, 0 , vec1x.X);
+                    vec1z = vec1zz;
+                }
+
+                */
 
                 /*
                 if (b.axis.CurvatureAt(0) == nullvec)
@@ -746,10 +773,10 @@ namespace Master.Components
                     vec1z = b.axis.CurvatureAt(0);
                 }
                 */
-                
 
-                Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
-                
+
+                Vector3d vec1z = Vector3d.CrossProduct(vec1y, vec1x);
+
 
                 vec1z.Unitize();
                 vec1x.Unitize();

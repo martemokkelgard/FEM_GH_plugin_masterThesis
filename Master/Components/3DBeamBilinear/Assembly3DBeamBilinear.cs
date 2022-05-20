@@ -784,7 +784,8 @@ namespace Master.Components
 
                 Vector3d nullvec = new Vector3d(0, 0, 0);
                 Vector3d vec1x = b.axis.TangentAt(0);
-                Vector3d vec1z = new Vector3d(-vec1x.Z,0,vec1x.X);
+                Vector3d vec1y = new Vector3d(-vec1x.Y, vec1x.X, 0);
+                //Vector3d vec1z = new Vector3d(-vec1x.Z,0,vec1x.X);
 
                 /*
                 if (b.axis.CurvatureAt(0) == nullvec)
@@ -798,7 +799,7 @@ namespace Master.Components
                 */
 
 
-                Vector3d vec1y = Vector3d.CrossProduct(vec1z, vec1x);
+                Vector3d vec1z = Vector3d.CrossProduct(vec1y, vec1x);
 
 
                 vec1z.Unitize();
