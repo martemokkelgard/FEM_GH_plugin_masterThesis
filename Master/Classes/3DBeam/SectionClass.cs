@@ -16,6 +16,7 @@ namespace Master
         public double h;
         public double tw;
         public double tf;
+        public double r;
         public double CSA;
         public double Iy;
         public double Iz;
@@ -64,6 +65,17 @@ namespace Master
             }
             
 
+            
+        }
+
+        public SectionClass(string _Name, double _r)
+        {
+            Name = _Name;
+            r = _r;
+            CSA = Math.PI * Math.Pow(r, 2);
+            Iy = (Math.PI * Math.Pow(r, 4)) / 4.0;
+            Iz = Iy;
+            J = (Math.PI * Math.Pow(r, 4)) / 2.0;
 
         }
     }

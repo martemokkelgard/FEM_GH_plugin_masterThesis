@@ -24,10 +24,11 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name of the section (bxh [mm]), default: 100x100mm", GH_ParamAccess.item,"100x100");
-            pManager.AddNumberParameter("Height", "h", "Height of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("Width", "w", "Width of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("ThicknessF", "tf", "Thickness of the flanges of the cross-section", GH_ParamAccess.item, 5);
-            pManager.AddNumberParameter("ThicknessW", "tw", "Thickness of the web of the cross-section", GH_ParamAccess.item, 5);
+            //pManager.AddNumberParameter("Height", "h", "Height of the cross-section", GH_ParamAccess.item, 100);
+            //pManager.AddNumberParameter("Width", "w", "Width of the cross-section", GH_ParamAccess.item, 100);
+            //pManager.AddNumberParameter("ThicknessF", "tf", "Thickness of the flanges of the cross-section", GH_ParamAccess.item, 5);
+            //pManager.AddNumberParameter("ThicknessW", "tw", "Thickness of the web of the cross-section", GH_ParamAccess.item, 5);
+            pManager.AddNumberParameter("radius", "r", "radius of the cross-section", GH_ParamAccess.item, 100);
         }
 
         /// <summary>
@@ -51,15 +52,17 @@ namespace Master.Components
             double w = 100;
             double tf = 5;
             double tw = 5;
+            double r = 100;
             DA.GetData(0, ref Name);
-            DA.GetData(1,ref h);
-            DA.GetData(2,ref w);
-            DA.GetData(3,ref tf);
-            DA.GetData(4,ref tw);
-               
+            //DA.GetData(1,ref h);
+            //DA.GetData(2,ref w);
+            //DA.GetData(3,ref tf);
+            //DA.GetData(4,ref tw);
+            DA.GetData(1,ref r);
+
             //code
-            SectionClass sec = new SectionClass(Name, h, w, tf, tw);
-           
+            //SectionClass sec = new SectionClass(Name, h, w, tf, tw);
+            SectionClass sec = new SectionClass(Name, r);
 
             //output
             DA.SetData(0, sec);
