@@ -145,15 +145,15 @@ namespace Master.Components
             foreach (BeamClass2D b in bars)
             {
                 double originLength = b.axis.GetLength();
-                double deformedLength = liness[b.Id].Length;
+                //double deformedLength = liness[b.Id].Length;
 
-                double dL = originLength - deformedLength;
+                //double dL = originLength - deformedLength;
 
-                double e = dL / originLength;
-                strain.Add(e);
+                //double e = dL / originLength;
+                //strain.Add(e);
 
-                double s = e * b.material.youngsModolus;
-                stress.Add(s);
+                //double s = e * b.material.youngsModolus;
+                //stress.Add(s);
             }
 
             //lage lister med displacement

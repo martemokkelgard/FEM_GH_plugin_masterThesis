@@ -42,7 +42,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddMatrixParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
+            pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -52,134 +52,147 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
 
-            List<Point3d> ipts = new List<Point3d>();   //control points
-            double ngpp = new double();                        //Number of gauss points
-            List<double> X_ax = new List<double>();        //Knot vector
-            List<double> X_ver = new List<double>();
-            double pp = new double();                          //degree
+            List<Point3d> ipts = new List<Point3d>();
+            double ngp = new double();
+            List<double> X = new List<double>();
+            double pp = new double();
 
 
 
             DA.GetDataList(0, ipts);
-            DA.GetData(1, ref ngpp);
-            DA.GetDataList(2, X_ax);
-            DA.GetDataList(3, X_ver);
-            DA.GetData(4, ref pp);
+            DA.GetData(1, ref ngp);
+            DA.GetDataList(2, X);
+            DA.GetData(3, ref pp);
 
-            int ngp = Convert.ToInt32(ngpp);
+            ngp = Convert.ToInt32(ngp);
             int p = Convert.ToInt32(pp);
 
-            List<double> Xi = new List<double>();
-            Xi.Add(-Math.Sqrt(1.0 / 3.0));
-            Xi.Add(Math.Sqrt(1.0 / 3.0));
+            //List<double> Xi = new List<double>();
+            //List<double> GPW = new List<double>();
+
+            var GPW = getGPW(Convert.ToInt32(ngp));
 
 
+            /*
+            if (ngp == 2)
+            {
+                Xi.Add(-Math.Sqrt(1.0 / 3.0));
+                Xi.Add(Math.Sqrt(1.0 / 3.0));
+                GPW.Add(1.0);
+                GPW.Add(1.0);
+            }
+            */
+
+            //control points
+
+            var cpts = ipts;
+
+            // degree
             int pu = 1;
-            int pv = 3;
+            int pv = p;
+            int cpc = cpts.Count;
+
             int dim = pu + 1 + pv + 1;
             Matrix<double> k_e = DenseMatrix.OfArray(new double[dim, dim]);
+            Matrix<double> k_ee = DenseMatrix.OfArray(new double[4, 4]);
 
-            foreach (double xi in Xi)
+            for (int n = 0; n < ngp; n++)
             {
                 //info
                 var info = new List<string>() { "code for NURBS" };
 
-                //control points
-
-                var cpts = ipts;
-
-
+                
                 //knot vector
-                List<double> kV_ax = X_ax;// new List<double>(){-1,-1,1,1};
-                List<double> kV_vert = X_ver;// new List<double>(){-1,-1,-1,-1,1,1,1,1};
+                List<double> kVv = X;// new List<double>(){0,0,0,0.5,1,1,1};
+                List<double> kVu = new List<double>(){-1,-1,1,1};
 
+                string kVstring = "KnotVec = ";
+                foreach (var v in kVv)
+                    kVstring = kVstring + " " + v;
+                info.Add(kVstring);
 
-                //degree
-                int n = cpts.Count;
-
+              
                 //double xi = 0.49;
 
                 //basic shape function degree 0
-                Vector<double> N0_ax = getN0(kV_ax, xi);
-
+                List<double> N0v = getN0(kVv, GPW[0, n]);
+                List<double> N0u = getN0(kVu, GPW[0, n]);
+                string N0string = "N0 = ";
+                foreach (var n0 in N0v)
+                    N0string = N0string + " " + n0;
+                info.Add(N0string);
 
                 //basic shape function degree 1 and higher
                 int d = 1;
-                Vector<double> N_ax = getN(kV_ax, xi, 1);
-                Vector<double> dN_ax = getdN(kV_ax, xi, 1, d);
-
-                Vector<double> dN_vert = getdN(kV_ax, xi, 1, d);
+                List<double> Nu = getN(kVu, GPW[0, n], pu);
+                List<double> dNu = getdN(kVu, GPW[0, n], pu, d);
+                List<double> Nv = getN(kVv, GPW[0, n], pv);
+                List<double> dNv = getdN(kVv, GPW[0, n], pv, d);
                 string Nstring = "N = ";
-
+                foreach (var nshp in Nv)
+                    Nstring = Nstring + " " + nshp;
+                info.Add(Nstring);
 
                 //Beam properties
                 double L = 1.3;
                 double J = L / 2.0;
                 double A = 0.2;
                 double I = 0.014;
-                double E = 1525.0;
+                double E = 1525;
 
 
                 //Selective basis functions (for vertical disp and rot)
 
                 int db = 2;   //derived d-times
-                
+                List<double> B = new List<double>();
+                double B0 = getdN(kVv, GPW[0,n], pv, db)[0] + getdN(kVv, GPW[0, n], pv, db)[1];
+                double B1 = getdN(kVv, GPW[0, n], pv, db)[2] + getdN(kVv, GPW[0, n], pv, db)[3];
+                double B2 = L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[1];
+                double B3 = -L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[2];
+                B.Add(B0);B.Add(B1);B.Add(B2);B.Add(B3);
 
 
                 //Making K-matrix
 
 
-                List<double> GPW = new List<double>() { 2, 1, }; 
                 
 
-                for (int a = 0; a < ngp; a++)
+                for (int a = 0; a < Nu.Count; a++)
                 {
-                    for (int b = 0; b < 2; b++)
+                    for (int b = 0; b < Nu.Count; b++)
                     {
-                        for(int c = 0; b < 2; b++)
-                        {
-                            k_e[3 * b, 3 * c] += (E * A / J * J) * dN_ax[c] * dN_ax[b] * J;
-                        }
-                            
+                        k_e[3*a,3*b] += (E * A / (J * J)) * dNu[a] * dNu[b] * J * GPW[1,n];
                     }
                 }
 
-                Vector<double> B_vec = SparseVector.OfEnumerable(new double[4]);
-
-                for (int a = 0; a < ngp; a++)
+                
+                for (int g = 0; g < Nv.Count; g++)
                 {
-                    B_vec[0] = getdN(kV_vert, xi, pv, d)[0] + getdN(kV_vert, xi, pv, db)[1];
-                    B_vec[1] = getdN(kV_vert, xi, pv, d)[2] + getdN(kV_vert, xi, pv, db)[3];
-                    B_vec[2] = L / 3 * getdN(kV_vert, xi, p, db)[1];
-                    B_vec[3] = -L / 3 * getdN(kV_vert, xi, p, db)[2];
+                    for (int e = 0; e < Nv.Count; e++)
 
-                    for (int j = 1; j < 4; j++)
                     {
-                        for (int k = 1; k < 4; k++)
-                        {
-                            k_e[j+2, k+2] += (E * I * B_vec[j] * B_vec[k] * J);
-                        }
-
+                        k_ee[g,e] += (E * I) / (Math.Pow(J,4)) * B[g] * B[e] * J * GPW[1,n];
+                        
                     }
                 }
 
+                
 
 
                 //calculate
-                /*
-                            int ispan = findSpan(kV_ax, xi);
-                            info.Add("ispan for xi " + xi + " is =" + ispan);
+                int ispan = findSpan(kVv, GPW[0, n]);
+                info.Add("ispan for xi " + GPW[0, n] + " is =" + ispan);
 
                             double posX = 0;
                             double posY = 0;
                             double posZ = 0;
 
-                            for (int c = 0; c < cpts.Count; c++)
-                            {
-                                posX = posX + cpts[c].X * N[c];
-                                posY = posY + cpts[c].Y * N[c];
-                                posZ = posZ + cpts[c].Z * N[c];
-                            }
+                for (int c = 0; c < cpts.Count; c++)
+                {
+                    posX = posX + cpts[c].X * Nv[c];
+                    posY = posY + cpts[c].Y * Nv[c];
+                    posZ = posZ + cpts[c].Z * Nv[c];
+                }
 
                             Point3d pos = new Point3d(posX, posY, posZ);
                             info.Add("Xcord = " + posX);
@@ -187,12 +200,13 @@ namespace Master.Components
                             info.Add("Zcord = " + posX);
 
 
-                            //infos = info;
-                            //opts = cpts;
-                            //opt = pos;
-                */
-
+               
             }
+
+           
+
+            DA.SetData(0, k_ee);
+        }
 
             DA.SetData(0, k_e);
 
@@ -217,8 +231,66 @@ namespace Master.Components
             return ispan;
         }
 
+        private double[,] getGPW(int ngp)
+        {
+            double[,] gpw = new double[,] { };
+            switch (ngp)
+            {
+                case 1:
+                    double p11 = 0;
+                    double w11 = 2;
+                    gpw = new double[,] { { p11 }, { w11 } };
+                    break;
+                case 2:
+                    double p21 = -Math.Sqrt(0.33);
+                    double w21 = 1;
+                    double p22 = Math.Sqrt(0.33);
+                    double w22 = 1;
+                    gpw = new double[,] { { p21, p22 }, { w21, w22 } };
+                    break;
+                case 3:
+                    double p31 = -Math.Sqrt(0.6);
+                    double w31 = 0.55556;
+                    double p32 = 0;
+                    double w32 = 0.88889;
+                    double p33 = Math.Sqrt(0.6);
+                    double w33 = 0.55556;
+                    gpw = new double[,] { { p31, p32, p33 }, { w31, w32, w33 } };
+                    break;
+                case 4:
+                    double p41 = -Math.Sqrt(0.42857 + 0.28571 * Math.Sqrt(1.2));
+                    double w41 = (18 - Math.Sqrt(30)) / 36.0;
+                    double p42 = -Math.Sqrt(0.42857 - 0.28571 * Math.Sqrt(1.2));
+                    double w42 = (18 + Math.Sqrt(30)) / 36.0;
+                    double p43 = Math.Sqrt(0.42857 - 0.28571 * Math.Sqrt(1.2));
+                    double w43 = (18 + Math.Sqrt(30)) / 36.0;
+                    double p44 = Math.Sqrt(0.42857 + 0.28571 * Math.Sqrt(1.2));
+                    double w44 = (18 - Math.Sqrt(30)) / 36.0;
+                    gpw = new double[,] { { p41, p42, p43, p44 }, { w41, w42, w43, w44 } };
+                    break;
+                case 5:
+                    double p51 = -0.33333 * Math.Sqrt(5 + 2 * Math.Sqrt(1.42857));
+                    double w51 = (322 - 13 * Math.Sqrt(70)) / 900;
+                    double p52 = -0.33333 * Math.Sqrt(5 - 2 * Math.Sqrt(1.42857));
+                    double w52 = (322 + 13 * Math.Sqrt(70)) / 900;
+                    double p53 = 0;
+                    double w53 = (128 / 225.0);
+                    double p54 = 0.33333 * Math.Sqrt(5 - 2 * Math.Sqrt(1.42857));
+                    double w54 = (322 + 13 * Math.Sqrt(70)) / 900;
+                    double p55 = 0.33333 * Math.Sqrt(5 + 2 * Math.Sqrt(1.42857));
+                    double w55 = (322 - 13 * Math.Sqrt(70)) / 900;
+                    gpw = new double[,] { { p51, p52, p53, p54, p55 }, { w51, w52, w53, w54, w55 } };
+                    break;
 
-        private Vector<double> getN(List<double> kV, double xi, int p)
+
+
+            }
+            return gpw;
+
+
+
+        }
+        private List<double> getN(List<double> kV, double xi, int p)
         {
             Vector<double> N = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
@@ -275,9 +347,32 @@ namespace Master.Components
         {
             Vector<double> dN = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
-            Vector<double> N0 = getN0(kV, xi); //get basic shape function
+            List<double> N0 = getN0(kV, xi); //get basic shape function
+            
 
-            if (p == 1)
+            if (d == 1 && p ==1)
+            {
+                for (int i = 0; i < kV.Count - p - 1; i++)
+                {
+                    double a1 = p;
+                    double a2 = kV[i + p] - kV[i];
+                    double a = 0;
+                    if (a2 != 0)
+                        a = a1 / a2;
+
+                    double b1 = p;
+                    double b2 = kV[i + p + 1] - kV[i + 1];
+                    double b = 0;
+                    if (b2 != 0)
+                        b = b1 / b2;
+
+                    double n = a * N0[i] + b * N0[i + 1];
+                    dN.Add(n);
+
+                }
+            }
+
+            else if (d == 1 && p > 1)
             {
                 for (int i = 0; i < kV.Count - p-1; i++)
                 {
@@ -293,12 +388,12 @@ namespace Master.Components
                     if (b2 != 0)
                         b = b1 / b2;
 
-                    double n = a * N0[i] + b * N0[i + 1];
-                    dN[i] = (n);
+                    double n = a * getN(kV, xi, p-1)[i] + b * getN(kV, xi, p - 1)[i + 1];
+                    dN.Add(n);
 
                 }
             }
-            else if (p > 1)
+            else if (d > 1 && p > 1)
             {
                 for (int i = 0; i < kV.Count -p - 1; i++)
                 {
