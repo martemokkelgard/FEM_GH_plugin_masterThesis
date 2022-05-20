@@ -32,8 +32,9 @@ namespace Master.Components
         {
             pManager.AddPointParameter("ControlPoints", "CP", "Control Points", GH_ParamAccess.list);
             pManager.AddNumberParameter("ngp", "ngp", "Number of Gauss-points", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Knot", "Knot", "Knot Vector", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Deg", "Deg", "Degree", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Knot axial", "Knot", "Knot Vector", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Knot vert and rot", "Knot", "Knot Vector", GH_ParamAccess.list);
+            pManager.AddMatrixParameter("Deg", "Deg", "Degree", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -134,7 +135,7 @@ namespace Master.Components
 
                 //Beam properties
                 double L = 1.3;
-                double J = L / 2;
+                double J = L / 2.0;
                 double A = 0.2;
                 double I = 0.014;
                 double E = 1525;
@@ -182,9 +183,9 @@ namespace Master.Components
                 int ispan = findSpan(kVv, GPW[0, n]);
                 info.Add("ispan for xi " + GPW[0, n] + " is =" + ispan);
 
-                double posX = 0;
-                double posY = 0;
-                double posZ = 0;
+                            double posX = 0;
+                            double posY = 0;
+                            double posZ = 0;
 
                 for (int c = 0; c < cpts.Count; c++)
                 {
@@ -193,10 +194,10 @@ namespace Master.Components
                     posZ = posZ + cpts[c].Z * Nv[c];
                 }
 
-                Point3d pos = new Point3d(posX, posY, posZ);
-                info.Add("Xcord = " + posX);
-                info.Add("Ycord = " + posX);
-                info.Add("Zcord = " + posX);
+                            Point3d pos = new Point3d(posX, posY, posZ);
+                            info.Add("Xcord = " + posX);
+                            info.Add("Ycord = " + posX);
+                            info.Add("Zcord = " + posX);
 
 
                
@@ -207,17 +208,17 @@ namespace Master.Components
             DA.SetData(0, k_ee);
         }
 
-            
+            DA.SetData(0, k_e);
 
 
 
-    
+        }
 
         private int findSpan(List<double> kV, double xi)
         {
             int ispan = 0;
 
-            for (int i = 0; i < kV.Count - 1; i++)
+            for (int i = 0; i < kV.Count -1; i++)
             {
                 double span0 = kV[i];
                 double span1 = kV[i + 1];
@@ -291,13 +292,13 @@ namespace Master.Components
         }
         private List<double> getN(List<double> kV, double xi, int p)
         {
-            List<double> N = new List<double>();
+            Vector<double> N = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
-            List<double> N0 = getN0(kV, xi); //get basic shape function
+            Vector<double> N0 = getN0(kV, xi); //get basic shape function
 
             if (p == 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count - p-1; i++)
                 {
                     double a1 = xi - kV[i];
                     double a2 = kV[i + p] - kV[i];
@@ -312,7 +313,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * N0[i] + b * N0[i + 1];
-                    N.Add(n);
+                    N[i] = (n);
 
                 }
             }
@@ -333,7 +334,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * getN(kV, xi, p - 1)[i] + b * getN(kV, xi, p - 1)[i + 1];
-                    N.Add(n);
+                    N[i] = (n);
                 }
             }
 
@@ -342,9 +343,9 @@ namespace Master.Components
         }
 
 
-        private List<double> getdN(List<double> kV, double xi, int p, int d)
+        private Vector<double> getdN(List<double> kV, double xi, int p, int d)
         {
-            List<double> dN = new List<double>();
+            Vector<double> dN = SparseVector.OfEnumerable(new double[kV.Count-p-1]);
 
             List<double> N0 = getN0(kV, xi); //get basic shape function
             
@@ -373,7 +374,7 @@ namespace Master.Components
 
             else if (d == 1 && p > 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count - p-1; i++)
                 {
                     double a1 = p;
                     double a2 = kV[i + p] - kV[i];
@@ -394,7 +395,7 @@ namespace Master.Components
             }
             else if (d > 1 && p > 1)
             {
-                for (int i = 0; i < kV.Count - p - 1; i++)
+                for (int i = 0; i < kV.Count -p - 1; i++)
                 {
                     double a1 = p;
                     double a2 = kV[i + p] - kV[i];
@@ -409,7 +410,7 @@ namespace Master.Components
                         b = b1 / b2;
 
                     double n = a * getdN(kV, xi, p - 1, d - 1)[i] + b * getdN(kV, xi, p - 1, d - 1)[i + 1];
-                    dN.Add(n);
+                    dN[i] = (n);
                 }
             }
 
@@ -418,20 +419,20 @@ namespace Master.Components
         }
 
 
-        private List<double> getN0(List<double> kV, double xi)
+        private Vector<double> getN0(List<double> kV, double xi)
         {
-            List<double> N0 = new List<double>();
+            Vector<double> N0 = SparseVector.OfEnumerable(new double[kV.Count-1]);
 
             for (int i = 0; i < kV.Count - 1; i++)
             {
                 double xi0 = kV[i];     //xi for i
                 double xi1 = kV[i + 1]; //xi for i+1
                 if (xi >= xi0 && xi < xi1)
-                { N0.Add(1); }
+                { N0[i] = (1); }
                 else if (xi == 1 && xi1 == 1 && xi0 != 1)
-                { N0.Add(1); }
+                { N0[i] = (1); }
                 else
-                { N0.Add(0); }
+                { N0[i] = (0); }
             }
             return N0;
         }
