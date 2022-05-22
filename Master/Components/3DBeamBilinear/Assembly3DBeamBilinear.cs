@@ -427,7 +427,7 @@ namespace Master.Components
             List<double> M_lst = new List<double>();
 
             Vector<double> dNN = DenseVector.OfEnumerable(new double[18]);
-            List<Point3d> curve_pts = new List<Point3d>();
+            
 
             foreach (BeamClassBilinear b in bars)
             {
@@ -486,7 +486,8 @@ namespace Master.Components
 
                 Curve currentLine = b.axis;
                 double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
-                double n = 10;
+                List<Point3d> curve_pts = new List<Point3d>();
+                double n = 4;
                 var x = 0.0;
                 
                 for (int i = 0; i < n+1; i++)
@@ -577,20 +578,21 @@ namespace Master.Components
                 mom[node2 * 3 + 1] += S[16];
                 mom[node2 * 3 + 2] += S[17];
 
-               
+                for (int i = 1; i < curve_pts.Count; i++)
+                {
+                    Line line = new Line(curve_pts[i - 1], curve_pts[i]);
+                    bending.Add(line);
+                }
+                Line line1 = new Line(b.startNode.pt, curve_pts[0]);
+                Line line2 = new Line(b.endNode.pt, curve_pts[curve_pts.Count-1]);
+                bending.Add(line1);
+                bending.Add(line2);
+
 
 
             }
 
-            for (int i = 1; i < curve_pts.Count; i++)
-            {
-                Line line = new Line(curve_pts[i - 1], curve_pts[i]);
-                bending.Add(line);
-            }
-            Line line1 = new Line(bars[0].startNode.pt, curve_pts[0]);
-            Line line2 = new Line(bars[bars.Count-1].endNode.pt, curve_pts[curve_pts.Count-1]);
-            bending.Add(line1);
-            bending.Add(line2);
+
 
             foreach (double m_temp in M_lst)
             {
