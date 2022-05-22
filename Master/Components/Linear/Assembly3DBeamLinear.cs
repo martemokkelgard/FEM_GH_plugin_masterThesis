@@ -384,7 +384,7 @@ namespace Master.Components
             Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> forc = SparseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> dNN = DenseVector.OfEnumerable(new double[12]);
-            List<Point3d> curve_pts = new List<Point3d>();
+            
             List<Line> bending = new List<Line>();
 
             var u_max = new double();
@@ -441,6 +441,7 @@ namespace Master.Components
 
                 Curve currentLine = b.axis;
                 double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
+                List<Point3d> curve_pts = new List<Point3d>();
                 double n = 2;
                 var x = 0.0;
 
@@ -482,7 +483,7 @@ namespace Master.Components
                     Point3d en = new Point3d(st.X - vector.X * _M / 10000000.0, st.Y - vector.Y * _M / 10000000.0, st.Z - vector.Z * _M / 10000000.0);
 
 
-
+                    
                     curve_pts.Add(en);
 
                     /*
@@ -493,6 +494,8 @@ namespace Master.Components
                         m_Max = m_max;
                     }
                     */
+
+                    
                 }
 
 
@@ -528,20 +531,23 @@ namespace Master.Components
 
 
 
-            }
+                for (int a = 1; a < curve_pts.Count; a++)
+                {
+                    Line line = new Line(curve_pts[a - 1], curve_pts[a]);
+                    bending.Add(line);
+                }
+                Line line1 = new Line(b.startNode.pt, curve_pts[0]);
+                Line line2 = new Line(b.endNode.pt, curve_pts[curve_pts.Count - 1]);
+                bending.Add(line1);
+                bending.Add(line2);
 
-            for (int i = 1; i < curve_pts.Count; i++)
-            {
-                Line line = new Line(curve_pts[i - 1], curve_pts[i]);
-                bending.Add(line);
+
             }
-            Line line1 = new Line(bars[0].startNode.pt, -curve_pts[0]);
-            Line line2 = new Line(bars[bars.Count - 1].endNode.pt, -curve_pts[curve_pts.Count - 1]);
-            bending.Add(line1);
-            bending.Add(line2);
 
 
             
+
+
             foreach (double m_temp in M_lst)
             {
                 
