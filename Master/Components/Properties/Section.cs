@@ -23,7 +23,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name of the section (bxh [mm]), default: 100x100mm", GH_ParamAccess.item,"100x100");
+            pManager.AddTextParameter("Name", "N", "Name of the section (bxh [mm]), default: 100x100mm", GH_ParamAccess.item, "100x100");
             //pManager.AddNumberParameter("Height", "h", "Height of the cross-section", GH_ParamAccess.item, 100);
             //pManager.AddNumberParameter("Width", "w", "Width of the cross-section", GH_ParamAccess.item, 100);
             //pManager.AddNumberParameter("ThicknessF", "tf", "Thickness of the flanges of the cross-section", GH_ParamAccess.item, 5);
@@ -36,7 +36,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("section","S","SectionClass object",GH_ParamAccess.item);
+            pManager.AddGenericParameter("section", "S", "SectionClass object", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace Master.Components
             //DA.GetData(2,ref w);
             //DA.GetData(3,ref tf);
             //DA.GetData(4,ref tw);
-            DA.GetData(1,ref r);
+            DA.GetData(1, ref r);
 
             //code
             //SectionClass sec = new SectionClass(Name, h, w, tf, tw);

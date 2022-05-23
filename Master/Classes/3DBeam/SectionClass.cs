@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Rhino.Geometry;
 
 namespace Master
 {
+
     internal class SectionClass
     {
         public string Name;
@@ -32,8 +34,8 @@ namespace Master
         {
             //empty
         }
-        
-        public SectionClass(string _Name, double _h, double _w, double _tf, double _tw )
+
+        public SectionClass(string _Name, double _h, double _w, double _tf, double _tw)
         {
 
             Name = _Name;
@@ -41,8 +43,8 @@ namespace Master
             h = _h;
             tw = _tw;
             tf = _tf;
-            CSA = w * h -((w-2*tw)*(h-2*tf));
-            Iy = ( 1 / (12.00) * w * Math.Pow(h,3) ) - ( 1 / (12.00) * (w - 2*tw) * Math.Pow( (h - 2*tf), 3) );
+            CSA = w * h - ((w - 2 * tw) * (h - 2 * tf));
+            Iy = (1 / (12.00) * w * Math.Pow(h, 3)) - (1 / (12.00) * (w - 2 * tw) * Math.Pow((h - 2 * tf), 3));
             Iz = (1 / (12.00) * h * Math.Pow(w, 3)) - (1 / (12.00) * (h - 2 * tf) * Math.Pow((w - 2 * tw), 3));
             Asteg = (h - 2 * tf) * 2;
 
@@ -52,7 +54,7 @@ namespace Master
                 a = h / 2;
                 b = w / 2;
 
-                J = a * Math.Pow(b, 3) * ( 16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4)) ) ); //polar moment of interia
+                J = a * Math.Pow(b, 3) * (16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4)))); //polar moment of interia
             }
 
             else
@@ -63,7 +65,6 @@ namespace Master
                 //J = (Iy + Iz) * 0.7608938646;
                 //J = a * Math.Pow(b, 3) * (16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4))));
             }
-            
 
             
         }
@@ -77,7 +78,9 @@ namespace Master
             Iz = Iy;
             J = (Math.PI * Math.Pow(r, 4)) / 2.0;
 
+
         }
     }
 }
+
 

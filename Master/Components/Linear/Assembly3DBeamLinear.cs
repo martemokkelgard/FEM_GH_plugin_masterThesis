@@ -273,11 +273,9 @@ namespace Master.Components
         }
 
         /*
-
         private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
         {
             GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-
             int count = 0;
             foreach (Vector<double> vec in vecLst)
             {
@@ -286,10 +284,8 @@ namespace Master.Components
                 {
                     tree.Append(new GH_Number(num), path);
                 }
-
                 count++;
             }
-
             return tree;
         }
         */
