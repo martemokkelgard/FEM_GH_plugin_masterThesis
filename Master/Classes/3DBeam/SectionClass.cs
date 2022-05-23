@@ -66,7 +66,8 @@ namespace Master
                 //J = a * Math.Pow(b, 3) * (16.00 / 3.00 - 3.36 * b / a * (1 - Math.Pow(b, 4) / (12.00 * Math.Pow(a, 4))));
             }
 
-            
+
+
         }
 
         public SectionClass(string _Name, double _r)
@@ -77,7 +78,6 @@ namespace Master
             Iy = (Math.PI * Math.Pow(r, 4)) / 4.0;
             Iz = Iy;
             J = (Math.PI * Math.Pow(r, 4)) / 2.0;
-
 
         }
     }

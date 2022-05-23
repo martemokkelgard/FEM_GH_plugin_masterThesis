@@ -88,7 +88,7 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
-            
+
 
             for (int i = 0; i < bars.Count; i++)
             {
