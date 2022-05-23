@@ -56,7 +56,7 @@ namespace Master.Components
 
             pManager.AddLineParameter("moment diagram", "ben", "to see the moment ", GH_ParamAccess.list);
 
-            
+
 
         }
 
@@ -89,18 +89,29 @@ namespace Master.Components
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
 
+
             for (int i = 0; i < bars.Count; i++)
             {
                 Curve L1 = bars[i].axis;
 
                 double a = 0.5;                                             // * parameter for midnode 
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6)));
+                Point3d aa = new Point3d(Math.Round(L1.PointAtNormalizedLength(0).X, 6), Math.Round(L1.PointAtNormalizedLength(0).Y, 6), Math.Round(L1.PointAtNormalizedLength(0).Z, 6));
+                pts.Add(aa);
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6)));
+                Point3d bb = new Point3d(Math.Round(L1.PointAtNormalizedLength(a).X, 6), Math.Round(L1.PointAtNormalizedLength(a).Y, 6), Math.Round(L1.PointAtNormalizedLength(a).Z, 6));
+                pts.Add(bb);
 
-                pts.Add(new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6)));
+                Point3d cc = new Point3d(Math.Round(L1.PointAtNormalizedLength(1).X, 6), Math.Round(L1.PointAtNormalizedLength(1).Y, 6), Math.Round(L1.PointAtNormalizedLength(1).Z, 6));
+                pts.Add(cc);
 
+                //NodeClass aaa = new NodeClass(aa);
+                //NodeClass bbb = new NodeClass(bb);
+                //NodeClass ccc = new NodeClass(cc);
+
+                //nodes.Add(aaa);
+                //nodes.Add(bbb);
+                //nodes.Add(ccc);
             }
 
             for (int i = 0; i < pts.Count; i++)
@@ -115,10 +126,16 @@ namespace Master.Components
                 }
             }
 
+            for (int i = 0; i < pts.Count; i++)
+            {
+                nodes.Add(new NodeClass(pts[i]));
+                nodes[i].Id = i;
+            }
 
-            List<int> BCList = CreateBCList(bcc, pts);
 
-            Vector<double> LoadList = CreateLoadList(lc, pts);
+            List<int> BCList = CreateBCList(bcc, nodes);
+
+            Vector<double> LoadList = CreateLoadList(lc, nodes);
 
 
 
@@ -140,16 +157,16 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN,T_List, T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out double M_max, out double umax, out List<Line>  crv);
+            CreateForces(bars, pts, def, k_eg, N, dN, T_List, T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out double M_max, out double umax, out List<Line> crv);
 
 
-            for (int i = 0; i < pts.Count; i++)
+            foreach (NodeClass nod in nodes) //(int i = 0; i < nodes.Count; i++)
             {
 
-                displNodes.Add(new Point3d(pts[i].X + def[6 * i] / 1000, pts[i].Y + def[6 * i + 1] / 1000, pts[i].Z + def[6 * i + 2] / 1000));
+                displNodes.Add(new Point3d(pts[nod.Id].X + def[6 * nod.Id] / 1000, pts[nod.Id].Y + def[6 * nod.Id + 1] / 1000, pts[nod.Id].Z + def[6 * nod.Id + 2] / 1000));
             }
 
-            
+
 
 
 
@@ -178,6 +195,7 @@ namespace Master.Components
 
 
 
+
             foreach (Vector<double> uu in u)
             {
 
@@ -192,10 +210,10 @@ namespace Master.Components
             {
 
 
-                if (BCList.Contains(i * 6) | BCList.Contains(i * 6 + 1) | BCList.Contains(i * 6 + 2) | BCList.Contains(i * 6 + 3) | BCList.Contains(i * 6 + 4) | BCList.Contains(i * 6 + 5))
+                if (BCList.Contains(nodes[i].Id * 6) | BCList.Contains(nodes[i].Id * 6 + 1) | BCList.Contains(nodes[i].Id * 6 + 2))
                 {
-                    force_lst.Add(new Point3d(forces[i * 3], forces[i * 3 + 1], forces[i * 3 + 2]));
-                    mom_lst.Add(new Point3d(moment[i * 3], moment[i * 3 + 1], moment[i * 3 + 2]));
+                    force_lst.Add(new Point3d(forces[nodes[i].Id * 3] - LoadList[nodes[i].Id * 6], forces[nodes[i].Id * 3 + 1] - LoadList[nodes[i].Id * 6 + 1], forces[nodes[i].Id * 3 + 2] - LoadList[nodes[i].Id * 6 + 2]));
+                    mom_lst.Add(new Point3d(moment[nodes[i].Id * 3] + LoadList[nodes[i].Id * 6 + 3], moment[nodes[i].Id * 3 + 1] + LoadList[nodes[i].Id * 6 + 4], moment[nodes[i].Id * 3 + 2] + LoadList[nodes[i].Id * 6 + 5]));
 
                 }
 
@@ -208,8 +226,8 @@ namespace Master.Components
 
             foreach (BeamClassBilinear b in bars)
             {
-                Point3d p1 = new Point3d(b.startNode.pt.X +(def[b.startNode.Id * 6] /1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6+1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6+2] / 1000.00));
-                Point3d p2 = new Point3d(b.midNode.pt.X + (def[b.midNode.Id * 6] / 1000.00), b.midNode.pt.Y + (def[b.midNode.Id * 6 + 1] / 1000.00), b.midNode.pt.Z + (def[b.midNode.Id * 6 +2] / 1000.00));
+                Point3d p1 = new Point3d(b.startNode.pt.X + (def[b.startNode.Id * 6] / 1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6 + 1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6 + 2] / 1000.00));
+                Point3d p2 = new Point3d(b.midNode.pt.X + (def[b.midNode.Id * 6] / 1000.00), b.midNode.pt.Y + (def[b.midNode.Id * 6 + 1] / 1000.00), b.midNode.pt.Z + (def[b.midNode.Id * 6 + 2] / 1000.00));
                 Point3d p3 = new Point3d(b.endNode.pt.X + (def[b.endNode.Id * 6] / 1000.00), b.endNode.pt.Y + (def[b.endNode.Id * 6 + 1] / 1000.00), b.endNode.pt.Z + (def[b.endNode.Id * 6 + 2] / 1000.00));
                 Line line1 = new Line(p1, p2);
                 Line line2 = new Line(p2, p3);
@@ -238,37 +256,38 @@ namespace Master.Components
 
         }
 
-        private List<int> CreateBCList(List<BcClass> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
+        private List<int> CreateBCList(List<BcClass> _BcValue, List<NodeClass> _nodes)  //making a list with indexes of fixed BC
         {
 
             //List<int> BCs = new List<int>();
             List<int> BCsIndex = new List<int>();
 
 
-            for (int i = 0; i < _Pts.Count; i++)
+            for (int i = 0; i < _nodes.Count; i++)
             {
-                Point3d node = _Pts[i];
+                Point3d node = _nodes[i].pt;
+                int id = _nodes[i].Id;
                 foreach (var b in _BcValue)
                 {
                     if (b.Coordinate.DistanceTo(node) < 0.000001)
                     {
                         if (b.ux)
-                            BCsIndex.Add(6 * i);
+                            BCsIndex.Add(6 * id);
 
                         if (b.uy)
-                            BCsIndex.Add(6 * i + 1);
+                            BCsIndex.Add(6 * id + 1);
 
                         if (b.uz)
-                            BCsIndex.Add(6 * i + 2);
+                            BCsIndex.Add(6 * id + 2);
 
                         if (b.rx)
-                            BCsIndex.Add(6 * i + 3);
+                            BCsIndex.Add(6 * id + 3);
 
                         if (b.ry)
-                            BCsIndex.Add(6 * i + 4);
+                            BCsIndex.Add(6 * id + 4);
 
                         if (b.rz)
-                            BCsIndex.Add(6 * i + 5);
+                            BCsIndex.Add(6 * id + 5);
                     }
                 }
 
@@ -295,7 +314,7 @@ namespace Master.Components
         }
         */
 
-        private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
+        private Vector<double> CreateLoadList(List<LoadClass> _lc, List<NodeClass> _nodes)
         {
             /*
             List<int> globalIds = new List<int>();
@@ -312,7 +331,7 @@ namespace Master.Components
 
 
 
-            Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_Pts.Count * 6]);
+            Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_nodes.Count * 6]);
 
             foreach (var load in _lc)
 
@@ -337,10 +356,11 @@ namespace Master.Components
 
                 Vector3d LoadVec = load.LoadVec;
 
-                for (int i = 0; i < _Pts.Count; i++)
+                for (int i = 0; i < _nodes.Count; i++)
                 {
                     //this line was not so good
-                    Point3d node = _Pts[i];
+                    Point3d node = _nodes[i].pt;
+                    int id = _nodes[i].Id;
 
 
                     for (int j = 0; j < LoadPts.Count; j++)
@@ -350,27 +370,27 @@ namespace Master.Components
                         {
                             if (load.Id1)
                             {
-                                LoadValue[i * 6] += LoadVec.X;
-                                LoadValue[i * 6 + 1] += LoadVec.Y;
-                                LoadValue[i * 6 + 2] += LoadVec.Z;
+                                LoadValue[id * 6] += LoadVec.X;
+                                LoadValue[id * 6 + 1] += LoadVec.Y;
+                                LoadValue[id * 6 + 2] += LoadVec.Z;
                             }
 
                             else
                             {
-                                LoadValue[i * 6 + 3] += load.mVal[0];
-                                LoadValue[i * 6 + 4] += load.mVal[1];
-                                LoadValue[i * 6 + 5] += load.mVal[2];
+                                LoadValue[id * 6 + 3] += load.mVal[0];
+                                LoadValue[id * 6 + 4] += load.mVal[1];
+                                LoadValue[id * 6 + 5] += load.mVal[2];
                             }
 
                         }
                         else
                         {
-                            LoadValue[i * 6] += 0;
-                            LoadValue[i * 6 + 1] += 0;
-                            LoadValue[i * 6 + 2] += 0;
-                            LoadValue[i * 6 + 3] += 0;
-                            LoadValue[i * 6 + 4] += 0;
-                            LoadValue[i * 6 + 5] += 0;
+                            LoadValue[id * 6] += 0;
+                            LoadValue[id * 6 + 1] += 0;
+                            LoadValue[id * 6 + 2] += 0;
+                            LoadValue[id * 6 + 3] += 0;
+                            LoadValue[id * 6 + 4] += 0;
+                            LoadValue[id * 6 + 5] += 0;
                         }
 
                     }
