@@ -42,6 +42,7 @@ namespace Master.Components
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
+            pManager.AddPointParameter("CurvePoint", "CurvePoint", "Point on Curve", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace Master.Components
             ngp = Convert.ToInt32(ngp);
             int p = Convert.ToInt32(pp);
 
-            //List<double> Xi = new List<double>();
+            List<Point3d> position = new List<Point3d>();
             //List<double> GPW = new List<double>();
 
             var GPW = getGPW(Convert.ToInt32(ngp));
@@ -139,7 +140,7 @@ namespace Master.Components
                 double I = 0.014;
                 double E = 1525;
 
-
+                /*
                 //Selective basis functions (for vertical disp and rot)
 
                 int db = 2;   //derived d-times
@@ -153,7 +154,7 @@ namespace Master.Components
 
                 //Making K-matrix
 
-
+                
 
 
                 for (int a = 0; a < Nu.Count; a++)
@@ -176,7 +177,7 @@ namespace Master.Components
                 }
 
 
-
+                */
 
                 //calculate
                 int ispan = findSpan(kVv, GPW[0, n]);
@@ -198,13 +199,14 @@ namespace Master.Components
                 info.Add("Ycord = " + posX);
                 info.Add("Zcord = " + posX);
 
-
+                position.Add(pos);
 
             }
 
-
+            //Curve crv = Curve.CreateInterpolatedCurve(position, p);
 
             DA.SetData(0, k_ee);
+            DA.SetDataList(1, position);
         }
 
 
