@@ -42,6 +42,7 @@ namespace Master.Components
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
+            pManager.AddPointParameter("CurvePoint", "CurvePoint", "Point on Curve", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace Master.Components
             ngp = Convert.ToInt32(ngp);
             int p = Convert.ToInt32(pp);
 
-            //List<double> Xi = new List<double>();
+            List<Point3d> position = new List<Point3d>();
             //List<double> GPW = new List<double>();
 
             var GPW = getGPW(Convert.ToInt32(ngp));
@@ -139,9 +140,8 @@ namespace Master.Components
                 double I = 0.014;
                 double E = 1525;
 
-
+                /*
                 //Selective basis functions (for vertical disp and rot)
-
                 int db = 2;   //derived d-times
                 List<double> B = new List<double>();
                 double B0 = getdN(kVv, GPW[0, n], pv, db)[0] + getdN(kVv, GPW[0, n], pv, db)[1];
@@ -149,13 +149,8 @@ namespace Master.Components
                 double B2 = L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[1];
                 double B3 = -L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[2];
                 B.Add(B0); B.Add(B1); B.Add(B2); B.Add(B3);
-
-
                 //Making K-matrix
-
-
-
-
+                
                 for (int a = 0; a < Nu.Count; a++)
                 {
                     for (int b = 0; b < Nu.Count; b++)
@@ -163,20 +158,14 @@ namespace Master.Components
                         k_e[3 * a, 3 * b] += (E * A / (J * J)) * dNu[a] * dNu[b] * J * GPW[1, n];
                     }
                 }
-
-
                 for (int g = 0; g < Nv.Count; g++)
                 {
                     for (int e = 0; e < Nv.Count; e++)
-
                     {
                         k_ee[g, e] += (E * I) / (Math.Pow(J, 4)) * B[g] * B[e] * J * GPW[1, n];
-
                     }
                 }
-
-
-
+                */
 
                 //calculate
                 int ispan = findSpan(kVv, GPW[0, n]);
@@ -198,13 +187,14 @@ namespace Master.Components
                 info.Add("Ycord = " + posX);
                 info.Add("Zcord = " + posX);
 
-
+                position.Add(pos);
 
             }
 
-
+            //Curve crv = Curve.CreateInterpolatedCurve(position, p);
 
             DA.SetData(0, k_ee);
+            DA.SetDataList(1, position);
         }
 
 
