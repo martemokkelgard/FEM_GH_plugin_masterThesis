@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Material : GH_Component
+    public class CreateLineLoad3D : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Material class.
+        /// Initializes a new instance of the CreateLineLoad class.
         /// </summary>
-        public Material()
-          : base("Material", "Nickname",
+        public CreateLineLoad3D()
+          : base("CreateLineLoad3D", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DBeam")
         {
         }
 
@@ -23,9 +23,8 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "name of the materiaL, default: S355", GH_ParamAccess.item, "s355");
-            pManager.AddNumberParameter("Density", "D", "density of the material, default: 7.8e-6 kg/mm^3", GH_ParamAccess.item, 0.0000078 );
-            pManager.AddNumberParameter("YoungsModulus", "E", "youngsModulus of the material (in [N/mm^2], default 210000 N/mm^2", GH_ParamAccess.item,210000);
+            pManager.AddLineParameter("Line", "L", "Lines to add distributed load to", GH_ParamAccess.list);
+            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all lines", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("material", "M", "materialClass object", GH_ParamAccess.item);
+            pManager.AddGenericParameter("LineLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -43,20 +42,25 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string Name = "C14";
-            double d = 100;
-            double E = 100000;
+            Vector3d Vecs = new Vector3d();
+            List<Curve> lines = new List<Curve>();
 
-            DA.GetData(0, ref Name);
-            DA.GetData(1, ref d);
-            DA.GetData(2, ref E);
+            if (!DA.GetDataList(0, lines)) return;
+            if (!DA.GetData(1, ref Vecs)) return;
 
             //code
-            MaterialClass mat = new MaterialClass(Name, d, E);
+
+            List<LoadClass> loads = new List<LoadClass>();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                loads.Add(new LoadClass(lines[i], Vecs));
+
+            }
+
 
             //output
-            DA.SetData(0, mat);
-
+            DA.SetDataList(0, loads);
         }
 
         /// <summary>
@@ -77,7 +81,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("6445C831-20BE-46BA-8488-BFBA926A7BF0"); }
+            get { return new Guid("1b6fd7da-f9d7-4d42-863a-71175e7448ea"); }
         }
     }
 }

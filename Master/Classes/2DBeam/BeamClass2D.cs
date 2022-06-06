@@ -8,25 +8,25 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class BarClass
+    internal class BeamClass2D
     {
         public string Name;
         public int Id;
         public SectionClass section;
         public MaterialClass material;
-        public Line axis;
-        public NodeClass startNode;
-        public NodeClass endNode;
-        
+        public Curve axis;
+        public NodeClass2D startNode;
+        public NodeClass2D endNode;
 
 
-        public BarClass()
+
+        public BeamClass2D()
         { }
-        
-        public BarClass(string _Name, Line _line, SectionClass _section, MaterialClass _material) 
+
+        public BeamClass2D(string _Name, Curve _line, SectionClass _section, MaterialClass _material)
         {
             Name = _Name;
-            axis= _line;
+            axis = _line;
             section = _section;
             material = _material;
         }

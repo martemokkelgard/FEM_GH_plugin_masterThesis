@@ -8,25 +8,23 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class BcClass
+    internal class BcClass2DTruss
     {
 
         public Point3d Coordinate;
         public bool ux;
-        public bool uy;
         public bool uz;
 
-        public BcClass()
+        public BcClass2DTruss()
         { }
 
 
 
-        public BcClass(Point3d _Coordinate,bool _ux,bool _uy,bool _uz)
+        public BcClass2DTruss(Point3d _Coordinate, bool _ux, bool _uz)
         {
-            
+
             Coordinate = _Coordinate;
             ux = _ux;
-            uy = _uy;
             uz = _uz;
         }
 

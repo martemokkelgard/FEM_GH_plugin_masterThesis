@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class Section : GH_Component
+    public class CreateLineLoad2D : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Sectioncs class.
+        /// Initializes a new instance of the CreateLineLoad class.
         /// </summary>
-        public Section()
-          : base("Sectioncs", "Nickname",
+        public CreateLineLoad2D()
+          : base("CreateLineLoad", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "2DBeam")
         {
         }
 
@@ -23,11 +23,8 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddTextParameter("Name", "N", "Name of the section (bxh [mm]), default: 100x100mm", GH_ParamAccess.item,"100x100");
-            pManager.AddNumberParameter("Height", "h", "Height of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("Width", "w", "Width of the cross-section", GH_ParamAccess.item, 100);
-            pManager.AddNumberParameter("ThicknessF", "tf", "Thickness of the flanges of the cross-section", GH_ParamAccess.item, 5);
-            pManager.AddNumberParameter("ThicknessW", "tw", "Thickness of the web of the cross-section", GH_ParamAccess.item, 5);
+            pManager.AddLineParameter("Line", "L", "Lines to add distributed load to", GH_ParamAccess.list);
+            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all lines", GH_ParamAccess.item);
         }
 
         /// <summary>
@@ -35,7 +32,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("section","S","SectionClass object",GH_ParamAccess.item);
+            pManager.AddGenericParameter("LineLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,25 +41,26 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-
             //input
-            string Name = "100x100";
-            double h = 100;
-            double w = 100;
-            double tf = 5;
-            double tw = 5;
-            DA.GetData(0, ref Name);
-            DA.GetData(1,ref h);
-            DA.GetData(2,ref w);
-            DA.GetData(3,ref tf);
-            DA.GetData(4,ref tw);
-               
+            Vector3d Vecs = new Vector3d();
+            List<Line> lines = new List<Line>();
+
+            if (!DA.GetDataList(0, lines)) return;
+            if (!DA.GetData(1, ref Vecs)) return;
+
             //code
-            SectionClass sec = new SectionClass(Name, h, w, tf, tw);
-           
+
+            List<LoadClass2D> loads = new List<LoadClass2D>();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                loads.Add(new LoadClass2D(lines[i], Vecs));
+
+            }
+
 
             //output
-            DA.SetData(0, sec);
+            DA.SetDataList(0, loads);
         }
 
         /// <summary>
@@ -83,7 +81,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("D6B5319A-CE46-464C-ABFF-EC3CCC6DFB5B"); }
+            get { return new Guid("1e7fd7a0-0fc1-47a1-8dd8-af4c50507d5f"); }
         }
     }
 }

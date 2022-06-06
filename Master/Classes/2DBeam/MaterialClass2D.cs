@@ -8,23 +8,23 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class MaterialClass
+    internal class MaterialClass2D
     {
         public string Name;
         public int Id;
         public double youngsModolus;
         public double density;
 
-        public MaterialClass()
+        public MaterialClass2D()
         { }
 
-        public MaterialClass(string _Name)
+        public MaterialClass2D(string _Name)
         {
             Name = _Name;
         }
 
 
-        public MaterialClass(string _Name, double _density, double _youngsModolus)
+        public MaterialClass2D(string _Name, double _density, double _youngsModolus)
         {
             Name = _Name;
             density = _density;

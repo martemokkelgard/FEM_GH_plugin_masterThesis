@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreateBar : GH_Component
+    public class CreateBeam3D : GH_Component
     {
         /// <summary>
         /// Initializes a new instance of the Beam class.
         /// </summary>
-        public CreateBar()
-          : base("CreateBar", "Nickname",
+        public CreateBeam3D()
+          : base("CreateBeam3D", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DBeam")
         {
         }
 
@@ -24,7 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddTextParameter("Name", "N", "Name of bar", GH_ParamAccess.item);
-            pManager.AddLineParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
+            pManager.AddCurveParameter("lines", "LNS", "Geometry (lines with dim. in [m])", GH_ParamAccess.list);
             pManager.AddGenericParameter("material", "M", "MaterialClass", GH_ParamAccess.item);
             pManager.AddGenericParameter("section", "S", "Section of the bar", GH_ParamAccess.item);
         }
@@ -34,7 +34,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("bars", "B", "List of barClass objects", GH_ParamAccess.list);
+            pManager.AddGenericParameter("beams", "B", "List of beamClass objects", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -44,21 +44,21 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string name = "Bar";
-            List<Line> lines = new List<Line>();
+            string name = "Beam";
+            List<Curve> lines = new List<Curve>();
             MaterialClass mat = new MaterialClass();
             SectionClass sec = new SectionClass();
             DA.GetData(0, ref name);
             DA.GetDataList(1, lines);
             DA.GetData(2, ref mat);
             DA.GetData(3, ref sec);
-            List<BarClass> bars = new List<BarClass>();
+            List<BeamClass> bars = new List<BeamClass>();
 
             
             //code
-            foreach (Line l in lines)  //making barsClass objects of lines
+            foreach (Curve l in lines)  //making barsClass objects of lines
             { 
-                bars.Add(new BarClass("trussBar", l, sec, mat));
+                bars.Add(new BeamClass("Beam", l, sec, mat));
             }
 
             for (int i = 0; i < bars.Count; i++)   //giving id to beamClass objects
@@ -71,15 +71,15 @@ namespace Master.Components
 
             for (int i = 0; i < lines.Count; i++)
             {
-                Line L1 = lines[i];
+                Curve L1 = lines[i];
 
-                if (!pts.Contains(L1.From))
+                if (!pts.Contains(L1.PointAtStart))
                 {
-                    pts.Add(L1.From);
+                    pts.Add(L1.PointAtStart);
                 }
-                if (!pts.Contains(L1.To))
+                if (!pts.Contains(L1.PointAtEnd))
                 {
-                    pts.Add(L1.To);
+                    pts.Add(L1.PointAtEnd);
                 }
 
             }
@@ -95,15 +95,15 @@ namespace Master.Components
             {
                 nodes[i].Id = i;
 
-                foreach (BarClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
+                foreach (BeamClass l in bars)       //finding the nodeClass object that is start/end node of barClass objects
                 {
 
 
-                    if (l.axis.From == nodes[i].pt)
+                    if (l.axis.PointAtStart == nodes[i].pt)
                     {
                         l.startNode = nodes[i];
                     }
-                    if (l.axis.To == nodes[i].pt)
+                    if (l.axis.PointAtEnd == nodes[i].pt)
                     {
                         l.endNode = nodes[i];
                     }
@@ -138,7 +138,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("A5FAD6C5-F8A4-44BC-A8D3-FDF88A0CB043"); }
+            get { return new Guid("1f2455fd-cab7-487b-b69e-9de68afa9031"); }
         }
     }
 }

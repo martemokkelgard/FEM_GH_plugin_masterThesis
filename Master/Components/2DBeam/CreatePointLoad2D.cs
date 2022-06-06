@@ -1,0 +1,95 @@
+﻿using System;
+using System.Collections.Generic;
+
+using Grasshopper.Kernel;
+using Rhino.Geometry;
+
+namespace Master.Components
+{
+    public class CreatePointLoad2D : GH_Component
+    {
+        /// <summary>
+        /// Initializes a new instance of the Load class.
+        /// </summary>
+        public CreatePointLoad2D()
+          : base("CreatePointLoad", "Nickname",
+              "Description",
+              "Panda", "2DBeam")
+        {
+        }
+
+        /// <summary>
+        /// Registers all the input parameters for this component.
+        /// </summary>
+        protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
+        {
+            pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
+            pManager.AddVectorParameter("LoadVector", "LV", "Load vector with amplitude in [N].Give either one load to be applied to all inputted points, or different loads for each inputted point or lines", GH_ParamAccess.item);
+
+
+        }
+
+        /// <summary>
+        /// Registers all the output parameters for this component.
+        /// </summary>
+        protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
+        {
+            pManager.AddGenericParameter("PointLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
+        }
+
+        /// <summary>
+        /// This is the method that actually does the work.
+        /// </summary>
+        /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
+        protected override void SolveInstance(IGH_DataAccess DA)
+        {
+
+            //input
+            List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
+            Vector3d Vecs = new Vector3d();
+
+
+            if (!DA.GetDataList(0, pointList)) return;
+            if (!DA.GetData(1, ref Vecs)) return;
+
+
+
+            //code
+
+
+            List<LoadClass2D> loads = new List<LoadClass2D>();
+
+            for (int i = 0; i < pointList.Count; i++)
+            {
+                loads.Add(new LoadClass2D(pointList[i], Vecs));
+            }
+
+
+
+            //output
+            DA.SetDataList(0, loads);
+
+        }
+
+        /// <summary>
+        /// Provides an Icon for the component.
+        /// </summary>
+        protected override System.Drawing.Bitmap Icon
+        {
+            get
+            {
+                //You can add image files to your project resources and access them like this:
+                // return Resources.IconForThisComponent;
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the unique ID for this component. Do not change this ID after release.
+        /// </summary>
+        public override Guid ComponentGuid
+        {
+            get { return new Guid("2d8c9339-d0cc-43fa-b90a-4a9a85c58f17"); }
+        }
+    }
+}

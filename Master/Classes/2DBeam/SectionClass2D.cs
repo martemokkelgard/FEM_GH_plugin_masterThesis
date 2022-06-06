@@ -8,7 +8,7 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class SectionClass
+    internal class SectionClass2D
     {
         public string Name;
         public int id;
@@ -17,14 +17,15 @@ namespace Master
         public double tw;
         public double tf;
         public double CSA;
+        public double I;
 
 
-        public SectionClass()
+        public SectionClass2D()
         {
             //empty
         }
-        
-        public SectionClass(string _Name, double _h, double _w, double _tf, double _tw )
+
+        public SectionClass2D(string _Name, double _h, double _w, double _tf, double _tw)
         {
 
             Name = _Name;
@@ -32,9 +33,10 @@ namespace Master
             h = _h;
             tw = _tw;
             tf = _tf;
-            CSA = w * h -((w-2*tw)*(h-2*tf));
-                   
+            CSA = w * h - ((w - 2 * tw) * (h - 2 * tf));
+            I = (1 / (12.0000) * w * Math.Pow(h, 3)) - (1 / (12.0000) * (w - 2 * tw) * Math.Pow((h - 2 * tf), 3));
+            
+
         }
     }
 }
-

@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace Master.Components
+namespace Master.Components._3DTruss
 {
-    public class BoundaryConditions : GH_Component
+    public class BC3DTruss : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the BoundaryConditions class.
+        /// Initializes a new instance of the BC3DTruss class.
         /// </summary>
-        public BoundaryConditions()
-          : base("BoundaryConditions", "Nickname",
+        public BC3DTruss()
+          : base("BC3DTruss", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DTruss")
         {
         }
 
@@ -23,7 +23,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddPointParameter("Points","P", "Points for BCs", GH_ParamAccess.list);
+            pManager.AddPointParameter("Points", "P", "Points for BCs", GH_ParamAccess.list);
             pManager.AddBooleanParameter("Ux", "Ux", "Ux: false = free", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Uy", "Uy", "Uy: false = free", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Uz", "Uz", "Uz: false = free", GH_ParamAccess.item, false);
@@ -54,12 +54,12 @@ namespace Master.Components
             if (!DA.GetData(2, ref y)) return;
             if (!DA.GetData(3, ref z)) return;
 
-            List<BcClass> BCs = new List<BcClass>();
-          
+            List<BcClass3DTruss> BCs = new List<BcClass3DTruss>();
+
 
             foreach (Point3d p in pt)
             {
-                BCs.Add(new BcClass(p, x, y,z ));
+                BCs.Add(new BcClass3DTruss(p, x, y, z));
             }
 
             //output
@@ -84,7 +84,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("67B07F7C-EC63-4E79-A1CC-80168B002FBC"); }
+            get { return new Guid("76e696b1-e619-4a8f-98af-7844c6a67afc"); }
         }
     }
 }

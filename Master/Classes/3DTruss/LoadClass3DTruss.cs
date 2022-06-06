@@ -8,20 +8,20 @@ using Rhino.Geometry;
 
 namespace Master
 {
-    internal class LoadClass
+    internal class LoadClass3DTruss
     {
         public Point3d coordinate;
         public Vector3d LoadVec;
 
-        public LoadClass()
+        public LoadClass3DTruss()
         { }
 
 
-        public LoadClass(Point3d _coordinate, Vector3d _LoadVec)
+        public LoadClass3DTruss(Point3d _coordinate, Vector3d _LoadVec)
         {
             coordinate = _coordinate;
             LoadVec = _LoadVec;
-                
+
         }
 
 

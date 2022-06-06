@@ -6,15 +6,15 @@ using Rhino.Geometry;
 
 namespace Master.Components
 {
-    public class CreatePointLoad : GH_Component
+    public class CreateMomentForce : GH_Component
     {
         /// <summary>
-        /// Initializes a new instance of the Load class.
+        /// Initializes a new instance of the CreateMomentForce class.
         /// </summary>
-        public CreatePointLoad()
-          : base("PointLoad", "Nickname",
+        public CreateMomentForce()
+          : base("CreateMomentForce", "Nickname",
               "Description",
-              "Løve", "3DTruss")
+              "Panda", "3DBeam")
         {
         }
 
@@ -24,8 +24,7 @@ namespace Master.Components
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "Points to apply load(s)", GH_ParamAccess.list);
-            pManager.AddVectorParameter("Load", "L", "Load vector with amplitude in [N].Give either one load to be applied to all inputted points, or different loads for each inputted point", GH_ParamAccess.item);
-            
+            pManager.AddNumberParameter("MomentValue", "MV", "Moment Load vector with amplitude in [Nmm].Give it like list", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("PointLoad", "PL", "List of PointLoadsClass object", GH_ParamAccess.list);
+            pManager.AddGenericParameter("MomentLoad", "ML", "List of MomentLoadsClass object", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -42,28 +41,31 @@ namespace Master.Components
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            
             //input
             List<Point3d> pointList = new List<Point3d>(); //list of points where loads are applied
-            Vector3d Vecs = new Vector3d();
+            List<double> mVal = new List<double>();
+
 
             if (!DA.GetDataList(0, pointList)) return;
-            if (!DA.GetData(1, ref Vecs)) return;
-            
+            if (!DA.GetDataList(1, mVal)) return;
+
+
 
             //code
-            
-            
+
+
             List<LoadClass> loads = new List<LoadClass>();
+
             for (int i = 0; i < pointList.Count; i++)
             {
-                loads.Add(new LoadClass(pointList[i], Vecs));
+                loads.Add(new LoadClass(pointList[i], mVal));
             }
 
 
 
             //output
             DA.SetDataList(0, loads);
+
 
         }
 
@@ -85,7 +87,7 @@ namespace Master.Components
         /// </summary>
         public override Guid ComponentGuid
         {
-            get { return new Guid("ED282DDC-4338-474F-BBB1-0B01FD70D9F5"); }
+            get { return new Guid("83489457-ad76-4d3e-b757-22f1255d3aa8"); }
         }
     }
 }
