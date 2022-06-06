@@ -209,26 +209,6 @@ namespace Master.Components
             DA.SetDataList(5, stress);
         }
 
-        /*
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-
-                count++;
-            }
-
-            return tree;
-        }
-        */
 
         private List<int> CreateBCList(List<BcClass2DTruss> _BcValue, List<Point3d> _Pts)  //making a list with indexes of fixed BC
         {
@@ -394,7 +374,6 @@ namespace Master.Components
 
             int dofs = points.Count * 2;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
-            //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
 
             foreach (BarClass2DTruss b in bars)
             {
@@ -410,13 +389,6 @@ namespace Master.Components
                 double c = Math.Cos(angle); 
                 double s = Math.Sin(angle);
 
-                /*
-                double[,] K_e = new double[,]
-                {   { mat*c*c, mat*c*s, -mat*c*c ,-mat*c*s},
-                        { mat*c*s, mat*s*s ,-mat*c*s, -mat*s*s},
-                        { -mat*c*c, -mat*c*s, mat*c*c, mat*c*s},
-                        { -mat*c*s ,-mat*s*s ,mat*c*s, mat*s*s} };
-                */
         
                 Matrix<double> T = SparseMatrix.OfArray(new double[,]
                                 {
@@ -440,9 +412,6 @@ namespace Master.Components
                 Matrix<double> KG = Tt.Multiply(ke * mat);
                 Matrix<double> K_eG = KG.Multiply(T);
 
-
-                //K_eG = mat * K_eG;  //global element stivehetsmatrise
-                //ke = mat * ke;      //lokal element stivhetsmatrise
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;

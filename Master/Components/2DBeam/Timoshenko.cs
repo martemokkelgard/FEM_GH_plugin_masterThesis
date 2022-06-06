@@ -228,7 +228,6 @@ namespace Master.Components.Linear
             DA.SetDataList(2, force_lst);
             DA.SetDataList(3, mom_lst);
             DA.SetDataList(4, force_mom_pos);
-            //DA.SetDataTree(1, outTree);
             DA.SetDataList(5, displNodes);
             DA.SetDataList(6, deformedgeometry);
             DA.SetDataList(7, strain);
@@ -267,26 +266,7 @@ namespace Master.Components.Linear
             return BCsIndex;
         }
 
-        /*
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
 
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-
-                count++;
-            }
-
-            return tree;
-        }
-        */
         private Vector<double> CreateLoadList(List<LoadClass2D> _lc, List<Point3d> _Pts)
         {
 
@@ -350,9 +330,8 @@ namespace Master.Components.Linear
 
         private static void CreateForces(double x, List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out List<Matrix<double>> displace, out Vector<double> forces, out Vector<double> moment)
         {
-            //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
-            //List<Vector<double>> ST = new List<Vector<double>>();
+
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
             Matrix<double> v_shape = DenseMatrix.OfArray(new double[4, 1]);
 
@@ -427,12 +406,6 @@ namespace Master.Components.Linear
 
                 
                 var Ainv = Amatrix.Inverse();
-                /*
-                var A1 = Ainv.RemoveColumn(0);
-                var A2 = A1.RemoveColumn(2);
-                var A3 = A2.RemoveRow(0);
-                var Ause = A3.RemoveRow(2);
-                */
 
                 Matrix<double> Ke = ke * mat;
                 Matrix<double> Tt = T.Transpose(); //transpose
@@ -442,20 +415,7 @@ namespace Master.Components.Linear
 
                 int node1 = b.startNode.Id;
                 int node2 = b.endNode.Id;
-                /*
-                // only takes in the z displacement and ry rotation, since this the the values we have in the A and Nq matrix.
-                v_shape[0,0] = _def[node1 * 3 + 1];
-                v_shape[1,0] = _def[node1 * 3 + 2];
-                v_shape[2,0] = _def[node2 * 3 + 1];
-                v_shape[3,0] = _def[node2 * 3 + 2];
 
-
-                var N =  Nq.Multiply(Ainv);
-                var w = (Nq.Multiply(Ainv)).Multiply(v_shape);
-                
-
-                w_lst.Add(w);
-                */
                 v[0] = _def[node1 * 3];
                 v[1] = _def[node1 * 3 + 1];
                 v[2] = _def[node1 * 3 + 2];
@@ -490,7 +450,7 @@ namespace Master.Components.Linear
 
             int dofs = points.Count * 3;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
-            //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
+
 
             foreach (BeamClass2D b in bars)
             {

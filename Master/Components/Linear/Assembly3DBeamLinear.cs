@@ -109,12 +109,12 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
-            //Matrix<double> invK = K_red.Inverse();
+            Matrix<double> invK = K_red.Inverse();
 
-            //var def = invK.Multiply(R);
+            var def = invK.Multiply(R);
             var displNodes = new List<Point3d>();
 
-            Vector<double> def = K_red.Cholesky().Solve(R);     //r
+            //Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);

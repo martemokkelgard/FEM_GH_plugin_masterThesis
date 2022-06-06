@@ -32,8 +32,7 @@ namespace Master
             density = _density;
             youngsModolus = _youngsModolus;
             v = 0.3;
-            G = 80760.00;
-            //G = youngsModolus / (2 * (1 + v) );
+            G = youngsModolus / (2 * (1 + v) );
         }
 
 

@@ -116,7 +116,6 @@ namespace Master.Components
                 displNodes.Add(new Point3d(pts[i].X + def[3 * i]/1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2]/1000));
             }
 
-            //var outTree = DataTreeFromVectorList(forces);
 
             
             List<Line> liness = new List<Line>();
@@ -152,22 +151,6 @@ namespace Master.Components
             List<Point3d> disp_lst = new List<Point3d>();
             List<Point3d> rot_lst = new List<Point3d>();
 
-            //gjør om små tall til 0
-            /*for (int i = 0; i < forces.Count; i++)
-            {
-                if (Math.Abs(forces[i]) <= 0.00001)
-                {
-                    forces[i] = 0;
-                }
-
-
-                if (Math.Abs(rotation[i]) <= 0.00001)
-                {
-                    rotation[i] = 0;
-                }
-
-            }
-            */
 
             //removing smaller values than 1e-6 to zero due to numerical error
             forces.CoerceZero(1e-6);
@@ -243,28 +226,6 @@ namespace Master.Components
             return BCsIndex;
         }
 
-        /*
-
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-
-                count++;
-            }
-
-            return tree;
-        }
-
-        */
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<Point3d> _Pts)
         {
@@ -274,9 +235,7 @@ namespace Master.Components
             foreach (var load in _lc )
 
             {
-                //List<Vector3d> LoadVec = new List<Vector3d>();
-                
-                //Vector<double> LoadValue = new Vector<double>();
+
                 List<Point3d> LoadPts = new List<Point3d>();
 
                 if (load.Id == true)
@@ -344,7 +303,7 @@ namespace Master.Components
 
         private static void CreateForces(List<BeamClass> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> moment)
         {
-            //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
+
             Vector<double> S;
             List<Vector<double>> ST_disp = new List<Vector<double>>();
             List<Vector<double>> ST_rot = new List<Vector<double>>();
@@ -359,9 +318,7 @@ namespace Master.Components
 
                 Curve currentLine = b.axis;
                 double L = currentLine.GetLength()*1000;
-                double LL = Math.Pow(L, 2);
-                
-                //double theta_z = 12 * b.material.youngsModolus * b.section.Iy * k_Z / ( b.section.CSA * b.material.G * Math.Pow(L,2) )
+                double LL = Math.Pow(L, 2);                
 
 
                 double X = b.section.CSA * b.material.youngsModolus / L;
@@ -400,15 +357,7 @@ namespace Master.Components
 
                 double s = ( p2.Z - p1.Z ) / l;
                 double c = ( Math.Pow( Math.Pow((p2.X - p1.X),2) + Math.Pow((p2.Y - p1.Y),2 ) , 0.5) ) / l ;
-                /*
-                Matrix<double> t = DenseMatrix.OfArray(new double[,]
-                {
-                        {cx,                                     cy,                   cz},
-                        {-(xl*zl*s + l*yl*c) / den,   -(yl*zl*s - l*xl*c) / den,    den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,      (yl*zl*c + l*xl*s) / den,     -den*c / (l*l)},
-                });
                 
-                */
                 Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
                 Plane plane = new Plane(p1, vecX);
                 Vector3d vecY = plane.XAxis;
@@ -538,8 +487,7 @@ namespace Master.Components
 
             forces = force;
             moment = mom;     
-            //forces = new List<Vector<double>>(ST_disp);
-            //rotation = new List<Vector<double>>(ST_rot);
+
         }
 
         private static void CreateGlobalStiffnesMatrix(List<BeamClass> bars, List<Point3d> points, out Matrix<double> k_tot)

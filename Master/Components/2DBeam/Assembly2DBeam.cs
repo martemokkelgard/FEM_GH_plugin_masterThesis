@@ -60,9 +60,7 @@ namespace Master.Components
             
             
             //input
-            
-            
-            
+  
 
             List<BeamClass2D> bars = new List<BeamClass2D>();
             List<LoadClass2D> lc = new List<LoadClass2D>();
@@ -73,15 +71,6 @@ namespace Master.Components
             DA.GetDataList(1, bcc);
             DA.GetDataList(2, lc);
 
-            /*
-            foreach (var load in lc)
-            {
-                LoadPts.Add(load.coordinate);
-                LoadVec.Add(load.LoadVec);
-            }
-            */
-
-            //code
 
             List<Point3d> pts = new List<Point3d>();
             foreach (BeamClass2D b in bars)
@@ -145,15 +134,15 @@ namespace Master.Components
             foreach (BeamClass2D b in bars)
             {
                 double originLength = b.axis.GetLength();
-                //double deformedLength = liness[b.Id].Length;
+                double deformedLength = liness[b.Id].Length;
 
-                //double dL = originLength - deformedLength;
+                double dL = originLength - deformedLength;
 
-                //double e = dL / originLength;
-                //strain.Add(e);
+                double e = dL / originLength;
+                strain.Add(e);
 
-                //double s = e * b.material.youngsModolus;
-                //stress.Add(s);
+                double s = e * b.material.youngsModolus;
+                stress.Add(s);
             }
 
             //lage lister med displacement
@@ -244,26 +233,7 @@ namespace Master.Components
             return BCsIndex;
         }
 
-        /*
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
 
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-
-                count++;
-            }
-
-            return tree;
-        }
-        */
         private Vector<double> CreateLoadList(List<LoadClass2D> _lc, List<Point3d> _Pts)
         {
 
@@ -272,9 +242,7 @@ namespace Master.Components
             foreach (var load in _lc )
 
             {
-                //List<Vector3d> LoadVec = new List<Vector3d>();
-                
-                //Vector<double> LoadValue = new Vector<double>();
+
                 List<Point3d> LoadPts = new List<Point3d>();
 
                 if (load.Id == true)
@@ -327,9 +295,8 @@ namespace Master.Components
 
         private static void CreateForces(List<BeamClass2D> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces, out Vector<double> moment)
         {
-            //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
+
             Vector<double> S;
-            //List<Vector<double>> ST = new List<Vector<double>>();
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
 
             Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count]);
@@ -412,7 +379,7 @@ namespace Master.Components
 
             int dofs = points.Count * 3;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
-            //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
+
 
             foreach (BeamClass2D b in bars)
             {
@@ -423,8 +390,6 @@ namespace Master.Components
                 double LL = Math.Pow(L, 2);
                 double mat = (b.material.youngsModolus * b.section.Iy) / (Math.Pow(L, 3));
                 double my = (LL * b.section.CSA) / b.section.Iy;
-                //Point3d p1 = new Point3d(Math.Round(currentLine.From.X, 5), Math.Round(currentLine.From.Y, 5), Math.Round(currentLine.From.Z, 5));
-                //Point3d p2 = new Point3d(Math.Round(currentLine.To.X, 5), Math.Round(currentLine.To.Y, 5), Math.Round(currentLine.To.Z, 5));
                 Point3d p1 = currentLine.PointAtStart;
                 Point3d p2 = currentLine.PointAtEnd;
 
