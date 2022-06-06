@@ -150,7 +150,10 @@ namespace Master.Components
                 double B3 = -L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[2];
                 B.Add(B0); B.Add(B1); B.Add(B2); B.Add(B3);
                 //Making K-matrix
+
                 
+
+
                 for (int a = 0; a < Nu.Count; a++)
                 {
                     for (int b = 0; b < Nu.Count; b++)
@@ -165,6 +168,8 @@ namespace Master.Components
                         k_ee[g, e] += (E * I) / (Math.Pow(J, 4)) * B[g] * B[e] * J * GPW[1, n];
                     }
                 }
+
+
                 */
 
                 //calculate

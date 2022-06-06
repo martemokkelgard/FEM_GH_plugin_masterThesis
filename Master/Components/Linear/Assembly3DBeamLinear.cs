@@ -52,7 +52,7 @@ namespace Master.Components
             pManager.AddLineParameter("Deformed Geometry", "defGeo", "Deformed geometry", GH_ParamAccess.list);
             pManager.AddNumberParameter("Strain in x", "E", "strain ", GH_ParamAccess.list);
             pManager.AddNumberParameter("Stress [N/mm^2] in x", "S", "stress [N/mm^2] ", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Maxïmum moment", "M_max", "Maximum moment ", GH_ParamAccess.item);
+            pManager.AddNumberParameter("Maximum moment", "M_max", "Maximum moment ", GH_ParamAccess.item);
             pManager.AddNumberParameter("umax", "Umax", "maximum displacement ", GH_ParamAccess.item);
             pManager.AddLineParameter("moment diagram", "ben", "to see the moment ", GH_ParamAccess.list);
         }
@@ -109,7 +109,7 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
-            Matrix<double> invK = K_red.Inverse();
+            //Matrix<double> invK = K_red.Inverse();
 
             //var def = invK.Multiply(R);
             var displNodes = new List<Point3d>();
@@ -130,28 +130,6 @@ namespace Master.Components
                 displNodes.Add(new Point3d(node.X + def[6 * id] / 1000, node.Y + def[6 * id + 1] / 1000, node.Z + def[6 * id + 2] / 1000));
             }
 
-            //var outTree = DataTreeFromVectorList(forces);
-
-            /*
-            List<Line> liness = new List<Line>();
-            for (int i = 0; i < displNodes.Count - 1; i++)
-            {
-                Line line = new Line(displNodes[i], displNodes[i + 1]);
-                liness.Add(line);
-            }
-            List<double> strain = new List<double>();   //strain and stress
-            List<double> stress = new List<double>();
-            foreach (BarClass b in bars)
-            {
-                double originLength = b.axis.Length;
-                double deformedLength = liness[b.Id].Length;
-                double dL = originLength - deformedLength;
-                double e = dL / originLength;
-                strain.Add(e);
-                double s = e * b.material.youngsModolus;
-                stress.Add(s);
-            }
-            */
 
             //lage lister med displacement
 
@@ -220,7 +198,6 @@ namespace Master.Components
             DA.SetDataList(1, rot_lst);
             DA.SetDataList(2, force_lst);
             DA.SetDataList(3, mom_lst);
-            //DA.SetDataTree(1, outTree);
             DA.SetDataList(4, displNodes);
             DA.SetDataList(5, deformedgeometry);
             DA.SetDataList(6, strain);
@@ -273,35 +250,15 @@ namespace Master.Components
             return BCsIndex;
         }
 
-        /*
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector<double>> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-                count++;
-            }
-            return tree;
-        }
-        */
 
         private Vector<double> CreateLoadList(List<LoadClass> _lc, List<NodeClass> _nodes)
         {
 
-            Vector<double> LoadValue = SparseVector.OfEnumerable(new double[_nodes.Count * 6]);
+            Vector<double> LoadValue = DenseVector.OfEnumerable(new double[_nodes.Count * 6]);
 
             foreach (var load in _lc)
 
             {
-                //List<Vector3d> LoadVec = new List<Vector3d>();
-
-                //Vector<double> LoadValue = new Vector<double>();
                 List<Point3d> LoadPts = new List<Point3d>();
 
                 if (load.Id == true)
@@ -321,7 +278,6 @@ namespace Master.Components
 
                 for (int i = 0; i < _nodes.Count; i++)
                 {
-                    //this line was not so good
                     Point3d node = _nodes[i].pt;
                     int id = _nodes[i].Id;
 
@@ -369,17 +325,17 @@ namespace Master.Components
         private static void CreateForces(List<BeamClassLinear> bars, List<Point3d> points, Vector<double> _def, List<Matrix<double>> Lk_eg, Matrix<double> N, Matrix<double> dN, List<Matrix<double>> T_List, List<Matrix<double>> T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> _u, out double M_max, out double umax, out List<Line> crv)
         {
             //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
-            Vector<double> u = SparseVector.OfEnumerable(new double[6]);
-            Vector<double> eps = SparseVector.OfEnumerable(new double[6]);
-            Vector<double> sigma = SparseVector.OfEnumerable(new double[6]);
+            Vector<double> u = DenseVector.OfEnumerable(new double[6]);
+            Vector<double> eps = DenseVector.OfEnumerable(new double[6]);
+            Vector<double> sigma = DenseVector.OfEnumerable(new double[6]);
             Vector<double> S;
 
             Vector<double> v = DenseVector.OfEnumerable(new double[12]);
             Vector<double> vl = DenseVector.OfEnumerable(new double[12]);
             var _M = new double();
 
-            Vector<double> mom = SparseVector.OfEnumerable(new double[points.Count * 3]);
-            Vector<double> forc = SparseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> mom = DenseVector.OfEnumerable(new double[points.Count * 3]);
+            Vector<double> forc = DenseVector.OfEnumerable(new double[points.Count * 3]);
             Vector<double> dNN = DenseVector.OfEnumerable(new double[12]);
             
             List<Line> bending = new List<Line>();
@@ -461,14 +417,8 @@ namespace Master.Components
 
                     x += L / n;
 
-                    //Point3d main1 = b.axis.PointAtNormalizedLength(0);
-                    //Point3d main2 = b.axis.PointAtNormalizedLength(1);
-                    //Point3d mid = b.axis.PointAtNormalizedLength(0.5);
                     Vector3d vector = b.axis.CurvatureAt((L / n) / L);
                     Vector3d nullVec = new Vector3d(0,0,0);
-                    //Vector3d vec = new Vector3d(main2.X-main1.X, main2.Y-main1.Y, main2.Z-main1.Z);
-                    //Plane plan = new Plane(main1, vec , new Vector3d(0, 1, 0));
-                    //Vector3d norm = plan.Normal;
                     vector.Unitize();
                     Point3d st = b.axis.PointAtNormalizedLength((L / n * i) / L);
                     
@@ -479,26 +429,12 @@ namespace Master.Components
                     
                     Point3d en = new Point3d(st.X - vector.X * _M / 10000000.0, st.Y - vector.Y * _M / 10000000.0, st.Z - vector.Z * _M / 10000000.0);
 
-
                     
                     curve_pts.Add(en);
-
-                    /*
-                    m_max = _M;
-
-                    if (m_max > m_Max)
-                    {
-                        m_Max = m_max;
-                    }
-                    */
 
                     
                 }
 
-
-
-
-                //bending = new Polyline(curve_pts);
 
 
                 eps = B.Multiply(vl);        //strain (3)
@@ -554,42 +490,7 @@ namespace Master.Components
                 }
             }
 
-            /*
 
-            eps = B.Multiply(v);        //strain (3)
-
-            sigma = E * eps;            //stress = E*3
-
-            S = Lk_eg[b.Id].Multiply(v);
-
-            _M = E * b.section.Iy * eps[2];
-
-            M_lst.Add(_M);
-
-
-
-
-            disp[node1 * 3] += S[0];
-            disp[node1 * 3 + 1] += S[1];
-            disp[node1 * 3 + 2] += S[2];
-            disp[node2 * 3] += S[6];
-            disp[node2 * 3 + 1] += S[7];
-            disp[node2 * 3 + 2] += S[8];
-
-
-            rot[node1 * 3] += S[3];
-            rot[node1 * 3 + 1] += S[4];
-            rot[node1 * 3 + 2] += S[5];
-            rot[node2 * 3] += S[9];
-            rot[node2 * 3 + 1] += S[10];
-            rot[node2 * 3 + 2] += S[11];
-
-
-
-        }
-
-
-        */
 
             forces = forc;
             moment = mom;
@@ -726,66 +627,21 @@ namespace Master.Components
 
 
                 Point3d p1 = new Point3d(Math.Round(currentLine.PointAtStart.X, 6), Math.Round(currentLine.PointAtStart.Y, 6), Math.Round(currentLine.PointAtStart.Z, 6));
-                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6));  //negative values for y to get it in the same coordinatsystem as we use
-
+                Point3d p2 = new Point3d(Math.Round(currentLine.PointAtEnd.X, 6), Math.Round(currentLine.PointAtEnd.Y, 6), Math.Round(currentLine.PointAtEnd.Z, 6)); 
 
                 Vector3d unitX = new Vector3d(1, 0, 0);
                 Vector3d unitY = new Vector3d(0, 1, 0);
                 Vector3d unitZ = new Vector3d(0, 0, 1);
 
-                //Vector3d vec1z = new Vector3d();
 
                 Vector3d nullvec = new Vector3d(0, 0, 0);
                 Vector3d vec1x = b.axis.TangentAt(0);
-
-                //Vector3d vec1z = new Vector3d();
-
-                
                 Vector3d vec1y = new Vector3d(-vec1x.Y, vec1x.X, 0);
-                
-
-                
-                /*
-                if (vec1x.Z == 0)
-                {
-                    Vector3d vec1zz = new Vector3d(0, 0 , 1);
-                    vec1z = vec1zz;
-                }
-
-                else if(vec1x.X == 0 && vec1x.Z != 0)
-                {
-                    Vector3d vec1zz = new Vector3d(0, -vec1x.Z, vec1x.X);
-                    vec1z = vec1zz;
-                }
-
-                else if (vec1x.Y == 0 && vec1x.Z != 0)
-                {
-                    Vector3d vec1zz = new Vector3d(-vec1x.Z, 0 , vec1x.X);
-                    vec1z = vec1zz;
-                }
-
-                */
-
-                /*
-                if (b.axis.CurvatureAt(0) == nullvec)
-                {
-                    vec1z = unitZ;
-                }
-                else
-                {
-                    vec1z = b.axis.CurvatureAt(0);
-                }
-                */
-
-
                 Vector3d vec1z = Vector3d.CrossProduct(vec1y, vec1x);
-
 
                 vec1z.Unitize();
                 vec1x.Unitize();
                 vec1y.Unitize();
-
-                
                 
                 double _1l1 = Math.Cos(Vector3d.VectorAngle(vec1x, unitX));
                 double _1m1 = Math.Cos(Vector3d.VectorAngle(vec1x, unitY));
@@ -806,100 +662,8 @@ namespace Master.Components
                         {_1l3,   _1m3,     _1n3},
                 });
 
-                Matrix<double> tr = DenseMatrix.OfArray(new double[,]
-                {
-                        {_1l1,   _1m1,     _1n1},
-                        {_1l2,   _1m2,     _1n2},
-                        {_1l3,   _1m3,     _1n3},
-                });
 
                 t.CoerceZero(0.00001);
-                
-
-                /*
-                double xl = (p2.X - p1.X);
-                double yl = (p2.Y - p1.Y);
-                double zl = (p2.Z - p1.Z);
-
-                double l = currentLine.GetLength();
-                double den = l * Math.Pow(Math.Pow(xl, 2) + Math.Pow(yl, 2), 0.5);
-
-                double cx = xl / l;
-                double cy = yl / l;
-                double cz = zl / l;
-
-                double s = (p2.Z - p1.Z) / l;
-                double c = (Math.Pow(Math.Pow((p2.X - p1.X), 2) + Math.Pow((p2.Y - p1.Y), 2), 0.5)) / l;
-                
-                Matrix<double> t = DenseMatrix.OfArray(new double[,]
-                {
-                        {cx,                                     cy,                   cz},
-                        {-(xl*zl*s + l*yl*c) / den,     -(yl*zl*s - l*xl*c) / den,     den*s/(l*l)},
-                        {(xl*zl*c - l*yl*s)/den,         (yl*zl*c + l*xl*s) / den,    -den*c / (l*l)},
-                });
-
-                */
-
-                /*
-                Vector3d vecX = new Vector3d(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
-                Plane plane = new Plane(p1, vecX);
-                Vector3d vecY = plane.XAxis;
-                Vector3d vecZ = plane.YAxis;
-
-                vecX.Unitize();
-                vecY.Unitize();
-                vecZ.Unitize();
-
-
-
-                Vector3d unitX = new Vector3d(1, 0, 0);
-                Vector3d unitY = new Vector3d(0, 1, 0);
-                Vector3d unitZ = new Vector3d(0, 0, 1);
-
-                Plane xyplane = new Plane(p1, unitZ);
-                Vector3d mapXY = new Vector3d(vecZ.X, vecZ.Y, 0);
-                Plane newxyplane = new Plane(p1, vecZ);
-                Vector3d y3 = Vector3d.CrossProduct(unitZ, vecZ);
-
-                double beta = Vector3d.VectorAngle(unitZ, vecZ);
-                Vector3d control = new Vector3d(0, 0, 0);
-                double alpha;
-                double gamma;
-                if (mapXY == control)
-                {
-                    alpha = 0;
-                }
-                else
-                {
-                    alpha = Vector3d.VectorAngle(unitX, mapXY);
-                }
-
-                if (y3 == control)
-                {
-                    gamma = 0;
-                }
-                else
-                {
-                    gamma = Vector3d.VectorAngle(vecY, y3);
-                }
-
-
-
-                double ca = Math.Cos(alpha);
-                double cb = Math.Cos(beta);
-                double cg = Math.Cos(gamma);
-
-                double sa = Math.Sin(alpha);
-                double sb = Math.Sin(beta);
-                double sg = Math.Sin(gamma);
-
-                Matrix<double> t = DenseMatrix.OfArray(new double[,]
-                {
-                        {ca*cb*cg-sa*sg,   sa*cb*cg+ca*sg,     -sb*cg},
-                        {-ca*cb*sg-sa*cg,   -sa*cb*sg+ca*cg,    sb*sg},
-                        {ca*sb,                sa*sb,            cb},
-                });
-                */
 
                 var T_t = t.DiagonalStack(t);
                 var T = T_t.DiagonalStack(T_t);
