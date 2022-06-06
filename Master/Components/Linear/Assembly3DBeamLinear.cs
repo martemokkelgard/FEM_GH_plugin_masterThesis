@@ -426,7 +426,7 @@ namespace Master.Components
                         vector = new Vector3d(0,0,1);
                     }
                     
-                    Point3d en = new Point3d(st.X - vector.X * _M / 10000000.0, st.Y - vector.Y * _M / 10000000.0, st.Z - vector.Z * _M / 10000000.0);
+                    Point3d en = new Point3d(st.X - vector.X * -_M / 10000000.0, st.Y - vector.Y * -_M / 10000000.0, st.Z - vector.Z * -_M / 10000000.0);
 
                     
                     curve_pts.Add(en);

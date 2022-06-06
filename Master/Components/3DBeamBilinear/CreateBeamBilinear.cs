@@ -55,19 +55,7 @@ namespace Master.Components._3DBeamBilinear
             DA.GetData(3, ref sec);
             List<BeamClassBilinear> bars = new List<BeamClassBilinear>();
 
-            /*
-            lines[0].PointAtNormalizedLength(0);
-            lines[0].PointAtNormalizedLength(0.5);
-            lines[0].PointAtNormalizedLength(1);
-            double minpdomain = lines[0].Domain[0];
-            double maxpdomain = lines[0].Domain[1];
-            double middomain = minpdomain + (maxpdomain - minpdomain) / 2;
-            lines[0].PointAt(minpdomain);
-            lines[0].PointAt(middomain);
-            lines[0].PointAt(maxpdomain);
-            */
-
-
+          
             //code
             foreach (Curve l in lines)  //making barsClass objects of lines
             {

@@ -120,25 +120,17 @@ namespace Master.Components._3DTruss
 
             CreateReducedStiffnesMatrix(BCList, k_tot, out K_red);
 
-            //Matrix<double> k_red = K_red.PointwiseRound();
 
-            //Matrix<double> invK = DenseMatrix.OfArray(new double[9, 9]);
-
-            //Matrix<double> invK = K_red.Inverse();
+            //var invK = K_red.Inverse();
 
 
-            var invK = K_red.Inverse();
+            //var def = invK.Multiply(R);
 
-
-            var def = invK.Multiply(R);
-
-            //var def = K_red.Cholesky().Solve(R);
+            var def = K_red.Cholesky().Solve(R);
 
             var displNodes = new List<Point3d>();
 
-            //Vector<double> def = K_red.Cholesky().Solve(R);
-
-
+            
             CreateForces(bars, pts, def, out Vector<double> forces);
 
 
@@ -149,7 +141,6 @@ namespace Master.Components._3DTruss
                 displNodes.Add(new Point3d(pts[i].X + def[3 * i] / 1000, pts[i].Y + def[3 * i + 1] / 1000, pts[i].Z + def[3 * i + 2] / 1000));
             }
 
-            //var outTree = DataTreeFromVectorList(forces);
 
             List<Line> liness = new List<Line>();
 
@@ -212,7 +203,6 @@ namespace Master.Components._3DTruss
             DA.SetDataList(0, disp_lst);
             DA.SetDataList(1, force_lst);
             DA.SetDataList(2, force_lst_pos);
-            //DA.SetDataTree(1, outTree);
             DA.SetDataList(3, displNodes);
             DA.SetDataList(4, strain);
             DA.SetDataList(5, stress);
@@ -251,23 +241,6 @@ namespace Master.Components._3DTruss
             return BCsIndex;
         }
 
-        /*
-        private GH_Structure<GH_Number> DataTreeFromVectorList(List<Vector3d> vecLst)
-        {
-            GH_Structure<GH_Number> tree = new GH_Structure<GH_Number>();
-            int count = 0;
-            foreach (Vector<double> vec in vecLst)
-            {
-                GH_Path path = new GH_Path(count);
-                foreach (var num in vec.AsArray())
-                {
-                    tree.Append(new GH_Number(num), path);
-                }
-                count++;
-            }
-            return tree;
-        }
-        */
 
         private List<double> CreateLoadList(List<Point3d> _LoadPts, List<Vector3d> _LoadValue, List<Point3d> _Pts)
         {
@@ -306,11 +279,8 @@ namespace Master.Components._3DTruss
 
         private static void CreateForces(List<BarClass3DTruss> bars, List<Point3d> points, Vector<double> _def, out Vector<double> forces)
         {
-            //Matrix<double> k_eG = DenseMatrix.OfArray(new double[6, 6]);
             Vector<double> S;
-            //List<Point3d> st = new List<Point3d>(points.Count);
             Vector<double> disp = SparseVector.OfEnumerable(new double[points.Count * 3]);
-            //List <Vector<double>> Force = new List<Vector<double>>(points.Count);
             Vector<double> v = SparseVector.OfEnumerable(new double[6]);
 
             var nodes = new List<NodeClass>();
@@ -398,8 +368,7 @@ namespace Master.Components._3DTruss
 
             int dofs = points.Count * 3;
             Matrix<double> K_tot = DenseMatrix.OfArray(new double[dofs, dofs]);
-            //Matrix<double> K_eG = DenseMatrix.OfArray(new double[4, 4]);
-
+            
             foreach (BarClass3DTruss b in bars)
             {
 
