@@ -41,8 +41,8 @@ namespace Master.Components
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
-            pManager.AddPointParameter("CurvePoint", "CurvePoint", "Point on Curve", GH_ParamAccess.list);
+            //pManager.AddGenericParameter("ke", "ke", "Element stiffness matrix for NURBS element", GH_ParamAccess.item);
+            pManager.AddPointParameter("NURBS", "CurvePoint", "Point on Curve", GH_ParamAccess.list);
         }
 
         /// <summary>
@@ -68,22 +68,7 @@ namespace Master.Components
             int p = Convert.ToInt32(pp);
 
             List<Point3d> position = new List<Point3d>();
-            //List<double> GPW = new List<double>();
-
             var GPW = getGPW(Convert.ToInt32(ngp));
-
-
-            /*
-            if (ngp == 2)
-            {
-                Xi.Add(-Math.Sqrt(1.0 / 3.0));
-                Xi.Add(Math.Sqrt(1.0 / 3.0));
-                GPW.Add(1.0);
-                GPW.Add(1.0);
-            }
-            */
-
-            //control points
 
             var cpts = ipts;
 
@@ -103,16 +88,14 @@ namespace Master.Components
 
 
                 //knot vector
-                List<double> kVv = X;// new List<double>(){0,0,0,0.5,1,1,1};
-                List<double> kVu = new List<double>() { -1, -1, 1, 1 };
+                List<double> kVv = X;// 
+                List<double> kVu = new List<double>() { -1, -1, 1, 1 };  //for stiffnessmatrix and dofs with different basis functions
 
                 string kVstring = "KnotVec = ";
                 foreach (var v in kVv)
                     kVstring = kVstring + " " + v;
                 info.Add(kVstring);
 
-
-                //double xi = 0.49;
 
                 //basic shape function degree 0
                 List<double> N0v = getN0(kVv, GPW[0, n]);
@@ -124,7 +107,7 @@ namespace Master.Components
 
                 //basic shape function degree 1 and higher
                 int d = 1;
-                List<double> Nu = getN(kVu, GPW[0, n], pu);
+                List<double> Nu = getN(kVu, GPW[0, n], pu);  
                 List<double> dNu = getdN(kVu, GPW[0, n], pu, d);
                 List<double> Nv = getN(kVv, GPW[0, n], pv);
                 List<double> dNv = getdN(kVv, GPW[0, n], pv, d);
@@ -133,6 +116,8 @@ namespace Master.Components
                     Nstring = Nstring + " " + nshp;
                 info.Add(Nstring);
 
+                /*   for stiffness matrix, commented out as it did not work
+                 
                 //Beam properties
                 double L = 1.3;
                 double J = L / 2;
@@ -140,7 +125,7 @@ namespace Master.Components
                 double I = 0.014;
                 double E = 1525;
 
-                /*
+                
                 //Selective basis functions (for vertical disp and rot)
 
                 int db = 2;   //derived d-times
@@ -203,10 +188,10 @@ namespace Master.Components
 
             }
 
-            //Curve crv = Curve.CreateInterpolatedCurve(position, p);
+            
 
-            DA.SetData(0, k_ee);
-            DA.SetDataList(1, position);
+            //DA.SetData(0, k_ee);
+            DA.SetDataList(0, position);
         }
 
 
@@ -437,8 +422,6 @@ namespace Master.Components
             }
             return N0;
         }
-
-
 
 
 

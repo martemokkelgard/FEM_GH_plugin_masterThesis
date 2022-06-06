@@ -43,7 +43,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
-            string Name = "C14";
+            string Name = "s355";
             double d = 100;
             double E = 100000;
 
