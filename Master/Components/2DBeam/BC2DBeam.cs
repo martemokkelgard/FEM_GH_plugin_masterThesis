@@ -44,6 +44,7 @@ namespace Master.Components
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             //input
+
             List<Point3d> pt = new List<Point3d>();
             bool x = false;
             bool z = false;
@@ -63,6 +64,7 @@ namespace Master.Components
             }
 
             //output
+
             DA.SetDataList(0, BCs);
         }
 

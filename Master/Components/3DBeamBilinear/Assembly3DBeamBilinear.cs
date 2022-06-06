@@ -56,7 +56,7 @@ namespace Master.Components
 
             pManager.AddLineParameter("moment diagram", "ben", "to see the moment ", GH_ParamAccess.list);
 
-            
+
 
         }
 
@@ -88,7 +88,7 @@ namespace Master.Components
 
 
             List<Point3d> pts = new List<Point3d>();  //making pointList from lines
-            
+
 
             for (int i = 0; i < bars.Count; i++)
             {
@@ -148,7 +148,7 @@ namespace Master.Components
             CreateGenerelizedShapeFunc(bars, x, out Matrix<double> N, out Matrix<double> dN);
 
 
-            CreateForces(bars, pts, def, k_eg, N, dN,T_List, T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out double M_max, out double umax, out List<Line>  crv);
+            CreateForces(bars, pts, def, k_eg, N, dN, T_List, T_List_six, out Vector<double> forces, out Vector<double> moment, out Vector<double> strain, out Vector<double> stress, out List<Vector<double>> u, out double M_max, out double umax, out List<Line> crv);
 
 
             foreach (NodeClass nod in nodes) //(int i = 0; i < nodes.Count; i++)
@@ -156,6 +156,9 @@ namespace Master.Components
 
                 displNodes.Add(new Point3d(pts[nod.Id].X + def[6 * nod.Id] / 1000, pts[nod.Id].Y + def[6 * nod.Id + 1] / 1000, pts[nod.Id].Z + def[6 * nod.Id + 2] / 1000));
             }
+
+
+
 
 
             //lage lister med displacement
@@ -212,8 +215,8 @@ namespace Master.Components
 
             foreach (BeamClassBilinear b in bars)
             {
-                Point3d p1 = new Point3d(b.startNode.pt.X +(def[b.startNode.Id * 6] /1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6+1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6+2] / 1000.00));
-                Point3d p2 = new Point3d(b.midNode.pt.X + (def[b.midNode.Id * 6] / 1000.00), b.midNode.pt.Y + (def[b.midNode.Id * 6 + 1] / 1000.00), b.midNode.pt.Z + (def[b.midNode.Id * 6 +2] / 1000.00));
+                Point3d p1 = new Point3d(b.startNode.pt.X + (def[b.startNode.Id * 6] / 1000.00), b.startNode.pt.Y + (def[b.startNode.Id * 6 + 1] / 1000.00), b.startNode.pt.Z + (def[b.startNode.Id * 6 + 2] / 1000.00));
+                Point3d p2 = new Point3d(b.midNode.pt.X + (def[b.midNode.Id * 6] / 1000.00), b.midNode.pt.Y + (def[b.midNode.Id * 6 + 1] / 1000.00), b.midNode.pt.Z + (def[b.midNode.Id * 6 + 2] / 1000.00));
                 Point3d p3 = new Point3d(b.endNode.pt.X + (def[b.endNode.Id * 6] / 1000.00), b.endNode.pt.Y + (def[b.endNode.Id * 6 + 1] / 1000.00), b.endNode.pt.Z + (def[b.endNode.Id * 6 + 2] / 1000.00));
                 Line line1 = new Line(p1, p2);
                 Line line2 = new Line(p2, p3);
@@ -437,7 +440,7 @@ namespace Master.Components
                 Curve currentLine = b.axis;
                 double L = Math.Round(currentLine.GetLength() * 1000.00, 2);
                 List<Point3d> curve_pts = new List<Point3d>();
-                double n = 4;
+                double n = 2;
                 var x = 0.0;
                 
                 for (int i = 0; i < n+1; i++)

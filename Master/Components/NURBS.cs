@@ -127,7 +127,6 @@ namespace Master.Components
 
                 
                 //Selective basis functions (for vertical disp and rot)
-
                 int db = 2;   //derived d-times
                 List<double> B = new List<double>();
                 double B0 = getdN(kVv, GPW[0, n], pv, db)[0] + getdN(kVv, GPW[0, n], pv, db)[1];
@@ -135,8 +134,6 @@ namespace Master.Components
                 double B2 = L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[1];
                 double B3 = -L / 3.0 * getdN(kVv, GPW[0, n], pv, db)[2];
                 B.Add(B0); B.Add(B1); B.Add(B2); B.Add(B3);
-
-
                 //Making K-matrix
 
                 
@@ -149,15 +146,11 @@ namespace Master.Components
                         k_e[3 * a, 3 * b] += (E * A / (J * J)) * dNu[a] * dNu[b] * J * GPW[1, n];
                     }
                 }
-
-
                 for (int g = 0; g < Nv.Count; g++)
                 {
                     for (int e = 0; e < Nv.Count; e++)
-
                     {
                         k_ee[g, e] += (E * I) / (Math.Pow(J, 4)) * B[g] * B[e] * J * GPW[1, n];
-
                     }
                 }
 

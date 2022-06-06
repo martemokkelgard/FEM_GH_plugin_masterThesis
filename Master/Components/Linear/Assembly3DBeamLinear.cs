@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Grasshopper.Kernel;
 using Rhino.Geometry;
+using System.Drawing;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using System.Linq;
@@ -108,12 +109,12 @@ namespace Master.Components
 
             CreateReducedStiffnesMatrix(BCList, k_tot, R, out Matrix<double> K_red);
 
-            //Matrix<double> invK = K_red.Inverse();
+            Matrix<double> invK = K_red.Inverse();
 
-            //var def = invK.Multiply(R);
+            var def = invK.Multiply(R);
             var displNodes = new List<Point3d>();
 
-            Vector<double> def = K_red.Cholesky().Solve(R);     //r
+            //Vector<double> def = K_red.Cholesky().Solve(R);     //r
 
 
             CreateGenerelizedShapeFunc(bars, k_tot, x, out Matrix<double> N, out Matrix<double> dN);
@@ -762,8 +763,8 @@ namespace Master.Components
             get
             {
                 //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return null;
+                return Master.Properties.Resources.Linear.ToBitmap();
+                //return null;
             }
         }
 
